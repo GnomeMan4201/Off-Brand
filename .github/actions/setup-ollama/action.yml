@@ -1,0 +1,36 @@
+name: Set up local model (Ollama)
+description: Install Ollama on the runner, start it, and pull an open-weight model. No API key, nothing leaves the runner.
+inputs:
+  model:
+    description: Ollama model tag
+    default: qwen2.5:3b
+runs:
+  using: composite
+  steps:
+    - name: Cache model weights
+      uses: actions/cache@v4
+      with:
+        path: ~/.ollama/models
+        key: ollama-${{ runner.os }}-${{ inputs.model }}
+
+    - name: Install Ollama
+      shell: bash
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sh
+        # the installer starts a system service; run our own so models live in the cached path
+        sudo systemctl stop ollama 2>/dev/null || true
+
+    - name: Start server and pull model
+      shell: bash
+      run: |
+        export OLLAMA_MODELS="$HOME/.ollama/models"
+        mkdir -p "$OLLAMA_MODELS"
+        nohup ollama serve > /tmp/ollama.log 2>&1 &
+        for i in $(seq 1 60); do
+          curl -fs http://127.0.0.1:11434/api/tags >/dev/null && break
+          sleep 1
+        done
+        curl -fs http://127.0.0.1:11434/api/tags >/dev/null || { cat /tmp/ollama.log; exit 1; }
+        start=$(date +%s)
+        ollama pull "${{ inputs.model }}"
+        echo "model ready in $(( $(date +%s) - start ))s"

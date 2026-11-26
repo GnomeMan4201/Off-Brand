@@ -8,6 +8,10 @@ permissions:
   contents: write
   issues: write
 
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     if: github.event.label.name == 'approved'
@@ -19,14 +23,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Extract latest comment & publish
+      - name: Fetch the approved review and publish it
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_JSON: /tmp/issue.json
+          COMMENTS_JSONL: /tmp/comments.jsonl
+          EVENTS_JSONL: /tmp/events.jsonl
+          PUBLISH_ERROR_PATH: /tmp/publish_error.txt
+          PUBLISH_RECEIPT_PATH: /tmp/publish_receipt.txt
         run: |
-          REVIEW_COMMENT=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments[-1].body')
-          export REVIEW_COMMENT
+          gh api "repos/$REPO/issues/$ISSUE_NUMBER" > "$ISSUE_JSON"
+          gh api --paginate "repos/$REPO/issues/$ISSUE_NUMBER/comments" --jq '.[]' > "$COMMENTS_JSONL"
+          gh api --paginate "repos/$REPO/issues/$ISSUE_NUMBER/events" --jq '.[]' > "$EVENTS_JSONL"
           python3 scripts/publish_from_issue.py
 
       - name: Commit & close issue
@@ -38,5 +48,19 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/reviews.json
           git diff --cached --quiet || git commit -m "feat: publish review from issue #$ISSUE_NUMBER"
+          git pull --rebase origin main
           git push
-          gh issue close "$ISSUE_NUMBER" --reason completed --comment "Published to Off-Brand."
+          RECEIPT="Published to Off-Brand."
+          [ -f /tmp/publish_receipt.txt ] && RECEIPT="$(cat /tmp/publish_receipt.txt)"
+          gh issue close "$ISSUE_NUMBER" --reason completed --comment "$RECEIPT"
+
+      - name: Explain why it wasn't published
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          REASON="Publishing failed. Check the workflow log."
+          [ -f /tmp/publish_error.txt ] && REASON="$(cat /tmp/publish_error.txt)"
+          gh issue edit "$ISSUE_NUMBER" --remove-label approved || true
+          gh issue comment "$ISSUE_NUMBER" --body "**Not published.** $REASON Fix it, then add \`approved\` again."

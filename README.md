@@ -32,15 +32,18 @@ Off-Brand stocks counterfeits. It doesn't sell them.
 ## How a knockoff gets on the shelf
 
 ```
- urlscan.io public scans          (fallback: OpenPhish community feed)
+ urlscan.io public scans (only ones with an archived screenshot)
           │
           ▼
-  🤖 ingest.yml     every day at 14:00 UTC, or run by hand
-          │         opens up to 3 GitHub issues labeled `triage`,
-          │         each with a 🎭 writing assignment
+  🤖 ingest.yml     twice a day, sharing a cap of 10 new candidates per day
+          │         (backfill.yml: a manual one-off of up to 30 from the past week)
+          │         opens a `triage` issue for each, with a 🎭 writing assignment
           ▼
-  🧑 you            check the record, write the review as an issue comment,
-          │         add the `approved` label
+  🤖 draft          a small open-weight model running on the Actions runner
+          │         posts a DRAFT review comment (no API key, nothing sent elsewhere)
+          ▼
+  🧑 you            check the draft against the screenshot, fix it,
+          │         fill every placeholder, add the `approved` label
           ▼
   🤖 publish.yml    validates your review, adds it to data/reviews.json,
           │         closes the issue
@@ -62,7 +65,8 @@ You'll need a GitHub account and a free urlscan.io account. Allow about ten minu
 4. **Turn on Pages.** Go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 5. **Create the two labels.** In **Issues → Labels**, make sure `triage` and `approved` both exist. The robots look for those exact names.
 6. **Let the bots work.** Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions**.
-7. **Stock the shelf.** Go to **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow**. A few `triage` issues should appear within a minute.
+7. **Check the drafting speed.** Go to **Actions → Draft Benchmark → Run workflow**. It times three drafts on the runner and puts a sample in the run summary.
+8. **Stock the shelf.** Go to **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow**. Triage issues appear, each followed by a draft comment a minute or two later. For a fuller launch, run **Backfill Candidates (manual)** once.
 
 After that, it restocks itself every morning.
 
@@ -73,25 +77,34 @@ After that, it restocks itself every morning.
 Open a `triage` issue. Each one contains:
 
 - **The record:** scan ID, defanged URL, IP, scan time and a link to the public scan. Open that link and look at the screenshot before you judge anything.
-- **Auto-detected tells:** hints from the robots, like a cheap TLD, free hosting or a brand name stuffed into a subdomain. They're hints, not verdicts.
-- **🎭 Your writing assignment:** the comedic voice and edge level this review should be written in (see below).
+- **Auto-detected observations:** literal facts about the address, like the domain ending, free hosting or how many levels the hostname has. They don't say which brand is being imitated; the screenshot does.
+- **🎭 Your writing assignment:** the comedic voice and edge level for this review (see below).
+- **A draft review** in the first comment, headed **DRAFT — verify against screenshot**.
 
-Reply with a comment in this format. Each field goes on its own line, and tells are separated by `|`:
+The draft looks like this:
 
-```
-brand: Ledger Live
-aisle: Crypto & Wallets
-knockoff_label: Ledger Live (Free Hosting Edition)
-verdict: Basement Bootleg
-rating: 1/10
-sketchy_segment: walletsupport-ledger-live-login-ch[.]vercel[.]app
-tells: First tell | Second tell | Third tell
-critic_note: One to three sentences. This is the main joke.
+```review
+brand: Needs editor verification
+aisle: Needs editor verification
+knockoff_label: Needs editor verification
+verdict: Needs editor verification
+rating: Needs editor verification
+sketchy_segment: Needs editor verification
+tells: Domain ends in .top, ... | URL path contains 'logowanie'
+critic_note: (a joke in the assigned voice, written by the model from the record only)
 voice: critic
 edge: 2
 ```
 
-Then add the **`approved`** label. The publish workflow checks the review, puts it on the shelf, closes the issue and redeploys the site.
+- **Copied from the record:** `brand` (filled in only when the scan record names one; it's never guessed from the domain) and `tells`, which are literal observations. Turning them into jokes is your job.
+- **Written by the model:** only `critic_note`. The model only sees the scan record, never the screenshot, so check every claim it makes.
+- **Your job:** replace every `Needs editor verification`, fix anything that's wrong, and punch up the tells. Edit the draft comment in place, or post your revision as a new comment with the same ```review block. Then add the **`approved`** label.
+
+**What gets published is exactly what you approved:**
+- It's the review block from the latest comment by you or the drafting bot that was posted *before* you added `approved`. Anything posted later is ignored.
+- If that comment is edited *after* you add the label, nothing publishes. Remove the label and add it again.
+- If any `Needs editor verification` or `<template>` text is left, nothing publishes. The bot comments with the fields still missing and removes the label.
+- Comments from other people never count, so nobody can sneak a review onto the shelf.
 
 - **Aisles in use:** `Banking`, `Crypto & Wallets`, `Marketplace & Retail`, `Cloud & SaaS`. A new aisle name creates a new filter button automatically.
 - **Not a phish?** Some "phishing" pages are really corporate phishing-simulation training sites, or something mislabeled. Close the issue without approving it. To show it publicly in the **Pulled from the shelf** log, add an entry to `rejected_log` in `data/reviews.json` with the reason.
@@ -171,8 +184,9 @@ URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candi
 ## Known limits (honest ones)
 
 - **Free urlscan keys can't search urlscan's own phishing verdicts.** Those fields are for paid plans, so the robots rely on community tags and scans that came from phishing feeds. That's noisier, which is one reason a human approves everything.
-- **At most 3 new candidates per day.** It's a zine, not a firehose. Change the limit in `filter_fresh()` in `scripts/ingest.py`.
-- **OpenPhish fallback items have no screenshot or scan record,** just the feed. The card says so honestly.
+- **At most 10 new candidates per day** across both runs, plus up to 30 per manual backfill. It's a zine, not a firehose. The caps are `DAILY_CAP` and `BACKFILL_CAP` in `scripts/ingest.py`.
+- **Only scans with an archived screenshot get in.** OpenPhish feed entries have no screenshot, so the OpenPhish fallback currently adds nothing.
+- **Drafts are only as good as a small model.** It runs on the free Actions runner on CPU (`qwen2.5:3b` by default; change `OFFBRAND_MODEL` in the workflows). The first run downloads about 2 GB of model weights, which are cached after that. Drafts are a starting point, never a verdict.
 - **Screenshots load from urlscan.** If urlscan removes a scan, its picture goes too, and the card says "No screenshot recorded in public scan."
 - **"Scanned" is when urlscan saw the page,** not proof that it's still live. Phishing pages tend to be short-lived.
 
