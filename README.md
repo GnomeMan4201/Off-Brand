@@ -3,7 +3,7 @@
 
 Somewhere out there, a guy registered `allegrolokalnie.aukcja758487593.top` and thought, *nailed it.*
 
-Off-Brand is where his work gets the review it deserves. Every page in the aisle is a **real phishing page**, pulled from a public scan record, screenshotted, and reviewed by hand by me, GnomeMan4201. Then it's mocked, thoroughly and accurately, in a rotating cast of comedic voices, until you can spot the next one from across the room.
+Off-Brand is where his work gets the review it deserves. Every page in the aisle is a **real phishing page**, pulled from a public scan record, screenshotted, and checked before publication by me, GnomeMan4201. Then it's mocked, thoroughly and accurately, in a rotating cast of comedic voices, until you can spot the next one from across the room.
 
 It's a gallery, a zine and a free lesson in not getting robbed. Mostly it's a roast.
 
@@ -31,40 +31,27 @@ Off-Brand stocks counterfeits. It doesn't sell them.
 
 ## How a knockoff gets on the shelf
 
-```
- urlscan.io public scans          (fallback: OpenPhish community feed)
-          │
-          ▼
-  🤖 ingest.yml     every day at 14:00 UTC, or run by hand
-          │         opens up to 3 GitHub issues labeled `triage`,
-          │         each with a 🎭 writing assignment
-          ▼
-  🧑 you            check the record, write the review as an issue comment,
-          │         add the `approved` label
-          ▼
-  🤖 publish.yml    validates your review, adds it to data/reviews.json,
-          │         closes the issue
-          ▼
-  🤖 deploy.yml     republishes the site to GitHub Pages
-```
+Intake runs at 02:17 and 14:17 UTC, with up to five issues per run and ten regular issues per UTC day. Merging the intake workflow starts the launch backfill. It draws from the past seven days and has a separate lifetime allowance of 30. To resume a partial backfill, choose **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow → backfill**.
 
-The whole thing runs on GitHub with free tiers only: no server, no database, no babysitting. You can run the entire operation from a phone.
+Only candidates with a retrievable urlscan screenshot enter the queue. Brand hints come from domain and title text. Unrecognized brands share a bucket. Two consecutive issues with the same hint must be followed by a different hint, even if that leaves slots empty.
+
+Each issue gets a draft from Qwen2.5-1.5B-Instruct running on the Actions CPU runner. The model receives the defanged address, domain, IP, title, detected tells and writing assignment. The editor opens the archived screenshot, checks the draft and adds **approved**, or posts a corrected review first. Approval by the repository owner commits the selected review and starts a Pages deployment.
 
 ---
 
 ## Setup
 
-You'll need a GitHub account and a free urlscan.io account. Allow about ten minutes.
+A GitHub account is required. The urlscan.io key is optional.
 
 1. **Get the repo.** Fork or clone it into your account.
-2. **Get a urlscan API key.** Sign up free at [urlscan.io](https://urlscan.io), then go to your profile → API keys → create one.
+2. **Optional: get a urlscan API key.** Sign up free at [urlscan.io](https://urlscan.io), then go to your profile → API keys → create one.
 3. **Store the key as a secret.** In the repo, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it `URLSCAN_API_KEY` and paste the key.
 4. **Turn on Pages.** Go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 5. **Create the two labels.** In **Issues → Labels**, make sure `triage` and `approved` both exist. The robots look for those exact names.
 6. **Let the bots work.** Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions**.
-7. **Stock the shelf.** Go to **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow**. A few `triage` issues should appear within a minute.
+7. **Stock the shelf.** Go to **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow**. Choose `regular` for a normal batch.
 
-After that, it restocks itself every morning.
+The regular schedule runs twice daily.
 
 ---
 
@@ -73,7 +60,7 @@ After that, it restocks itself every morning.
 Open a `triage` issue. Each one contains:
 
 - **The record:** scan ID, defanged URL, IP, scan time and a link to the public scan. Open that link and look at the screenshot before you judge anything.
-- **Auto-detected tells:** hints from the robots, like a cheap TLD, free hosting or a brand name stuffed into a subdomain. They're hints, not verdicts.
+- **Auto-detected tells:** hints from the robots, such as a hosting suffix or a login keyword in the recorded path. They're hints, not verdicts.
 - **🎭 Your writing assignment:** the comedic voice and edge level this review should be written in (see below).
 
 Reply with a comment in this format. Each field goes on its own line, and tells are separated by `|`:
@@ -145,7 +132,7 @@ The full guide is in [VOICE.md](VOICE.md). The short version:
 site/                 the zine: index.html, app.js, styles.css (no build step)
 data/reviews.json     the shelf: every published review, plus the rejected log
 data/voices.json      the comedy roster
-data/seen.json        candidates already sent to triage, so they aren't repeated
+data/seen.json        legacy candidate IDs; new issues also serve as the intake ledger
 scripts/ingest.py     fetches candidates from public records (never the sites)
 scripts/voices.py     picks each review's voice and edge
 scripts/publish_from_issue.py   turns an approved issue into a review
@@ -171,13 +158,11 @@ URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candi
 ## Known limits (honest ones)
 
 - **Free urlscan keys can't search urlscan's own phishing verdicts.** Those fields are for paid plans, so the robots rely on community tags and scans that came from phishing feeds. That's noisier, which is one reason a human approves everything.
-- **At most 3 new candidates per day.** It's a zine, not a firehose. Change the limit in `filter_fresh()` in `scripts/ingest.py`.
-- **OpenPhish fallback items have no screenshot or scan record,** just the feed. The card says so honestly.
 - **Screenshots load from urlscan.** If urlscan removes a scan, its picture goes too, and the card says "No screenshot recorded in public scan."
 - **"Scanned" is when urlscan saw the page,** not proof that it's still live. Phishing pages tend to be short-lived.
 
 ## Credits
 
-Scan records and screenshots come from [urlscan.io](https://urlscan.io) public scans, with the [OpenPhish](https://openphish.com) community feed as a fallback. Every scammer named on this site did the work of embarrassing themselves; we just wrote it down.
+Scan records and screenshots come from [urlscan.io](https://urlscan.io) public scans, including scans originating from the OpenPhish and PhishTank feeds. Every scammer named on this site did the work of embarrassing themselves; we just wrote it down.
 
 Off-Brand is a [badBANANA Research Collective](https://badbananaresearch.com) project.
