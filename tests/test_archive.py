@@ -8,7 +8,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import archive  # noqa: E402
 import build_archive  # noqa: E402
+import publish_shelf  # noqa: E402
 import write_specimen  # noqa: E402
+from shelf import Shelf  # noqa: E402
 
 NOW = datetime(2026, 11, 26, 12, 0, tzinfo=timezone.utc)
 PNG = b"\x89PNG\r\n\x1a\n"
@@ -58,7 +60,8 @@ def fresh():
 def run(name, client, index, state, tmp_path, **kw):
     kw.setdefault("now", NOW)
     kw.setdefault("max_pages", 50)
-    return archive.run_sweep(name, 7, client, index, state, shots_dir=tmp_path / "shots", **kw)
+    kw.setdefault("thumbnailer", lambda data: b"thumb" + data[-4:])
+    return archive.run_sweep(name, 7, client, index, state, Shelf(tmp_path / "shelf"), **kw)
 
 
 def test_repeat_import_adds_nothing_and_stores_one_file(tmp_path):
@@ -69,7 +72,7 @@ def test_repeat_import_adds_nothing_and_stores_one_file(tmp_path):
     state["jobs"]["backfill"]["complete"] = False  # force a second pass over the same results
     second = run("backfill", FakeClient(results), index, state, tmp_path)
     assert second["added"] == 0 and second["repeat"] == 5
-    assert len(index["specimens"]) == 5 and len(list((tmp_path / "shots").iterdir())) == 5
+    assert len(index["specimens"]) == 5 and len(list((tmp_path / "shelf" / "archive" / "shots").iterdir())) == 5
     assert [s["captured_at"] for s in index["specimens"]] == sorted(
         (s["captured_at"] for s in index["specimens"]), reverse=True)
 
@@ -90,7 +93,7 @@ def test_same_image_on_different_sites_stores_one_file_two_specimens(tmp_path):
     shots = {uid(1): (PNG + b"same", "png"), uid(2): (PNG + b"same", "png")}
     index, state = fresh()
     run("backfill", FakeClient([result(1, 1), result(2, 2)], shots), index, state, tmp_path)
-    assert len(index["specimens"]) == 2 and len(list((tmp_path / "shots").iterdir())) == 1
+    assert len(index["specimens"]) == 2 and len(list((tmp_path / "shelf" / "archive" / "shots").iterdir())) == 1
 
 
 def test_interrupted_backfill_resumes_without_skipping_older_captures(tmp_path):
@@ -145,7 +148,7 @@ def test_window_stops_at_old_captures_and_dry_run_writes_nothing(tmp_path):
     results = [result(1, 1), result(2, 24 * 9)]  # second is 9 days old
     index, state = fresh()
     dry = run("backfill", FakeClient(results), index, state, tmp_path, dry_run=True)
-    assert dry["added"] == 1 and not (tmp_path / "shots").exists()
+    assert dry["added"] == 1 and not (tmp_path / "shelf" / "archive" / "shots").exists()
     assert state["no_screenshot"] == {}
     index2, state2 = fresh()
     real = run("backfill", FakeClient(results), index2, state2, tmp_path)
@@ -230,24 +233,159 @@ def test_bullets_are_attributed_and_screenshot_claims_need_an_inspection(tmp_pat
     assert len(withshot) <= 5
 
 
-def test_build_status_and_filtering_data(tmp_path):
+def _data(tmp_path, drafts=None, published=()):
     index = _built_index(tmp_path)
-    out = tmp_path / "out"
-    data = build_archive.build(index, {"items": [{"id": "urlscan-" + uid(2)}]},
-                               {"urlscan-" + uid(1): 7}, {}, "o/r", out, root=ROOT_FOR(tmp_path))
+    return index, build_archive.build(index, {"items": [{"id": i} for i in published]}, drafts or {}, {})
+
+
+def test_build_status_and_ordering(tmp_path):
+    _, data = _data(tmp_path, {"urlscan-" + uid(1): 7}, ["urlscan-" + uid(2)])
     status = {s["id"]: s["status"] for s in data["specimens"]}
     assert status == {"urlscan-" + uid(1): "drafted", "urlscan-" + uid(2): "published"}
     assert data["specimens"][0]["captured_at"] > data["specimens"][1]["captured_at"]
-    assert (out / "data.json").exists() and len(list((out / "shots").iterdir())) == 2
+    assert data["counts"] == {"unwritten": 0, "drafted": 1, "published": 1}
 
 
-def ROOT_FOR(tmp_path):  # specimens store paths like archive/shots/<sha>; mirror under tmp root
-    root = tmp_path / "root"
-    (root / "archive").mkdir(parents=True, exist_ok=True)
-    src, dst = tmp_path / "shots", root / "archive" / "shots"
-    if src.exists() and not dst.exists():
-        dst.symlink_to(src)
-    return root
+def test_shelf_markdown_has_thumbs_space_used_and_write_action(tmp_path):
+    index, data = _data(tmp_path)
+    files = build_archive.render_shelf(data, "me/shelf", "me/pub", archive.used_bytes(index), generated_at="T")
+    assert "of 500.0 MB" in files["README.md"] and "Unwritten (2)" in files["README.md"]
+    page = files["shelf/unwritten-1.md"]
+    assert page.count('<img src="../archive/thumbs/') == 2 and 'width="150"' in page
+    assert "site1[.]example[.]top" in page.replace("\\", "") and "2026-11-26" in page
+    detail = files[f"shelf/specimens/{uid(1)}.md"]
+    assert "(../../archive/shots/" in detail and "Write this one" in detail
+    assert "actions/workflows/write-specimen.yml" in detail and f"`urlscan-{uid(1)}`" in detail
+    _, drafted = _data(tmp_path, {"urlscan-" + uid(1): 7})
+    d = build_archive.render_shelf(drafted, "me/shelf", "me/pub", 0)[f"shelf/specimens/{uid(1)}.md"]
+    assert "https://github.com/me/shelf/issues/7" in d and "Write this one" not in d
+    assert "shelf/unwritten-1.md" in files["README.md"]
+    assert "Nothing here yet" in build_archive.render_shelf(drafted, "a/b", "c/d", 0)["shelf/published-1.md"]
+
+
+def test_hostile_text_is_neutralised_in_markdown():
+    out = build_archive.esc('<img src=x onerror=alert(1)> [x](javascript:alert(1)) `c`')
+    assert "<" not in out and "[x]" not in out and "`c`" not in out
+
+
+def test_pagination_splits_long_shelves():
+    specs = [{"id": f"urlscan-{n}", "scan_id": f"s{n}", "domain": "a[.]b", "captured_at": f"2026-01-{n % 28 + 1:02d}T00:00:00Z",
+              "status": "unwritten", "image": "archive/shots/x.png", "thumb": "archive/thumbs/x.jpg",
+              "bullets": [], "source_record_url": "https://urlscan.io/result/x/", "draft_issue": None,
+              "repeat_captures": 0} for n in range(45)]
+    pages = build_archive.render_list_pages({"specimens": specs}, "all", "All", "space")
+    assert sorted(pages) == [f"shelf/all-{i}.md" for i in (1, 2, 3)]
+    assert "Older" in pages["shelf/all-1.md"] and "Newer" in pages["shelf/all-3.md"]
+
+
+def test_write_shelf_stays_inside_shelf_dir(tmp_path):
+    build_archive.write_shelf(tmp_path / "shelf", {"README.md": "x", "shelf/a.md": "y"})
+    assert (tmp_path / "shelf" / "shelf" / "a.md").exists() and not (tmp_path / "README.md").exists()
+
+
+def test_cap_stops_before_cursor_advances_and_resumes_when_space_is_added(tmp_path):
+    index, state = fresh()
+    c = FakeClient([result(1, 1), result(2, 2), result(3, 3)])
+    one = len(PNG + uid(1).encode()) + len(b"thumb" + (PNG + uid(1).encode())[-4:])
+    stats = run("backfill", c, index, state, tmp_path, max_bytes=one * 2 + 1)
+    assert stats["added"] == 2 and stats["stopped"] == "archive_full" and not stats["complete"]
+    assert stats["deferred"]["id"] == "urlscan-" + uid(3)
+    assert state["last_full"]["id"] == "urlscan-" + uid(3)
+    assert archive.used_bytes(index) <= one * 2 + 1
+    stats2 = run("backfill", FakeClient([result(1, 1), result(2, 2), result(3, 3)]), index, state,
+                 tmp_path, max_bytes=10 ** 6)
+    assert stats2["added"] == 1 and stats2["complete"] and "last_full" not in state
+    assert len(index["specimens"]) == 3
+
+
+def test_unreadable_image_counts_as_missing_screenshot(tmp_path):
+    index, state = fresh()
+
+    def bad(_data):
+        raise ValueError("unreadable")
+
+    stats = run("backfill", FakeClient([result(1, 1)]), index, state, tmp_path, thumbnailer=bad)
+    assert stats["added"] == 0 and stats["missing_screenshot"] == 1 and index["specimens"] == []
+
+
+def test_real_thumbnail_is_small_jpeg():
+    Image = __import__("pytest").importorskip("PIL.Image")
+    import io
+    buf = io.BytesIO()
+    Image.new("RGB", (1280, 3000), "red").save(buf, "PNG")
+    t = archive.make_thumbnail(buf.getvalue())
+    im = Image.open(io.BytesIO(t))
+    assert im.format == "JPEG" and im.width <= 320 and im.height <= 240
+    try:
+        archive.make_thumbnail(b"not an image")
+        assert False
+    except ValueError:
+        pass
+
+
+def test_shelf_must_be_private_and_separate(tmp_path):
+    import shelf as sh
+
+    def runner(out, code=0):
+        return lambda args: type("R", (), {"returncode": code, "stdout": out, "stderr": ""})()
+
+    sh.assert_private("o/s", runner("true\n"))
+    for bad in (runner("false\n"), runner("", 1)):
+        try:
+            sh.assert_private("o/s", bad)
+            assert False
+        except SystemExit:
+            pass
+    try:
+        sh.assert_private("", runner("true"))
+        assert False
+    except SystemExit:
+        pass
+    try:
+        sh.assert_separate_checkout(tmp_path)
+        assert False
+    except SystemExit:
+        pass
+
+
+def test_publish_requires_approved_label_and_review_comment(monkeypatch, tmp_path):
+    index = _built_index(tmp_path)
+    spec = index["specimens"][0]
+    body = write_specimen.build_body(spec, [], "o/shelf")
+    comment = "brand: Acme\naisle: Banking\nverdict: Fake\nrating: 3\ncritic_note: mine"
+    for issue in ({"body": body, "labels": [], "comments": [{"body": comment}]},
+                  {"body": body, "labels": [{"name": "approved"}], "comments": []}):
+        try:
+            publish_shelf.publish(issue)
+            assert False
+        except SystemExit:
+            pass
+    seen = {}
+    monkeypatch.setattr(publish_shelf.publish_from_issue, "main",
+                        lambda: seen.update(b=__import__("os").environ["ISSUE_BODY"],
+                                            c=__import__("os").environ["REVIEW_COMMENT"]) or 0)
+    assert publish_shelf.publish({"body": body, "labels": [{"name": "approved"}],
+                                  "comments": [{"body": "older"}, {"body": comment}]}) == 0
+    assert seen["c"] == comment and seen["b"] == body
+
+
+def test_no_scheduled_triage_and_workflows_keep_shelf_private():
+    wf = ROOT_DIR / ".github" / "workflows"
+    ingest = (wf / "ingest.yml").read_text()
+    assert "schedule:" not in ingest and "workflow_dispatch" in ingest
+    assert "cron" not in (wf / "ingest.yml").read_text()
+    assert "ARCHIVE_SCHEDULE_ENABLED == 'true'" in (wf / "archive.yml").read_text()
+    for name in ("archive.yml", "write-specimen.yml", "publish-shelf.yml"):
+        text = (wf / name).read_text()
+        assert "check-private" in text and "SHELF_TOKEN" in text
+    deploy = (wf / "deploy.yml").read_text()
+    assert "archive" not in deploy and "shelf" not in deploy
+    gi = (ROOT_DIR / ".gitignore").read_text()
+    assert "/shelf/" in gi and "/archive/" in gi and "/data/archive*.json" in gi
+    assert not (ROOT_DIR / "site" / "archive").exists()
+
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 def test_opening_the_same_draft_twice_creates_one_issue(tmp_path):
@@ -259,18 +397,18 @@ def test_opening_the_same_draft_twice_creates_one_issue(tmp_path):
         issues.append({"number": 41, "body": body, "url": "https://github.com/o/r/issues/41"})
         return {"number": 41, "url": "https://github.com/o/r/issues/41"}
 
-    first = write_specimen.write_specimen(sid, index, drafts, {}, "O/r", lambda: list(issues), create)
-    second = write_specimen.write_specimen(sid, index, drafts, {}, "O/r", lambda: list(issues), create)
+    first = write_specimen.write_specimen(sid, index, drafts, {}, "o/shelf", lambda: list(issues), create)
+    second = write_specimen.write_specimen(sid, index, drafts, {}, "o/shelf", lambda: list(issues), create)
     assert (first["action"], second["action"]) == ("created", "existing")
     assert len(creates) == 1 and drafts == {sid: 41} and second["number"] == 41
     title, body = creates[0]
     assert title.startswith("[Triage] site1")
     assert body.startswith(f"id: {sid}\n") and "public_record_url: https://urlscan.io/result/" in body
-    assert "![saved screenshot](https://o.github.io/r/archive/shots/" in body
+    assert "![saved screenshot](https://github.com/o/shelf/blob/main/archive/shots/" in body and "?raw=true)" in body
     assert "voice:" not in body and "edge:" not in body       # no assigned voice
     assert "critic_note: \n" in body                           # writing space left blank
     # collecting alone never created an issue
-    assert write_specimen.write_specimen(sid, index, {}, {}, "O/r", lambda: [], create,
+    assert write_specimen.write_specimen(sid, index, {}, {}, "o/shelf", lambda: [], create,
                                          dry_run=True)["action"] == "would_create"
     assert len(creates) == 1
 
@@ -279,6 +417,6 @@ def test_issue_body_round_trips_through_existing_publish_parser(tmp_path):
     from publish_from_issue import parse_kv_block
     index = _built_index(tmp_path)
     spec = index["specimens"][0]
-    meta = parse_kv_block(write_specimen.build_body(spec, build_archive.evidence_bullets(spec), "O/r"))
+    meta = parse_kv_block(write_specimen.build_body(spec, build_archive.evidence_bullets(spec), "o/shelf"))
     for k in ("id", "source", "public_record_url", "defanged_url"):
         assert meta[k]

@@ -28,16 +28,15 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID
 
 from ingest import URLSCAN_FREE_QUERY, load_json
+from shelf import Shelf, assert_separate_checkout, shelf_dir
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 
 ROOT = Path(__file__).resolve().parent.parent
-SHOTS_DIR = ROOT / "archive" / "shots"
-INDEX_PATH = ROOT / "data" / "archive.json"
-STATE_PATH = ROOT / "data" / "archive_state.json"
 
 PAGE_SIZE = 100  # urlscan search page size
 MAX_SHOT_BYTES = 8 * 1024 * 1024
-MAX_ARCHIVE_BYTES = 500 * 1024 * 1024  # stop adding past this; see README for limits
+MAX_ARCHIVE_BYTES = 500 * 1024 * 1024  # cap for screenshots + thumbnails together
+THUMB_WIDTH, THUMB_HEIGHT = 320, 240
 MAX_RATE_WAIT = 90  # seconds we are willing to sleep on a 429 before stopping the run
 CURSOR_RE = re.compile(r"^[0-9A-Za-z.,:_+-]{1,200}$")
 USER_AGENT = "OffBrand-Archive/0.1"
@@ -194,8 +193,42 @@ def parse_result(item: dict) -> dict | None:
 
 # ---------------------------------------------------------------- storage
 
-def load_index(path: Path = INDEX_PATH) -> dict:
+def load_index(path: Path) -> dict:
     return load_json(path, {"version": 1, "specimens": []})
+
+
+def make_thumbnail(data: bytes) -> bytes:
+    """Small JPEG of the top of the page (4:3). Raises ValueError for an unreadable image."""
+    import io
+
+    from PIL import Image, UnidentifiedImageError
+
+    try:
+        with Image.open(io.BytesIO(data)) as im:
+            im = im.convert("RGB")
+            w, h = im.size
+            box_h = min(h, max(1, round(w * THUMB_HEIGHT / THUMB_WIDTH)))
+            im = im.crop((0, 0, w, box_h))
+            im.thumbnail((THUMB_WIDTH, THUMB_HEIGHT))
+            out = io.BytesIO()
+            im.save(out, "JPEG", quality=70, optimize=True)
+            return out.getvalue()
+    except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
+        raise ValueError(f"unreadable image: {exc}") from exc
+
+
+def files_in_use(index: dict) -> dict[str, int]:
+    """Unique stored files -> bytes (identical images/thumbs are stored once)."""
+    used: dict[str, int] = {}
+    for s in index.get("specimens", []):
+        used[s["image"]["path"]] = s["image"]["bytes"]
+        if s.get("thumb"):
+            used[s["thumb"]["path"]] = s["thumb"]["bytes"]
+    return used
+
+
+def used_bytes(index: dict) -> int:
+    return sum(files_in_use(index).values())
 
 
 def save_json(path: Path, data) -> None:
@@ -215,9 +248,13 @@ def job_state(state: dict, name: str) -> dict:
     )
 
 
-def add_specimen(index: dict, spec: dict, data: bytes, ext: str, shots_dir: Path,
-                 imported_at: str, write: bool = True) -> str:
-    """Add a capture. Returns 'added', 'repeat' (same scan or unchanged site), or 'full'."""
+def add_specimen(index: dict, spec: dict, data: bytes, ext: str, shelf: Shelf,
+                 imported_at: str, write: bool = True, thumbnailer=make_thumbnail,
+                 max_bytes: int = MAX_ARCHIVE_BYTES) -> str:
+    """Add a capture. Returns 'added', 'repeat' (same scan or unchanged site) or 'full'.
+
+    Raises ValueError when the image cannot be read (no thumbnail can be made).
+    """
     specs = index["specimens"]
     if any(s["id"] == spec["id"] for s in specs):
         return "repeat"
@@ -229,16 +266,22 @@ def add_specimen(index: dict, spec: dict, data: bytes, ext: str, shots_dir: Path
             if extra not in s.setdefault("also_captured", []):
                 s["also_captured"].append(extra)
             return "repeat"
-    path = shots_dir / f"{digest}.{ext}"
-    total = sum(s["image"]["bytes"] for s in specs)
-    if not path.exists() and total + len(data) > MAX_ARCHIVE_BYTES:
+    thumb = thumbnailer(data)
+    image_rel, thumb_rel = f"archive/shots/{digest}.{ext}", f"archive/thumbs/{digest}.jpg"
+    used = files_in_use(index)
+    extra_bytes = (0 if image_rel in used else len(data)) + (0 if thumb_rel in used else len(thumb))
+    if used_bytes(index) + extra_bytes > max_bytes:
         return "full"
-    if write and not path.exists():
-        shots_dir.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(data)
+    if write:
+        for rel, blob in ((image_rel, data), (thumb_rel, thumb)):
+            target = shelf.base / rel
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(blob)
     spec = dict(spec, imported_at=imported_at,
-                image={"sha256": digest, "path": f"archive/shots/{digest}.{ext}",
-                       "bytes": len(data), "content_type": "image/png" if ext == "png" else "image/jpeg"})
+                image={"sha256": digest, "path": image_rel, "bytes": len(data),
+                       "content_type": "image/png" if ext == "png" else "image/jpeg"},
+                thumb={"path": thumb_rel, "bytes": len(thumb)})
     specs.append(spec)
     specs.sort(key=lambda s: (s["captured_at"], s["id"]), reverse=True)
     return "added"
@@ -246,8 +289,9 @@ def add_specimen(index: dict, spec: dict, data: bytes, ext: str, shots_dir: Path
 
 # ---------------------------------------------------------------- sweep engine
 
-def run_sweep(name: str, days: int, client, index: dict, state: dict, *,
-              shots_dir: Path = SHOTS_DIR, max_pages: int = 5, max_new: int = 100,
+def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: Shelf, *,
+              thumbnailer=make_thumbnail, max_bytes: int = MAX_ARCHIVE_BYTES,
+              max_pages: int = 5, max_new: int = 100,
               max_seconds: float = 1500, now: datetime | None = None, clock=time.monotonic,
               dry_run: bool = False, restart: bool = False, save=None) -> dict:
     """Run one budgeted slice of a sweep. `save()` persists index+state after each page."""
@@ -335,15 +379,31 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, *,
                         if not dry_run:
                             state["no_screenshot"][spec["id"]] = iso(now)
                     else:
-                        outcome = add_specimen(index, spec, shot[0], shot[1], shots_dir,
-                                               iso(now), write=not dry_run)
+                        try:
+                            outcome = add_specimen(index, spec, shot[0], shot[1], shelf, iso(now),
+                                                   write=not dry_run, thumbnailer=thumbnailer,
+                                                   max_bytes=max_bytes)
+                        except ValueError:
+                            outcome = "invalid"
                         if outcome == "added":
                             stats["added"] += 1
                             known.add(spec["id"])
+                            if (state.get("last_full") or {}).get("id") == spec["id"] and not dry_run:
+                                state.pop("last_full")
                         elif outcome == "repeat":
                             stats["repeat"] += 1
+                        elif outcome == "invalid":
+                            stats["missing_screenshot"] += 1
+                            if not dry_run:
+                                state["no_screenshot"][spec["id"]] = iso(now)
                         else:
+                            # Does not fit: stop here. The cursor still points before this
+                            # item, so a later run (more space, higher cap) collects it.
                             stats["stopped"] = "archive_full"
+                            stats["deferred"] = {"id": spec["id"], "image_bytes": len(shot[0]),
+                                                 "used_bytes": used_bytes(index), "cap_bytes": max_bytes}
+                            if not dry_run:
+                                state["last_full"] = dict(stats["deferred"], at=iso(now))
                             break
             if item_cursor:
                 cursor = item_cursor
@@ -373,6 +433,10 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, *,
     return stats
 
 
+def format_mb(n: int) -> str:
+    return f"{n / (1024 * 1024):.1f} MB"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mode", choices=["scheduled", "backfill"], required=True)
@@ -380,27 +444,40 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-pages", type=int, default=5)
     ap.add_argument("--max-new", type=int, default=100, help="max new screenshots saved per run")
     ap.add_argument("--max-seconds", type=float, default=1500)
+    ap.add_argument("--max-mb", type=float, default=MAX_ARCHIVE_BYTES / (1024 * 1024),
+                    help="cap for screenshots + thumbnails (default 500)")
     ap.add_argument("--dry-run", action="store_true", help="fetch and report, write nothing")
     ap.add_argument("--restart", action="store_true", help="discard saved progress for this mode")
     args = ap.parse_args(argv)
 
+    shelf = Shelf(shelf_dir())
+    if not args.dry_run:
+        assert_separate_checkout(shelf.base)
     days = max(1, min(args.days, 30))
-    index, state = load_index(), load_json(STATE_PATH, default_state())
+    index, state = load_index(shelf.index), load_json(shelf.state, default_state())
     state.setdefault("jobs", {}), state.setdefault("no_screenshot", {})
+    cap = int(args.max_mb * 1024 * 1024)
 
     def save():
-        save_json(INDEX_PATH, index)
-        save_json(STATE_PATH, state)
+        save_json(shelf.index, index)
+        save_json(shelf.state, state)
 
     client = Client(os.environ.get("URLSCAN_API_KEY", ""))
-    stats = run_sweep(args.mode, days, client, index, state, max_pages=max(1, args.max_pages),
-                      max_new=max(1, args.max_new), max_seconds=args.max_seconds,
-                      dry_run=args.dry_run, restart=args.restart, save=save)
+    stats = run_sweep(args.mode, days, client, index, state, shelf, max_bytes=cap,
+                      max_pages=max(1, args.max_pages), max_new=max(1, args.max_new),
+                      max_seconds=args.max_seconds, dry_run=args.dry_run, restart=args.restart,
+                      save=save)
     print(json.dumps(stats, indent=2))
     label = "DRY RUN: would add" if args.dry_run else "Added"
     print(f"{label} {stats['added']} specimen(s); {stats['repeat']} repeat, "
-          f"{stats['missing_screenshot']} without screenshot; "
-          f"{'complete' if stats['complete'] else 'will resume: ' + str(stats['stopped'])}.")
+          f"{stats['missing_screenshot']} without a usable screenshot.")
+    print(f"Space used: {format_mb(used_bytes(index))} of {format_mb(cap)}.")
+    if stats.get("deferred"):
+        d = stats["deferred"]
+        print(f"CAPTURE DID NOT FIT: {d['id']} ({format_mb(d['image_bytes'])}) would exceed the cap. "
+              "Nothing was skipped: the resume point is saved, so free space or raise --max-mb "
+              "and run again to collect it.")
+    print("Sweep complete." if stats["complete"] else f"Will resume: {stats['stopped']}.")
     return 0
 
 

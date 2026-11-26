@@ -1,5 +1,8 @@
 """'Write this one': open (or reopen) the editorial triage issue for one archived specimen.
 
+The issue is created in the PRIVATE shelf repo (checked privacy first), never in this
+public repo, so screenshots and draft notes stay unpublished.
+
 Uses the existing triage issue format (id/source/public_record_url/... lines and the
 `triage` label) so the existing approval -> publish flow works unchanged. The issue
 carries the screenshot and attributed evidence bullets and leaves every writing field
@@ -16,7 +19,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from build_archive import evidence_bullets, load
+from build_archive import build, evidence_bullets, load, render_shelf, write_shelf
+from archive import used_bytes
+from shelf import Shelf, assert_private, assert_separate_checkout, shelf_dir
 
 ROOT = Path(__file__).resolve().parent.parent
 ID_LINE = re.compile(r"^id: (\S+)", re.MULTILINE)
@@ -28,9 +33,8 @@ def find_issue(specimen_id: str, issues: list[dict]) -> dict | None:
     return min(hits, key=lambda i: i["number"]) if hits else None
 
 
-def build_body(spec: dict, bullets: list[dict], repo: str) -> str:
-    owner, _, name = repo.partition("/")
-    shot_url = f"https://{owner.lower()}.github.io/{name}/archive/{Path(spec['image']['path']).relative_to('archive')}"
+def build_body(spec: dict, bullets: list[dict], shelf_repo: str) -> str:
+    shot_url = f"https://github.com/{shelf_repo}/blob/main/{spec['image']['path']}?raw=true"
     cls = spec.get("classification") or {}
     src = cls.get("source")
     return "\n".join([
@@ -46,7 +50,7 @@ def build_body(spec: dict, bullets: list[dict], repo: str) -> str:
         "",
         "### Saved screenshot",
         f"![saved screenshot]({shot_url})",
-        f"File in repo: `{spec['image']['path']}` (sha256 `{spec['image']['sha256']}`)",
+        f"File in the private shelf repo: `{spec['image']['path']}` (sha256 `{spec['image']['sha256']}`)",
         "",
         "### Evidence (attributed; nothing here is written copy)",
         *[f"- {b['text']} _({b['source']})_" for b in bullets],
@@ -66,17 +70,17 @@ def build_body(spec: dict, bullets: list[dict], repo: str) -> str:
     ])
 
 
-def gh_issues() -> list[dict]:
+def gh_issues(shelf_repo: str) -> list[dict]:
     out = subprocess.run(
-        ["gh", "issue", "list", "--label", "triage", "--state", "all", "--limit", "1000",
-         "--json", "number,body,url"], check=True, capture_output=True, text=True).stdout
+        ["gh", "issue", "list", "-R", shelf_repo, "--label", "triage", "--state", "all",
+         "--limit", "1000", "--json", "number,body,url"], check=True, capture_output=True, text=True).stdout
     return json.loads(out)
 
 
-def gh_create(title: str, body: str) -> dict:
+def gh_create(shelf_repo: str, title: str, body: str) -> dict:
     url = subprocess.run(
-        ["gh", "issue", "create", "--title", title, "--body", body, "--label", "triage"],
-        check=True, capture_output=True, text=True).stdout.strip()
+        ["gh", "issue", "create", "-R", shelf_repo, "--title", title, "--body", body,
+         "--label", "triage"], check=True, capture_output=True, text=True).stdout.strip()
     return {"number": int(url.rstrip("/").rsplit("/", 1)[1]), "url": url}
 
 
@@ -101,18 +105,26 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--id", required=True)
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""))
+    ap.add_argument("--public-repo", default=os.environ.get("GITHUB_REPOSITORY", ""))
+    ap.add_argument("--shelf-repo", default=os.environ.get("SHELF_REPO", ""))
     a = ap.parse_args()
     if not re.fullmatch(r"urlscan-[0-9a-f-]{36}", a.id.strip()):
         print("Invalid specimen id", file=sys.stderr)
         return 1
-    d = ROOT / "data"
-    drafts = load(d / "archive_drafts.json", {})
-    result = write_specimen(a.id.strip(), load(d / "archive.json", {"specimens": []}), drafts,
-                            load(d / "archive_inspections.json", {}), a.repo, gh_issues, gh_create,
-                            a.dry_run)
+    assert_private(a.shelf_repo)
+    shelf = Shelf(shelf_dir())
+    assert_separate_checkout(shelf.base)
+    index = load(shelf.index, {"specimens": []})
+    drafts = load(shelf.drafts, {})
+    inspections = load(shelf.inspections, {})
+    result = write_specimen(a.id.strip(), index, drafts, inspections, a.shelf_repo,
+                            lambda: gh_issues(a.shelf_repo),
+                            lambda t, b: gh_create(a.shelf_repo, t, b), a.dry_run)
     if not a.dry_run:
-        (d / "archive_drafts.json").write_text(json.dumps(drafts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        shelf.drafts.parent.mkdir(parents=True, exist_ok=True)
+        shelf.drafts.write_text(json.dumps(drafts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        data = build(index, load(ROOT / "data" / "reviews.json", {"items": []}), drafts, inspections)
+        write_shelf(shelf.base, render_shelf(data, a.shelf_repo, a.public_repo, used_bytes(index)))
     print(json.dumps(result))
     return 0
 

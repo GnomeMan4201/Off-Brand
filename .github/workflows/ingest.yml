@@ -1,8 +1,6 @@
 name: Fetch Phishing Candidates for Phone Triage
 
 on:
-  schedule:
-    - cron: "0 14 * * *"
   workflow_dispatch:
 
 permissions:

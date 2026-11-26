@@ -1,0 +1,5 @@
+# The private shelf (screenshots, catalog, draft notes) must never enter this public repo.
+/shelf/
+/archive/
+/data/archive*.json
+__pycache__/
