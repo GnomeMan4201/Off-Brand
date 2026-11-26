@@ -163,3 +163,39 @@ def test_read_jsonl_handles_any_formatting(tmp_path):
     p = tmp_path / "c.jsonl"
     p.write_text('{"a": 1}\n{\n  "b": 2\n}\n[{"c": 3}]')
     assert pub.read_jsonl(str(p)) == [{"a": 1}, {"b": 2}, {"c": 3}]
+
+
+# ---------- automatic rule check on model notes ----------
+
+@pytest.mark.parametrize("note,why", [
+    ("Random Polish-sounding words on a cheap .top.", "nationality"),
+    ("Clearly aiming for your bank details.", "claim not in evidence ('bank')"),
+    ("Allegro Lokalnie in a cheap .top costume.", "names a brand"),
+    ("This is likely a scam on .top.", "speculation"),
+    ("A free hosting deal on .top.", "claim not in evidence ('free hosting')"),
+])
+def test_rule_check_rejects(note, why):
+    assert any(why in p for p in draft_mod.note_problems(note, FIXTURE))
+
+
+def test_rule_check_allows_evidence_based_joke():
+    note = "Somebody built a storefront on the cheapest lot in town: a .top ending, three labels deep."
+    assert draft_mod.note_problems(note, FIXTURE) == []
+
+
+def test_brand_allowed_when_record_names_it():
+    c = {**FIXTURE, "record_brand": "Allegro"}
+    assert draft_mod.note_problems("Allegro in a cardboard costume on a .top lot.", c) == []
+
+
+def test_retry_until_a_note_passes():
+    outputs = iter([("Probably a Polish scam.", 1.0), ("A cardboard costume on a .top lot.", 2.0)])
+    body, secs = draft_mod.draft(FIXTURE, A, chat=lambda s, u: next(outputs))
+    assert pub.extract_review(body)["critic_note"] == "A cardboard costume on a .top lot."
+    assert secs == 3.0 and "rejected 1 attempt" in body
+
+
+def test_all_attempts_fail_leaves_placeholder():
+    body, _ = draft_mod.draft(FIXTURE, A, chat=lambda s, u: ("Likely your bank.", 1.0))
+    assert pub.extract_review(body)["critic_note"] == draft_mod.PLACEHOLDER
+    assert "No attempt passed" in body

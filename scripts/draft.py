@@ -95,12 +95,59 @@ def clean_note(text: str | None, voice_name: str | None = None) -> str | None:
     return t
 
 
+# ---- automatic rule check on the model's note ----
+# Words that assert a fact. They're only allowed if the evidence itself says them.
+CLAIM_WORDS = (
+    "bank", "card", "password", "passcode", "pin", "recovery phrase", "seed phrase", "seed",
+    "crypto", "wallet", "bitcoin", "paypal", "amazon", "microsoft", "apple", "google",
+    "free hosting", "hosting plan", "vercel", "netlify", "cloudflare", "email", "sms", "text message",
+    "account", "login", "log in", "sign in", "invoice", "package", "delivery", "refund", "tax",
+)
+SPECULATION = ("likely", "probably", "suggests", "seems", "appears", "perhaps", "maybe", "might be")
+# Nationality, language and culture are off-limits for jokes (VOICE.md rule 4).
+CULTURE = (
+    "polish", "poland", "russian", "russia", "chinese", "china", "indian", "india", "nigerian", "nigeria",
+    "african", "asian", "european", "american", "mexican", "brazilian", "ukrainian", "romanian",
+    "vietnamese", "turkish", "arab", "foreign", "-sounding", "accent", "language",
+)
+GENERIC_LABELS = {"login", "logowanie", "secure", "verify", "verification", "account", "support",
+                  "online", "update", "wallet", "signin", "service", "auth", "portal", "home", "www"}
+
+
+def evidence_text(c: dict) -> str:
+    return " ".join(evidence_lines(c)).lower()
+
+
+def note_problems(note: str, c: dict) -> list[str]:
+    """Reasons a model note breaks the rules. Empty list = passes."""
+    low = note.lower()
+    ev = evidence_text(c)
+    problems = []
+    for w in SPECULATION:
+        if re.search(rf"\b{re.escape(w)}\b", low):
+            problems.append(f"speculation ('{w}')")
+    for w in CULTURE:
+        if w in low:
+            problems.append(f"nationality/language reference ('{w}')")
+    for w in CLAIM_WORDS:
+        if re.search(rf"\b{re.escape(w)}\b", low) and w not in ev:
+            problems.append(f"claim not in evidence ('{w}')")
+    if not c.get("record_brand"):
+        host = (c.get("defanged_domain") or "").replace("[.]", ".").lower()
+        squashed = re.sub(r"[^a-z0-9]", "", low)
+        for label in re.split(r"[.\-]", host):
+            word = re.sub(r"\d+$", "", label)
+            if len(word) >= 5 and word not in GENERIC_LABELS and word in squashed:
+                problems.append(f"names a brand the record doesn't ('{word}')")
+    return problems
+
+
 def ollama_chat(system: str, user: str) -> tuple[str | None, float]:
     body = json.dumps({
         "model": MODEL,
         "stream": False,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "options": {"temperature": 0.8, "num_predict": 220},
+        "options": {"temperature": 0.7, "num_predict": 220},
     }).encode()
     req = Request(f"{OLLAMA_URL}/api/chat", data=body, headers={"Content-Type": "application/json"})
     t0 = time.monotonic()
@@ -118,7 +165,7 @@ def literal_tells(c: dict) -> str:
     return " | ".join(tells) if tells else PLACEHOLDER
 
 
-def render_comment(c: dict, a: dict, note: str | None, seconds: float | None) -> str:
+def render_comment(c: dict, a: dict, note: str | None, seconds: float | None, rejected: list[str] | None = None) -> str:
     brand = c.get("record_brand") or PLACEHOLDER
     fields = [
         f"brand: {brand}",
@@ -145,14 +192,34 @@ def render_comment(c: dict, a: dict, note: str | None, seconds: float | None) ->
         "```",
         "",
         f"<sub>Drafted by local model `{MODEL}` in {timing}. Only `critic_note` is model-written; "
-        "`brand` and `tells` are copied from the scan record.</sub>",
+        "`brand` and `tells` are copied from the scan record."
+        + (f" Rule check rejected {len(rejected)} attempt(s) before this one." if rejected and note else "")
+        + (" No attempt passed the rule check, so `critic_note` is left for you." if rejected and not note else "")
+        + "</sub>",
     ])
 
 
+MAX_ATTEMPTS = int(os.environ.get("OFFBRAND_DRAFT_ATTEMPTS", "3"))
+
+
 def draft(c: dict, a: dict, chat=ollama_chat) -> tuple[str, float | None]:
-    raw, secs = chat(SYSTEM_PROMPT, build_user_prompt(c, a))
-    note = clean_note(raw, a.get("voice_name"))
-    return render_comment(c, a, note, secs), secs
+    """Up to MAX_ATTEMPTS model calls; keep the first note that passes the rule check."""
+    total, rejected, note = 0.0, [], None
+    for _ in range(MAX_ATTEMPTS):
+        raw, secs = chat(SYSTEM_PROMPT, build_user_prompt(c, a))
+        total += secs or 0.0
+        cand = clean_note(raw, a.get("voice_name"))
+        if not cand:
+            rejected.append("unusable output")
+            continue
+        problems = note_problems(cand, c)
+        if problems:
+            rejected.append("; ".join(problems))
+            print(f"[draft] rejected: {problems} :: {cand}", file=sys.stderr)
+            continue
+        note = cand
+        break
+    return render_comment(c, a, note, total, rejected), total
 
 
 def main(argv: list[str]) -> int:
