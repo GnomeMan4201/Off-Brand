@@ -1,0 +1,18 @@
+{
+  "id": "urlscan-01a172c4-cf90-7236-8c9f-5e6c71047710",
+  "source": "urlscan.io (Public Scan, tag: phishing)",
+  "public_record_url": "https://urlscan.io/result/01a172c4-cf90-7236-8c9f-5e6c71047710/report/",
+  "defanged_url": "hxxps://allegrolokalnie[.]aukcja758487593[.]top/logowanie/48819",
+  "defanged_domain": "allegrolokalnie[.]aukcja758487593[.]top",
+  "ip": "104.21.38.61",
+  "asn_name": null,
+  "page_title": null,
+  "scanned_at": "2026-10-25T11:14:23Z",
+  "auto_tells": [
+    "Domain ends in .top, a low-cost top-level domain often seen in phishing",
+    "Hostname is 3 levels deep (2 dots); this shows subdomain depth only, not which brand is imitated",
+    "URL path contains 'logowanie'"
+  ],
+  "scan_uuid": "01a172c4-cf90-7236-8c9f-5e6c71047710",
+  "record_brand": null
+}

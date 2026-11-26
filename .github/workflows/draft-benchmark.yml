@@ -1,0 +1,54 @@
+name: Draft Benchmark
+
+# Times one model draft on the runner, using a real published record as input.
+# Runs on PRs that touch the drafting code, or by hand. Opens no issues.
+on:
+  pull_request:
+    paths:
+      - "scripts/draft.py"
+      - ".github/actions/setup-ollama/**"
+      - ".github/workflows/draft-benchmark.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  OFFBRAND_MODEL: qwen2.5:14b
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up local model
+        uses: ./.github/actions/setup-ollama
+        with:
+          model: ${{ env.OFFBRAND_MODEL }}
+
+      - name: Draft one review and time it
+        run: |
+          for i in 1 2 3; do
+            python3 - "$i" <<'PY'
+          import json, sys
+          sys.path.insert(0, "scripts")
+          from voices import pick
+          json.dump(pick([], seed=f"benchmark-{sys.argv[1]}"), open(f"/tmp/assignment_{sys.argv[1]}.json", "w"))
+          PY
+            python3 scripts/draft.py tests/fixtures/candidate.json /tmp/assignment_$i.json > /tmp/draft_$i.md 2>> /tmp/timing.txt
+          done
+          {
+            echo "## Draft benchmark (\`$OFFBRAND_MODEL\`, 3 runs)"
+            echo '```'
+            cat /tmp/timing.txt
+            echo '```'
+            for i in 1 2 3; do echo "### Draft $i"; cat /tmp/draft_$i.md; echo; done
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/timing.txt
+          grep -h "critic_note:" /tmp/draft_*.md
