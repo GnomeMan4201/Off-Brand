@@ -199,3 +199,12 @@ def test_all_attempts_fail_leaves_placeholder():
     body, _ = draft_mod.draft(FIXTURE, A, chat=lambda s, u: ("Likely your bank.", 1.0))
     assert pub.extract_review(body)["critic_note"] == draft_mod.PLACEHOLDER
     assert "No attempt passed" in body
+
+
+def test_rule_check_catches_benchmark_failures():
+    # real outputs from the qwen2.5:7b benchmark run on the PR
+    assert any("victim" in p for p in draft_mod.note_problems(
+        "With your star sign pointing to .top, the scammer must think you're a gullible fool.", FIXTURE))
+    assert any("non-Latin" in p for p in draft_mod.note_problems(
+        "With its .top domain, this site's aiming for星际探索, but landed in the bargain bin.", FIXTURE))
+    assert draft_mod.note_problems("Three labels deep — a cheap .top lot.", FIXTURE) == []

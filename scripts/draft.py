@@ -110,6 +110,8 @@ CULTURE = (
     "african", "asian", "european", "american", "mexican", "brazilian", "ukrainian", "romanian",
     "vietnamese", "turkish", "arab", "foreign", "-sounding", "accent", "language",
 )
+# Punch at the scammer, never the reader or victim (VOICE.md rule 2).
+VICTIM = ("gullible", "fool", "idiot", "dumb", "stupid", "naive", "sucker", "moron", "you fall for", "falls for")
 GENERIC_LABELS = {"login", "logowanie", "secure", "verify", "verification", "account", "support",
                   "online", "update", "wallet", "signin", "service", "auth", "portal", "home", "www"}
 
@@ -129,6 +131,11 @@ def note_problems(note: str, c: dict) -> list[str]:
     for w in CULTURE:
         if w in low:
             problems.append(f"nationality/language reference ('{w}')")
+    for w in VICTIM:
+        if w in low:
+            problems.append(f"mocks the reader or victim ('{w}')")
+    if re.search(r"[^\x00-\u024f\u2010-\u2027\u2030-\u205e]", note):
+        problems.append("unexpected non-Latin characters")
     for w in CLAIM_WORDS:
         if re.search(rf"\b{re.escape(w)}\b", low) and w not in ev:
             problems.append(f"claim not in evidence ('{w}')")
