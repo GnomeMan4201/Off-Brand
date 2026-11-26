@@ -21,12 +21,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  OFFBRAND_MODEL: qwen2.5:7b
+  OFFBRAND_MODEL: qwen2.5:14b
 
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
 

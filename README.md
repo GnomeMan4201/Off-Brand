@@ -186,7 +186,7 @@ URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candi
 - **Free urlscan keys can't search urlscan's own phishing verdicts.** Those fields are for paid plans, so the robots rely on community tags and scans that came from phishing feeds. That's noisier, which is one reason a human approves everything.
 - **At most 10 new candidates per day** across both runs, plus up to 30 per manual backfill. It's a zine, not a firehose. The caps are `DAILY_CAP` and `BACKFILL_CAP` in `scripts/ingest.py`.
 - **Only scans with an archived screenshot get in.** OpenPhish feed entries have no screenshot, so the OpenPhish fallback currently adds nothing.
-- **Drafts are only as good as a small model.** It runs on the free Actions runner on CPU (`qwen2.5:7b` by default; change `OFFBRAND_MODEL` in the workflows). The first run downloads about 5 GB of model weights, which are cached after that. Drafts are a starting point, never a verdict.
+- **Drafts are only as good as a small model.** It runs on the free Actions runner on CPU (`qwen2.5:14b` by default; change `OFFBRAND_MODEL` in the workflows). The first run downloads about 9 GB of model weights, which are cached after that. Drafts are a starting point, never a verdict.
 - **Screenshots load from urlscan.** If urlscan removes a scan, its picture goes too, and the card says "No screenshot recorded in public scan."
 - **"Scanned" is when urlscan saw the page,** not proof that it's still live. Phishing pages tend to be short-lived.
 

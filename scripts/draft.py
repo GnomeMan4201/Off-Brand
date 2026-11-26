@@ -23,8 +23,8 @@ from urllib.request import Request, urlopen
 PLACEHOLDER = "Needs editor verification"
 DRAFT_HEADER = "**DRAFT — verify against screenshot**"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
-MODEL = os.environ.get("OFFBRAND_MODEL", "qwen2.5:7b")
-TIMEOUT_S = int(os.environ.get("OFFBRAND_DRAFT_TIMEOUT", "240"))
+MODEL = os.environ.get("OFFBRAND_MODEL", "qwen2.5:14b")
+TIMEOUT_S = int(os.environ.get("OFFBRAND_DRAFT_TIMEOUT", "420"))
 MAX_NOTE = 480
 
 SYSTEM_PROMPT = """You write one short comedic review for Off-Brand, a site that reviews real phishing pages like cheap knockoff products.
