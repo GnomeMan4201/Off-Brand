@@ -29,14 +29,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - << 'EOF'
-          import json, subprocess
+          import json, subprocess, sys
           from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from voices import assign_batch, assignment_markdown
 
           p = Path("data/pending_candidates.json")
           if not p.exists():
               raise SystemExit(0)
           candidates = json.loads(p.read_text(encoding="utf-8"))
+          published = json.loads(Path("data/reviews.json").read_text(encoding="utf-8")).get("items", [])
+          assignments = assign_batch(published, [c["id"] for c in candidates])
           for c in candidates:
+              a = assignments[c["id"]]
               body = "\n".join([
                   f"id: {c['id']}",
                   f"source: {c['source']}",
@@ -51,6 +56,8 @@ jobs:
                   "### Auto-detected tells",
                   *[f"- {t}" for t in c.get("auto_tells", [])],
                   "",
+                  *assignment_markdown(a),
+                  "",
                   "### How to publish from your phone",
                   "Reply with a comment using these `key: value` lines, then add the `approved` label:",
                   "```",
@@ -59,8 +66,11 @@ jobs:
                   "knockoff_label: <Funny product name>",
                   "verdict: <e.g. Dollar-Store Knockoff>",
                   "rating: <e.g. 2/10>",
+                  "sketchy_segment: <the exact part of the URL that gives it away>",
                   "tells: <Tell 1> | <Tell 2>",
-                  "critic_note: <1-3 sentences in Off-Brand voice>",
+                  "critic_note: <1-3 sentences in the assigned voice>",
+                  f"voice: {a['voice']}",
+                  f"edge: {a['edge']}",
                   "```",
               ])
               title = f"[Triage] {c.get('defanged_domain') or c['id']}"
