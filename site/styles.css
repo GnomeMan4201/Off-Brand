@@ -325,3 +325,46 @@ body {
   text-align: center;
 }
 
+
+/* Safety section: plain and readable, no stickers */
+.safety {
+  margin-top: 2.5rem;
+  background: var(--paper);
+  border: var(--border);
+  padding: 1.25rem;
+  line-height: 1.6;
+}
+
+.safety h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+.safety h3 {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.05rem;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.2rem;
+}
+
+.safety ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.safety li {
+  margin: 0.45rem 0;
+}
+
+.safety code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: #ece8dd;
+  padding: 0 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.safety a {
+  color: var(--teal);
+  font-weight: 600;
+}
