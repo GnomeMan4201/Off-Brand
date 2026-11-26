@@ -77,6 +77,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
           RESTART: ${{ inputs.restart }}
         run: |
+          set -o pipefail
           ARGS=(--mode "$MODE" --days "$DAYS" --max-pages "$MAX_PAGES" --max-mb "$MAX_MB")
           [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
           [ "$RESTART" = "true" ] && ARGS+=(--restart)

@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -289,13 +291,47 @@ def test_cap_stops_before_cursor_advances_and_resumes_when_space_is_added(tmp_pa
     one = len(PNG + uid(1).encode()) + len(b"thumb" + (PNG + uid(1).encode())[-4:])
     stats = run("backfill", c, index, state, tmp_path, max_bytes=one * 2 + 1)
     assert stats["added"] == 2 and stats["stopped"] == "archive_full" and not stats["complete"]
-    assert stats["deferred"]["id"] == "urlscan-" + uid(3)
+    assert "id" not in stats["deferred"]
     assert state["last_full"]["id"] == "urlscan-" + uid(3)
     assert archive.used_bytes(index) <= one * 2 + 1
     stats2 = run("backfill", FakeClient([result(1, 1), result(2, 2), result(3, 3)]), index, state,
                  tmp_path, max_bytes=10 ** 6)
     assert stats2["added"] == 1 and stats2["complete"] and "last_full" not in state
     assert len(index["specimens"]) == 3
+
+
+def test_cap_cli_logs_sizes_only_and_saves_private_resume_point(tmp_path, monkeypatch, capsys):
+    results = [result(1, 1), result(2, 2)]
+    shelf_path = tmp_path / "shelf"
+    monkeypatch.setattr(archive, "shelf_dir", lambda: shelf_path)
+    monkeypatch.setattr(archive, "assert_separate_checkout", lambda _: None)
+    monkeypatch.setattr(archive, "Client", lambda _: FakeClient(results))
+    run_sweep = archive.run_sweep
+
+    def fixture_sweep(*args, **kwargs):
+        return run_sweep(*args, **kwargs, now=NOW, thumbnailer=lambda data: b"thumb")
+
+    monkeypatch.setattr(archive, "run_sweep", fixture_sweep)
+    assert archive.main(["--mode", "backfill", "--max-mb", "0.00005"]) == 0
+    logs = capsys.readouterr()
+    assert uid(1) not in logs.out + logs.err
+    assert uid(2) not in logs.out + logs.err
+    assert '"image_bytes"' in logs.out and "CAPTURE DID NOT FIT: 1 capture" in logs.out
+    state = json.loads((shelf_path / "data" / "archive_state.json").read_text())
+    assert state["last_full"]["id"] == "urlscan-" + uid(2)
+    assert state["jobs"]["backfill"]["cursor"] == ",".join(map(str, results[0]["sort"]))
+
+
+def test_collector_workflow_pipeline_propagates_collector_failure(tmp_path):
+    workflow = (ROOT_DIR / ".github" / "workflows" / "archive.yml").read_text()
+    step = workflow.split("      - name: Collect (urlscan.io only, no target contact)", 1)[1]
+    script = step.split("        run: |\n", 1)[1].split("\n      - name:", 1)[0]
+    script = "\n".join(line.removeprefix("          ") for line in script.splitlines())
+    env = dict(os.environ, MODE="backfill", DAYS="7", MAX_PAGES="1", MAX_MB="500",
+               DRY_RUN="true", RESTART="false", GITHUB_STEP_SUMMARY=str(tmp_path / "summary"))
+    result = subprocess.run(["bash", "-e", "-c", "python3() { return 42; }\n" + script],
+                            env=env, capture_output=True, text=True)
+    assert result.returncode == 42
 
 
 def test_unreadable_image_counts_as_missing_screenshot(tmp_path):

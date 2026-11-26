@@ -400,10 +400,10 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: She
                             # Does not fit: stop here. The cursor still points before this
                             # item, so a later run (more space, higher cap) collects it.
                             stats["stopped"] = "archive_full"
-                            stats["deferred"] = {"id": spec["id"], "image_bytes": len(shot[0]),
+                            stats["deferred"] = {"image_bytes": len(shot[0]),
                                                  "used_bytes": used_bytes(index), "cap_bytes": max_bytes}
                             if not dry_run:
-                                state["last_full"] = dict(stats["deferred"], at=iso(now))
+                                state["last_full"] = dict(stats["deferred"], id=spec["id"], at=iso(now))
                             break
             if item_cursor:
                 cursor = item_cursor
@@ -474,9 +474,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Space used: {format_mb(used_bytes(index))} of {format_mb(cap)}.")
     if stats.get("deferred"):
         d = stats["deferred"]
-        print(f"CAPTURE DID NOT FIT: {d['id']} ({format_mb(d['image_bytes'])}) would exceed the cap. "
-              "Nothing was skipped: the resume point is saved, so free space or raise --max-mb "
-              "and run again to collect it.")
+        print(f"CAPTURE DID NOT FIT: 1 capture ({d['image_bytes']} bytes) would exceed the cap.")
+        if args.dry_run:
+            print("Dry run: no progress was saved.")
+        else:
+            print("The resume point is saved, so free space or raise --max-mb and run again.")
     print("Sweep complete." if stats["complete"] else f"Will resume: {stats['stopped']}.")
     return 0
 
