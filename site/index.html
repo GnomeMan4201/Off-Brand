@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';"
+  />
+  <title>OFF-BRAND // The Internet's Knockoff Aisle</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="tape-banner">
+    CAUTION: ZERO LIVE LINKS &bull; ALL URLS DEFANGED &bull; HUMAN-REVIEWED PUBLIC RECORDS ONLY
+  </div>
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <span class="issue-tag">ZINE VOL. 01</span>
+      <span class="issue-tag" id="last-updated">UPDATED: --</span>
+    </div>
+    <h1>OFF-BRAND</h1>
+    <p class="tagline">The internet's knockoff aisle. Real phishing pages reviewed like cheap flea-market imitations.</p>
+    <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+  </header>
+
+  <main class="container">
+    <section class="controls" aria-label="Filter aisle">
+      <div class="filter-group" id="aisle-filters"></div>
+      <label class="search-wrap">
+        <span class="sr-only">Search reviews</span>
+        <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
+      </label>
+    </section>
+
+    <section id="aisle-grid" class="aisle-grid" aria-live="polite"></section>
+
+    <section class="rejected-shelf">
+      <h2>// PULLED FROM THE SHELF (HUMAN REVIEW LOG)</h2>
+      <p class="shelf-note">
+        Automated scanners make mistakes. Here is what human review held back so we don't accuse innocent or training sites.
+      </p>
+      <ul id="rejected-list" class="rejected-list"></ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      <strong>THE ONE RULE:</strong> Every item traces to a checkable public record. Missing fields are shown as
+      <em>Not recorded</em>, never guessed.
+    </p>
+    <p>
+      Never visit defanged domains. All scanned strings are treated as hostile input and rendered as plain text.
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

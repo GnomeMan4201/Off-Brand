@@ -1,0 +1,62 @@
+{
+  "site_name": "Off-Brand",
+  "last_updated": "2026-11-25T00:00:00Z",
+  "items": [
+    {
+      "id": "urlscan-01a172c4-cf90-7236-8c9f-5e6c71047710",
+      "aisle": "Marketplace & Retail",
+      "impersonated_brand": "Allegro Lokalnie",
+      "knockoff_label": "Great Value Allegro (Polish Auction Edition)",
+      "verdict": "Dollar-Store Knockoff",
+      "rating": "2/10",
+      "defanged_url": "hxxps://allegrolokalnie[.]aukcja758487593[.]top/logowanie/48819",
+      "defanged_domain": "allegrolokalnie[.]aukcja758487593[.]top",
+      "ip": "104.21.38.61",
+      "asn_name": null,
+      "page_title": null,
+      "scanned_at": "2026-10-25T11:14:23Z",
+      "reviewed_at": "2026-11-25T00:00:00Z",
+      "source": "urlscan.io (Public Scan, tag: phishing)",
+      "public_record_url": "https://urlscan.io/result/01a172c4-cf90-7236-8c9f-5e6c71047710/report/",
+      "sketchy_segment": "aukcja758487593[.]top",
+      "tells": [
+        "Stuffs the real brand ('allegrolokalnie') into a subdomain so it looks right at a glance on a phone.",
+        "Actual registered domain is a random 9-digit number ('aukcja758487593') on a bargain-bin '.top' TLD.",
+        "Path '/logowanie/48819' mimics a specific Polish login/listing ID."
+      ],
+      "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo over a cardboard box. It relies entirely on mobile browsers truncating everything after the first word."
+    },
+    {
+      "id": "urlscan-019dfb7f-69ed-741c-a748-f5528fa3af1c",
+      "aisle": "Crypto & Wallets",
+      "impersonated_brand": "Ledger Live",
+      "knockoff_label": "Ledger Live (Free Hosting Edition)",
+      "verdict": "Basement Bootleg",
+      "rating": "1/10",
+      "defanged_url": "hxxps://walletsupport-ledger-live-login-ch[.]vercel[.]app/",
+      "defanged_domain": "walletsupport-ledger-live-login-ch[.]vercel[.]app",
+      "ip": "216.198.79.3",
+      "asn_name": null,
+      "page_title": null,
+      "scanned_at": "2026-05-06T04:15:24Z",
+      "reviewed_at": "2026-11-25T00:00:00Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/019dfb7f-69ed-741c-a748-f5528fa3af1c/report/",
+      "sketchy_segment": "walletsupport-ledger-live-login-ch[.]vercel[.]app",
+      "tells": [
+        "Five hyphenated buzzwords ('walletsupport-ledger-live-login-ch') crammed into one subdomain.",
+        "Hosted on 'vercel.app' \u2014 a free developer hosting platform, not Ledger's domain.",
+        "Real hardware wallet support never asks you to 'log in' via a web URL."
+      ],
+      "critic_note": "Nothing screams 'official hardware security' like a 34-character hyphen-salad hosted on a free hobbyist tier. If a domain has more dashes than a Morse code message, keep walking."
+    }
+  ],
+  "rejected_log": [
+    {
+      "id": "urlscan-01a1f3b1-f851-7443-874b-0a167d2ad2a5",
+      "defanged_domain": "webaccess-alert[.]net",
+      "reason": "Human review caught '_phishme.com_session_id' cookie in scan metadata \u2014 likely a corporate phishing simulation/training domain, not a criminal knockoff. Excluded from the main aisle.",
+      "public_record_url": "https://urlscan.io/result/01a1f3b1-f851-7443-874b-0a167d2ad2a5/"
+    }
+  ]
+}
