@@ -10,7 +10,7 @@
   "scanned_at": "2026-10-25T11:14:23Z",
   "auto_tells": [
     "Domain ends in .top, a low-cost top-level domain often seen in phishing",
-    "Hostname has 3 dot-separated labels (subdomain depth only; does not show which brand is imitated)",
+    "Hostname is 3 levels deep (2 dots); this shows subdomain depth only, not which brand is imitated",
     "URL path contains 'logowanie'"
   ],
   "scan_uuid": "01a172c4-cf90-7236-8c9f-5e6c71047710",

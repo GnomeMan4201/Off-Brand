@@ -53,7 +53,7 @@ def test_record_brand_never_guessed():
 
 def test_tells_are_literal():
     tells = infer_tells("https://a.b.c.top/login", "a.b.c.top")
-    assert any("4 dot-separated labels" in t and "does not show which brand" in t for t in tells)
+    assert any("4 levels deep (3 dots)" in t and "not which brand" in t for t in tells)
     assert not any("stuffed" in t.lower() for t in tells)
 
 

@@ -59,7 +59,7 @@ def infer_tells(raw_url: str, domain: str | None) -> list[str]:
             break
     dots = lower_dom.count(".")
     if dots >= 2:
-        tells.append(f"Hostname has {dots + 1} dot-separated labels (subdomain depth only; does not show which brand is imitated)")
+        tells.append(f"Hostname is {dots + 1} levels deep ({dots} dots); this shows subdomain depth only, not which brand is imitated")
     path = urlparse(raw_url).path.lower()
     for k in ("login", "logowanie", "verify", "wallet", "signin"):
         if k in path:
