@@ -46,6 +46,10 @@ def main() -> int:
             print(f"Missing review field: {k}", file=sys.stderr)
             return 1
 
+    if any(review.get(k) in {"Needs editor", "Unassigned"} for k in ("knockoff_label", "verdict", "critic_note")):
+        print("Complete the draft and reapply approved.", file=sys.stderr)
+        return 1
+
     record_url = validate_public_record_url(meta["public_record_url"])
     defanged = defang_url(meta["defanged_url"])
     if not record_url or not defanged:
@@ -72,7 +76,7 @@ def main() -> int:
         "verdict": sanitize_text(review["verdict"], max_len=60),
         "rating": sanitize_text(review["rating"], max_len=16),
         "defanged_url": defanged,
-        "defanged_domain": defang_domain(meta.get("defanged_domain")),
+        "defanged_domain": defang_domain((meta.get("defanged_domain") or "").replace("[.]", ".")),
         "ip": sanitize_text(meta.get("ip"), max_len=64),
         "asn_name": sanitize_text(meta.get("asn_name"), max_len=120),
         "page_title": sanitize_text(meta.get("page_title"), max_len=140),

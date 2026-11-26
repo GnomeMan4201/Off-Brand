@@ -2,29 +2,63 @@
 
 Sources:
 1. urlscan.io Public Search API (free-tier searchable fields only; uses URLSCAN_API_KEY if set)
-2. OpenPhish Community Feed (https://openphish.com/feed.txt) as fallback
+Only urlscan results with retrievable archived screenshots enter the editorial queue.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import sys
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
+from uuid import UUID
 
-from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
+from sanitize import (
+    defang_domain,
+    defang_url,
+    sanitize_text,
+    validate_public_record_url,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 REVIEWS_PATH = ROOT / "data" / "reviews.json"
 SEEN_PATH = ROOT / "data" / "seen.json"
 
 SUSPICIOUS_TLDS = {".top", ".xyz", ".click", ".icu", ".buzz", ".shop", ".cfd", ".sbs"}
-FREE_PAAS_SUFFIXES = (".vercel.app", ".pages.dev", ".netlify.app", ".workers.dev", ".github.io")
+FREE_PAAS_SUFFIXES = (
+    ".vercel.app",
+    ".pages.dev",
+    ".netlify.app",
+    ".workers.dev",
+    ".github.io",
+)
 
+# Hints for scheduling only. Unknown records share a bucket.
+BRANDS = {
+    "Microsoft",
+    "Office 365",
+    "PayPal",
+    "Apple",
+    "Google",
+    "Amazon",
+    "Facebook",
+    "MetaMask",
+    "Coinbase",
+    "Allegro",
+    "DHL",
+    "USPS",
+    "Netflix",
+    "Adobe",
+    "DocuSign",
+    "Dropbox",
+    "Instagram",
+    "Steam",
+    "Roblox",
+    "Telegram",
+}
 # Free-tier urlscan.io search fields only (verdicts.* and brand.* require Pro+).
 # task.source:(openphish OR phishtank) captures scans originated from those feeds;
 # task.tags:phishing captures community-tagged phishing submissions.
@@ -47,16 +81,19 @@ def infer_tells(raw_url: str, domain: str | None) -> list[str]:
     lower_dom = domain.lower()
     for tld in SUSPICIOUS_TLDS:
         if lower_dom.endswith(tld):
-            tells.append(f"Disposable/budget TLD ({tld})")
+            tells.append(f"Domain ends in ({tld})")
             break
     for suffix in FREE_PAAS_SUFFIXES:
         if lower_dom.endswith(suffix):
-            tells.append(f"Hosted on free static PaaS ({suffix})")
+            tells.append(f"Hostname uses hosting suffix ({suffix})")
             break
     if lower_dom.count(".") >= 2:
-        tells.append("Brand/keyword stuffed into subdomain")
+        tells.append("Hostname contains multiple labels")
     parsed = urlparse(raw_url)
-    if any(k in parsed.path.lower() for k in ("login", "logowanie", "verify", "wallet", "signin")):
+    if any(
+        k in parsed.path.lower()
+        for k in ("login", "logowanie", "verify", "wallet", "signin")
+    ):
         tells.append("Credential/wallet lure keyword in URL path")
     return tells
 
@@ -89,14 +126,20 @@ def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
         scan_id = item.get("_id")
         if not raw_url or not scan_id:
             continue
-        record_url = validate_public_record_url(f"https://urlscan.io/result/{scan_id}/report/")
+        record_url = validate_public_record_url(
+            f"https://urlscan.io/result/{scan_id}/report/"
+        )
         defanged = defang_url(raw_url)
         domain = page.get("domain") or urlparse(raw_url).hostname
         if not defanged or not record_url:
             continue
+        if not domain:
+            continue
 
         source_tag = sanitize_text(task.get("source"), max_len=40)
-        source_label = f"urlscan.io (source: {source_tag})" if source_tag else "urlscan.io"
+        source_label = (
+            f"urlscan.io (source: {source_tag})" if source_tag else "urlscan.io"
+        )
 
         candidates.append(
             {
@@ -115,77 +158,67 @@ def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
     return candidates
 
 
-def fetch_openphish_candidates(limit: int = 25) -> list[dict]:
-    req = Request("https://openphish.com/feed.txt", headers={"User-Agent": "OffBrand-Triage/0.1"})
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, *args):
+        return None
+
+
+def screenshot(scan_id):
     try:
-        with urlopen(req, timeout=20) as resp:
-            lines = resp.read().decode("utf-8", errors="replace").splitlines()
-    except (HTTPError, URLError, TimeoutError) as exc:
-        print(f"[warn] OpenPhish fetch skipped: {exc}", file=sys.stderr)
-        return []
-
-    candidates = []
-    for raw_url in lines[:limit]:
-        raw_url = raw_url.strip()
-        if not raw_url:
-            continue
-        defanged = defang_url(raw_url)
-        domain = urlparse(raw_url).hostname
-        if not defanged or not domain:
-            continue
-        url_digest = hashlib.sha256(raw_url.encode("utf-8")).hexdigest()[:16]
-        candidates.append(
-            {
-                "id": f"openphish-{url_digest}",
-                "source": "OpenPhish Community Feed",
-                "public_record_url": "https://openphish.com/feed.txt",
-                "defanged_url": defanged,
-                "defanged_domain": defang_domain(domain),
-                "ip": None,
-                "asn_name": None,
-                "page_title": None,
-                "scanned_at": None,
-                "auto_tells": infer_tells(raw_url, domain),
-            }
-        )
-    return candidates
+        uid = str(UUID(scan_id))
+    except (ValueError, TypeError):
+        return None
+    url = f"https://urlscan.io/screenshots/{uid}.png"
+    try:
+        with build_opener(NoRedirect()).open(url, timeout=8) as response:
+            if response.read(8) == bytes.fromhex("89504e470d0a1a0a"):
+                return url
+    except (OSError, HTTPError):
+        pass
+    return None
 
 
-def filter_fresh(candidates: list[dict], known_ids: set[str]) -> list[dict]:
-    excluded = known_ids.copy()
-    fresh = []
-    for candidate in candidates:
-        candidate_id = candidate["id"]
-        if candidate_id in excluded:
-            continue
-        fresh.append(candidate)
-        excluded.add(candidate_id)
-        if len(fresh) == 3:
+def brand_hint(candidate, brands):
+    text = (
+        candidate["defanged_domain"] + " " + (candidate["page_title"] or "")
+    ).casefold()
+    for brand in sorted(brands, key=len, reverse=True):
+        if brand.casefold() in text or brand.casefold().replace(" ", "") in text:
+            return brand.casefold()
+    return "unknown"
+
+
+def select_candidates(candidates, known, history, limit, brands, verify=screenshot):
+    selected = []
+    recent = list(history[-2:])
+    remaining = list(candidates)
+    while remaining and len(selected) < limit:
+        for index, candidate in enumerate(remaining):
+            brand = brand_hint(candidate, brands)
+            if candidate["id"] in known:
+                continue
+            if recent == [brand, brand]:
+                continue
+            url = verify(candidate["id"].removeprefix("urlscan-"))
+            known.add(candidate["id"])
+            if not url:
+                continue
+            candidate.update(screenshot=url, brand_hint=brand)
+            selected.append(candidate)
+            recent = (recent + [brand])[-2:]
+            remaining.pop(index)
             break
-    return fresh
-
-
-def main() -> int:
-    reviews_data = load_json(REVIEWS_PATH, {"items": []})
-    seen_ids = set(load_json(SEEN_PATH, []))
-    published_ids = {item["id"] for item in reviews_data.get("items", [])}
-
-    known_ids = seen_ids | published_ids
-    fresh = filter_fresh(fetch_urlscan_candidates(limit=25), known_ids)
-    if not fresh:
-        fresh = filter_fresh(fetch_openphish_candidates(limit=25), known_ids)
-
-    out_path = ROOT / "data" / "pending_candidates.json"
-    out_path.write_text(json.dumps(fresh, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
-
-    if fresh:
-        for c in fresh:
-            seen_ids.add(c["id"])
-        SEEN_PATH.write_text(json.dumps(sorted(seen_ids), indent=2) + "\n", encoding="utf-8")
-
-    print(f"Staged {len(fresh)} new candidate(s) for human review.")
-    return 0
+        else:
+            break
+    return selected
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # Local preview uses the same screenshot and diversity checks without opening issues.
+
+    known = set(load_json(SEEN_PATH, []))
+    known.update(r["id"] for r in load_json(REVIEWS_PATH, {"items": []})["items"])
+    preview = select_candidates(fetch_urlscan_candidates(100), known, [], 5, BRANDS)
+    (ROOT / "data/pending_candidates.json").write_text(
+        json.dumps(preview, indent=2) + "\n"
+    )
