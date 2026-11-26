@@ -78,10 +78,6 @@ function renderCard(item) {
 
   card.appendChild(el("h2", null, item.knockoff_label));
   card.appendChild(el("div", "brand-target", `Impersonating: ${item.impersonated_brand}`));
-  if (item.voice_name) {
-    card.appendChild(el("div", "voice-tag",
-      `Written as: ${item.voice_name}${item.edge_name ? " \u00b7 " + item.edge_name : ""}`));
-  }
   card.appendChild(el("div", "defanged-box", item.defanged_url));
   card.appendChild(el("p", "critic-note", item.critic_note));
 
