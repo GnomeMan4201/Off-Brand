@@ -287,3 +287,40 @@ body {
   font-size: 0.76rem;
   color: var(--muted);
 }
+
+/* Screenshot of the knockoff, straight from the public scan */
+.shot {
+  margin: 0;
+  border: var(--border);
+  background: #e7e3d8;
+}
+
+.shot-link {
+  display: block;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top;
+}
+
+.shot figcaption {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  border-top: var(--border);
+  background: var(--paper);
+  padding: 0.3rem 0.5rem;
+}
+
+.shot-missing {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 2rem 0.75rem;
+  text-align: center;
+}
