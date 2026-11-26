@@ -181,3 +181,15 @@ URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candi
 Scan records and screenshots come from [urlscan.io](https://urlscan.io) public scans, with the [OpenPhish](https://openphish.com) community feed as a fallback. Every scammer named on this site did the work of embarrassing themselves; we just wrote it down.
 
 Off-Brand is a [badBANANA Research Collective](https://badbananaresearch.com) project.
+
+---
+
+## Specimen archive (unpublished stockpile)
+
+A browsing shelf of real, previously reported pages, kept apart from the zine. Collecting never opens an issue and never writes any copy.
+
+- **Collect:** `archive.yml` (urlscan.io only) saves each public scan's screenshot to `archive/shots/` and its record to `data/archive.json`. Progress lives in `data/archive_state.json`, so interrupted or budget-limited runs resume.
+- **Browse:** `/archive/` on the Pages site (noindex). Cards show thumbnail, defanged domain, capture date and status; filter to **Unwritten**; tap for the big screenshot, attributed bullets and the source record.
+- **Write:** the **Write this one** button runs `write-specimen.yml`, which opens the usual `triage` issue (screenshot + bullets, blank writing fields) once and reuses it afterwards. Publishing still needs your comment and the `approved` label.
+- **Screenshot observations** (password field, countdown, ...) only appear if you add them to `data/archive_inspections.json` as `{"<id>": [{"observation": "...", "inspector": "...", "pointer": "where in the image"}]}`.
+- **Limits:** git storage (soft cap of 500 MB of images, enforced in `scripts/archive.py`; Pages sites max out at 1 GB), no generated thumbnails (the browser scales the saved file), and the Pages archive is public even though it is unlisted.

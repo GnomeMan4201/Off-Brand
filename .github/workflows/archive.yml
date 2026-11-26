@@ -1,0 +1,77 @@
+name: Collect Specimen Archive
+
+# Collects public urlscan.io scan records + their saved screenshots into archive/.
+# Never opens issues. Manual runs default to a dry run that writes nothing.
+# The daily schedule only runs when the repository variable ARCHIVE_SCHEDULE_ENABLED is "true".
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "scheduled = newest captures; backfill = resumable catch-up over the last N days"
+        type: choice
+        options: [backfill, scheduled]
+        default: backfill
+      days:
+        description: "Backfill window in days (max 30)"
+        default: "7"
+      max_pages:
+        description: "Search pages per run (100 results each)"
+        default: "5"
+      dry_run:
+        description: "Dry run: fetch and report, write nothing"
+        type: boolean
+        default: true
+      restart:
+        description: "Discard saved progress for this mode and start over"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: archive
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ARCHIVE_SCHEDULE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect (urlscan.io only, no target contact)
+        env:
+          URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          MODE: ${{ inputs.mode || 'scheduled' }}
+          DAYS: ${{ inputs.days || '7' }}
+          MAX_PAGES: ${{ inputs.max_pages || '5' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          RESTART: ${{ inputs.restart }}
+        run: |
+          ARGS=(--mode "$MODE" --days "$DAYS" --max-pages "$MAX_PAGES")
+          [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
+          [ "$RESTART" = "true" ] && ARGS+=(--restart)
+          python3 scripts/archive.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit archive and progress
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add archive data/archive.json data/archive_state.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore: update specimen archive"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push
+          gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"

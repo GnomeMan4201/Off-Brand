@@ -7,12 +7,10 @@ Sources:
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
@@ -34,8 +32,6 @@ URLSCAN_FREE_QUERY = (
     "(task.source:openphish OR task.source:phishtank OR task.tags:phishing) "
     "AND task.visibility:public AND page.status:200 AND date:>now-7d"
 )
-BACKFILL_CAP = 30
-BACKFILL_FETCH_SIZE = 100
 
 
 def load_json(path: Path, default):
@@ -65,10 +61,9 @@ def infer_tells(raw_url: str, domain: str | None) -> list[str]:
     return tells
 
 
-def fetch_urlscan_candidates(limit: int = 25, days: int = 7) -> list[dict]:
+def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
     api_key = os.environ.get("URLSCAN_API_KEY", "").strip()
-    query = URLSCAN_FREE_QUERY.replace("date:>now-7d", f"date:>now-{int(days)}d")
-    params = urlencode({"q": query, "size": limit})
+    params = urlencode({"q": URLSCAN_FREE_QUERY, "size": limit})
     url = f"https://urlscan.io/api/v1/search/?{params}"
     headers = {"User-Agent": "OffBrand-Triage/0.1"}
     if api_key:
@@ -170,84 +165,7 @@ def filter_fresh(candidates: list[dict], known_ids: set[str]) -> list[dict]:
     return fresh
 
 
-def parse_scanned_at(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        dt = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-
-
-def has_urlscan_screenshot(candidate: dict) -> bool:
-    """True if urlscan holds an archived screenshot. Contacts urlscan only, never the target."""
-    cid = candidate["id"]
-    if not cid.startswith("urlscan-"):
-        return False
-    req = Request(
-        f"https://urlscan.io/screenshots/{cid[len('urlscan-'):]}.png",
-        headers={"User-Agent": "OffBrand-Triage/0.1"},
-    )
-    try:
-        with urlopen(req, timeout=20) as resp:
-            return resp.headers.get_content_type().startswith("image/")
-    except (HTTPError, URLError, TimeoutError):
-        return False
-
-
-def select_backfill(
-    candidates: list[dict],
-    known_ids: set[str],
-    limit: int = BACKFILL_CAP,
-    days: int = 7,
-    now: datetime | None = None,
-    screenshot_check=has_urlscan_screenshot,
-) -> list[dict]:
-    """Up to `limit` distinct, recent, screenshot-backed candidates not already known."""
-    limit = max(0, min(int(limit), BACKFILL_CAP))
-    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
-    excluded = set(known_ids)
-    seen_urls: set[str] = set()
-    picked: list[dict] = []
-    for c in candidates:
-        if len(picked) >= limit:
-            break
-        if c["id"] in excluded or c["defanged_url"] in seen_urls:
-            continue
-        scanned = parse_scanned_at(c.get("scanned_at"))
-        if scanned is None or scanned < cutoff:
-            continue
-        if not screenshot_check(c):
-            continue
-        picked.append(c)
-        excluded.add(c["id"])
-        seen_urls.add(c["defanged_url"])
-    return picked
-
-
-def run_backfill(limit: int, days: int) -> int:
-    reviews_data = load_json(REVIEWS_PATH, {"items": []})
-    seen_ids = set(load_json(SEEN_PATH, []))
-    known_ids = seen_ids | {item["id"] for item in reviews_data.get("items", [])}
-    picked = select_backfill(
-        fetch_urlscan_candidates(limit=BACKFILL_FETCH_SIZE, days=days), known_ids, limit, days
-    )
-    out_path = ROOT / "data" / "pending_candidates.json"
-    out_path.write_text(json.dumps(picked, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
-    print(f"Backfill staged {len(picked)} candidate(s) from the last {days} day(s).")
-    return 0
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["daily", "backfill"], default="daily")
-    parser.add_argument("--limit", type=int, default=BACKFILL_CAP)
-    parser.add_argument("--days", type=int, default=7)
-    args = parser.parse_args()
-    if args.mode == "backfill":
-        return run_backfill(args.limit, args.days)
-
     reviews_data = load_json(REVIEWS_PATH, {"items": []})
     seen_ids = set(load_json(SEEN_PATH, []))
     published_ids = {item["id"] for item in reviews_data.get("items", [])}
