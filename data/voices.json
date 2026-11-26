@@ -1,0 +1,105 @@
+{
+  "edges": {
+    "1": {"name": "Dry", "brief": "Deadpan and understated. The joke is how calmly it's said. PG."},
+    "2": {"name": "Spicy", "brief": "Sarcastic and pointed. The scammer gets mocked openly."},
+    "3": {"name": "Roast", "brief": "A full roast of the scammer's craftsmanship. Still no victim-blaming, slurs or jokes about nationality."}
+  },
+  "voices": [
+    {
+      "id": "critic",
+      "name": "The Critic",
+      "brief": "A snobby product critic reviewing a cheap knockoff.",
+      "tells_shape": "2-4 tells, each a criticism of the craftsmanship plus the lesson.",
+      "sample": "From across the room it passes. Up close, the stitching gives it away.",
+      "edges": [1, 2, 3]
+    },
+    {
+      "id": "nature_doc",
+      "name": "Nature Documentary",
+      "brief": "A hushed narrator watching a predator in its natural habitat.",
+      "tells_shape": "Each tell is an observed behaviour of the creature, which is the trick it uses.",
+      "sample": "Here, in the long grass of a free hosting plan, the phish waits. It has borrowed the colours of something trustworthy.",
+      "edges": [1, 2]
+    },
+    {
+      "id": "recall",
+      "name": "Product Recall Notice",
+      "brief": "A deadpan corporate safety notice about a dangerous product.",
+      "tells_shape": "Exactly three tells, starting AFFECTED PRODUCT:, HAZARD: and REMEDY:.",
+      "sample": "Effective immediately, this product is recalled due to a risk of sudden account loss.",
+      "edges": [1, 2]
+    },
+    {
+      "id": "one_star",
+      "name": "One-Star Customer Review",
+      "brief": "A furious customer who ordered the real thing and got the knockoff. Funny-angry at the seller, never at themselves.",
+      "tells_shape": "Each tell is a complaint, and each complaint is a red flag.",
+      "sample": "Ordered one (1) bank login. Received a lottery-number domain. Would not phish again.",
+      "edges": [2, 3]
+    },
+    {
+      "id": "infomercial",
+      "name": "Late-Night Infomercial",
+      "brief": "A pitchman selling the scam, accidentally listing every flaw as a feature.",
+      "tells_shape": "Each tell is a 'feature' that is actually the giveaway. One tell may open with 'But wait, there's more'.",
+      "sample": "Tired of real domains? Try ours: nine random digits, no extra charge!",
+      "edges": [2, 3]
+    },
+    {
+      "id": "sports",
+      "name": "Play-by-Play",
+      "brief": "A sports commentator calling the scam live, like a game.",
+      "tells_shape": "Each tell is a play, the move the scammer just tried.",
+      "sample": "And he's stuffed the brand name into the subdomain. Oh, the audacity!",
+      "edges": [1, 2, 3]
+    },
+    {
+      "id": "sommelier",
+      "name": "Tasting Notes",
+      "brief": "A wine sommelier describing the page's nose, palate and finish.",
+      "tells_shape": "Exactly three tells, starting NOSE:, PALATE: and FINISH:.",
+      "sample": "Notes of urgency on the nose, a palate of borrowed logos, and a long finish of credential theft.",
+      "edges": [1, 2]
+    },
+    {
+      "id": "inspector",
+      "name": "Health Inspector",
+      "brief": "A restaurant inspection report: violations found, letter grade posted.",
+      "tells_shape": "Each tell is VIOLATION #n: followed by the problem. The verdict may be a letter grade.",
+      "sample": "Inspector observed a login form stored at an unsafe domain.",
+      "edges": [1, 2]
+    },
+    {
+      "id": "true_crime",
+      "name": "True Crime Podcast",
+      "brief": "A breathless podcast host retelling the case, with dramatic pauses.",
+      "tells_shape": "The tells are clues in the order a detective would find them.",
+      "sample": "It looked like any other login page. But the address bar was hiding something.",
+      "edges": [1, 2, 3]
+    },
+    {
+      "id": "dating",
+      "name": "Dating Profile Red Flags",
+      "brief": "A friend reading the phish's dating profile out loud and spotting the red flags.",
+      "tells_shape": "Each tell is a red flag, and it ends with a swipe verdict.",
+      "sample": "Says he's a bank. Lives on a .top domain. Wants your password on the first date.",
+      "edges": [2, 3]
+    },
+    {
+      "id": "museum",
+      "name": "Museum Placard",
+      "brief": "A pompous curator describing an artifact in a glass case.",
+      "tells_shape": "Each tell is a feature the curator points out, like Note the... or Observe the...",
+      "sample": "Credential Lure, mixed media (stolen CSS, free hosting), circa this Tuesday.",
+      "edges": [1, 2]
+    },
+    {
+      "id": "horoscope",
+      "name": "Horoscope",
+      "brief": "An astrologer reading the domain's chart, where every prediction is a warning.",
+      "tells_shape": "Each tell is a reading or a prediction.",
+      "sample": "With .top rising in your house of hosting, a stranger will ask for your recovery phrase. Do not give it to them.",
+      "edges": [1, 2]
+    }
+  ]
+}

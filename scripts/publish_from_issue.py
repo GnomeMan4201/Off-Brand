@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
+from voices import load_roster, validate as validate_voice
 
 ROOT = Path(__file__).resolve().parent.parent
 REVIEWS_PATH = ROOT / "data" / "reviews.json"
@@ -52,10 +53,16 @@ def main() -> int:
         return 1
 
     tells = [
-        sanitize_text(t, max_len=140)
+        sanitize_text(t, max_len=280)
         for t in review.get("tells", "").split("|")
-        if sanitize_text(t, max_len=140)
+        if sanitize_text(t, max_len=280)
     ]
+
+    voice = validate_voice(review.get("voice"), review.get("edge"))
+    if review.get("voice") and not voice:
+        print(f"Unknown voice or edge not allowed for it: {review.get('voice')} / {review.get('edge')}", file=sys.stderr)
+        return 1
+    edge_names = load_roster()["edges"]
 
     entry = {
         "id": sanitize_text(meta["id"], max_len=80),
@@ -76,6 +83,11 @@ def main() -> int:
         "tells": tells,
         "critic_note": sanitize_text(review["critic_note"], max_len=500),
     }
+    if review.get("sketchy_segment"):
+        entry["sketchy_segment"] = sanitize_text(review["sketchy_segment"], max_len=120)
+    if voice:
+        entry["voice"], entry["voice_name"], entry["edge"] = voice
+        entry["edge_name"] = edge_names[str(voice[2])]["name"]
 
     data = json.loads(REVIEWS_PATH.read_text(encoding="utf-8"))
     if any(item["id"] == entry["id"] for item in data["items"]):

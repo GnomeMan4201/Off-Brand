@@ -11,6 +11,16 @@ Off-Brand reviews phishing pages the way a sharp, slightly mean critic reviews c
 5. **One strong line beats three okay ones.** Cut the second joke in a sentence.
 6. **Safety advice is never a punchline.** Advice like "never share your recovery phrase" is stated plainly. Only the setup around it is funny.
 
+## Voice rotation (keeps it from going stale)
+
+Each new triage issue comes with a **writing assignment**: one of 12 comedic voices plus an edge level. They're picked by `scripts/voices.py` and defined in `data/voices.json`.
+
+- **Voices:** The Critic, Nature Documentary, Product Recall Notice, One-Star Customer Review, Late-Night Infomercial, Play-by-Play, Tasting Notes, Health Inspector, True Crime Podcast, Dating Profile Red Flags, Museum Placard and Horoscope. Each voice also changes the *shape* of the tells. The recall notice uses AFFECTED PRODUCT / HAZARD / REMEDY, the sommelier uses NOSE / PALATE / FINISH, and the inspector uses VIOLATION #n.
+- **Edge:** 1 Dry (deadpan), 2 Spicy (sarcastic) or 3 Roast (full roast of the scammer). Some voices don't allow Roast; a recall notice can't really roast anyone.
+- **Rotation rules:** no voice repeats within 4 reviews, voices that have been used less come up more often, and there are never two Roasts in a row.
+- **You're the editor:** if an assignment doesn't fit the page, change the `voice:` / `edge:` lines in your reply. The rules above apply to every voice.
+- **Adding a voice:** add an entry to `data/voices.json` with an `id`, `name`, `brief`, `tells_shape`, `sample` and the `edges` it allows.
+
 ## Shapes that work
 
 - **Comparison:** "That's like Rolex running its flagship store out of a borrowed folding table."

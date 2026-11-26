@@ -24,7 +24,11 @@
         "Read the address right to left, like a skeptic. The part that actually owns the page is 'aukcja758487593.top', which is a lottery ticket number on a domain ending that costs about as much as a gas station hot dog.",
         "'/logowanie/48819' means 'login' in Polish plus a listing number, the URL equivalent of a fake mustache: technically a disguise, mostly a confession."
       ],
-      "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo to a cardboard box. The whole con depends on your phone cutting the address off after the first word, which, to be fair, it will. Ours did."
+      "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo to a cardboard box. The whole con depends on your phone cutting the address off after the first word, which, to be fair, it will. Ours did.",
+      "voice": "critic",
+      "voice_name": "The Critic",
+      "edge": 2,
+      "edge_name": "Spicy"
     },
     {
       "id": "urlscan-019dfb7f-69ed-741c-a748-f5528fa3af1c",
@@ -48,7 +52,11 @@
         "The real owner of this address is 'vercel.app', a free hosting service anyone can sign up for in two minutes. That's like Rolex running its flagship store out of a borrowed folding table.",
         "Ledger Live is an app on your own device. It has never needed you to 'log in' on a website, and no real support person will ever ask for your 24-word recovery phrase. Anyone who does isn't support; they're the robbery."
       ],
-      "critic_note": "Nothing says 'official hardware security' like a 34-character hyphen salad on a free hobbyist hosting plan. If a domain has more dashes than a Morse code message, keep walking. Then run."
+      "critic_note": "Nothing says 'official hardware security' like a 34-character hyphen salad on a free hobbyist hosting plan. If a domain has more dashes than a Morse code message, keep walking. Then run.",
+      "voice": "critic",
+      "voice_name": "The Critic",
+      "edge": 2,
+      "edge_name": "Spicy"
     }
   ],
   "rejected_log": [
