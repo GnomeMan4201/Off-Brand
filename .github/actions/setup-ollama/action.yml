@@ -3,7 +3,7 @@ description: Install Ollama on the runner, start it, and pull an open-weight mod
 inputs:
   model:
     description: Ollama model tag
-    default: qwen2.5:3b
+    default: qwen2.5:7b
 runs:
   using: composite
   steps:

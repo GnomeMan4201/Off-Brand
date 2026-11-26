@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  OFFBRAND_MODEL: qwen2.5:3b
+  OFFBRAND_MODEL: qwen2.5:7b
 
 jobs:
   ingest:

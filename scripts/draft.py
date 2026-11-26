@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 PLACEHOLDER = "Needs editor verification"
 DRAFT_HEADER = "**DRAFT — verify against screenshot**"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
-MODEL = os.environ.get("OFFBRAND_MODEL", "qwen2.5:3b")
+MODEL = os.environ.get("OFFBRAND_MODEL", "qwen2.5:7b")
 TIMEOUT_S = int(os.environ.get("OFFBRAND_DRAFT_TIMEOUT", "240"))
 MAX_NOTE = 480
 
@@ -34,7 +34,13 @@ Hard rules:
 - If no brand is listed, do not name any brand or company. Call it "whatever this page is pretending to be".
 - Mock the scammer's craftsmanship. Never mock victims, never mock any nationality, language or culture.
 - Write 1 to 3 sentences, under 400 characters, plain text. No markdown, no lists, no quotation marks around the whole thing, no URLs, no emoji.
-- Write in the assigned VOICE and EDGE."""
+- Write in the assigned VOICE and EDGE. Be funny: a vivid comparison or a deadpan line, not a summary.
+- Never speculate. No "likely", "probably", "suggests", "seems to" or "appears to". If a fact isn't listed, leave it out.
+- Don't name the voice or start with a label like "Health Inspector:". Just write in that voice.
+
+Example of the style (different, made-up evidence, do not reuse its facts):
+EVIDENCE: Domain ends in .xyz | Hosted on a free hosting subdomain (.pages.dev)
+REVIEW: Somebody built a vault and then rented the door from a free hosting plan. The .xyz ending is the price tag they forgot to peel off."""
 
 
 def evidence_lines(c: dict) -> list[str]:
@@ -67,11 +73,14 @@ def build_user_prompt(c: dict, a: dict) -> str:
     ])
 
 
-def clean_note(text: str | None) -> str | None:
+def clean_note(text: str | None, voice_name: str | None = None) -> str | None:
     """Return a safe single-paragraph note, or None if it can't be used."""
     if not text:
         return None
     t = re.sub(r"\s+", " ", text).strip().strip('"“”').strip()
+    t = re.sub(r"^(review|critic_note)\s*:\s*", "", t, flags=re.I)
+    if voice_name and t.lower().startswith(voice_name.lower()):
+        t = t[len(voice_name):].lstrip(" :-—").strip()
     if not t:
         return None
     low = t.lower()
@@ -142,7 +151,7 @@ def render_comment(c: dict, a: dict, note: str | None, seconds: float | None) ->
 
 def draft(c: dict, a: dict, chat=ollama_chat) -> tuple[str, float | None]:
     raw, secs = chat(SYSTEM_PROMPT, build_user_prompt(c, a))
-    note = clean_note(raw)
+    note = clean_note(raw, a.get("voice_name"))
     return render_comment(c, a, note, secs), secs
 
 

@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  OFFBRAND_MODEL: qwen2.5:3b
+  OFFBRAND_MODEL: qwen2.5:7b
 
 jobs:
   benchmark:
@@ -34,23 +34,21 @@ jobs:
 
       - name: Draft one review and time it
         run: |
-          python3 - <<'PY'
+          for i in 1 2 3; do
+            python3 - "$i" <<'PY'
           import json, sys
           sys.path.insert(0, "scripts")
           from voices import pick
-          a = pick([], seed="benchmark")
-          json.dump(a, open("/tmp/assignment.json", "w"))
+          json.dump(pick([], seed=f"benchmark-{sys.argv[1]}"), open(f"/tmp/assignment_{sys.argv[1]}.json", "w"))
           PY
-          for i in 1 2 3; do
-            python3 scripts/draft.py tests/fixtures/candidate.json /tmp/assignment.json > /tmp/draft_$i.md 2>> /tmp/timing.txt
+            python3 scripts/draft.py tests/fixtures/candidate.json /tmp/assignment_$i.json > /tmp/draft_$i.md 2>> /tmp/timing.txt
           done
           {
             echo "## Draft benchmark (\`$OFFBRAND_MODEL\`, 3 runs)"
             echo '```'
             cat /tmp/timing.txt
             echo '```'
-            echo "### Sample draft"
-            cat /tmp/draft_3.md
+            for i in 1 2 3; do echo "### Draft $i"; cat /tmp/draft_$i.md; echo; done
           } >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/timing.txt
-          cat /tmp/draft_3.md
+          grep -h "critic_note:" /tmp/draft_*.md
