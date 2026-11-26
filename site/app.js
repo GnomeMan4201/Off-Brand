@@ -23,6 +23,48 @@ function displayOrMissing(val) {
   return val ? String(val) : "Not recorded in public scan";
 }
 
+// urlscan stores a screenshot for every public scan at a fixed address.
+// Only a well-formed scan UUID is ever put into that address.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+function scanUuid(item) {
+  const fromId = typeof item.id === "string" && item.id.startsWith("urlscan-") ? item.id.slice(8) : null;
+  if (fromId && UUID_RE.test(fromId)) return fromId;
+  const m = typeof item.public_record_url === "string" &&
+    item.public_record_url.match(/^https:\/\/urlscan\.io\/result\/([0-9a-f-]{36})\//);
+  return m && UUID_RE.test(m[1]) ? m[1] : null;
+}
+
+function renderShot(item) {
+  const uuid = scanUuid(item);
+  if (!uuid) return null;
+  const src = `https://urlscan.io/screenshots/${uuid}.png`;
+
+  const fig = el("figure", "shot");
+  const link = el("a", "shot-link");
+  link.href = src;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.setAttribute("aria-label", `Open full screenshot of the page impersonating ${item.impersonated_brand}`);
+
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = `Screenshot of the knockoff page impersonating ${item.impersonated_brand}`;
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.referrerPolicy = "no-referrer";
+  img.addEventListener("error", () => {
+    // Nothing fake: a missing screenshot is shown as missing, never replaced.
+    fig.replaceChildren(el("div", "shot-missing", "No screenshot recorded in public scan"));
+  });
+
+  link.appendChild(img);
+  fig.appendChild(link);
+  fig.appendChild(el("figcaption", null,
+    `Captured by urlscan.io${item.scanned_at ? " \u00b7 " + String(item.scanned_at).slice(0, 10) : ""}`));
+  return fig;
+}
+
 function renderCard(item) {
   const card = el("article", "card");
 
@@ -30,6 +72,9 @@ function renderCard(item) {
   top.appendChild(el("span", "aisle-badge", item.aisle || "Uncategorized"));
   top.appendChild(el("span", "sticker", `${item.verdict} (${item.rating})`));
   card.appendChild(top);
+
+  const shot = renderShot(item);
+  if (shot) card.appendChild(shot);
 
   card.appendChild(el("h2", null, item.knockoff_label));
   card.appendChild(el("div", "brand-target", `Impersonating: ${item.impersonated_brand}`));

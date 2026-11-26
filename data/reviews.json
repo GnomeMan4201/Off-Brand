@@ -20,11 +20,11 @@
       "public_record_url": "https://urlscan.io/result/01a172c4-cf90-7236-8c9f-5e6c71047710/report/",
       "sketchy_segment": "aukcja758487593[.]top",
       "tells": [
-        "Stuffs the real brand ('allegrolokalnie') into a subdomain so it looks right at a glance on a phone.",
-        "Actual registered domain is a random 9-digit number ('aukcja758487593') on a bargain-bin '.top' TLD.",
-        "Path '/logowanie/48819' mimics a specific Polish login/listing ID."
+        "Brand-name cosplay: 'allegrolokalnie' is wearing the real company's name like a borrowed suit, parked up front where a phone screen will show it and then politely give up.",
+        "Read the address right to left, like a skeptic. The part that actually owns the page is 'aukcja758487593.top', which is a lottery ticket number on a domain ending that costs about as much as a gas station hot dog.",
+        "'/logowanie/48819' means 'login' in Polish plus a listing number, the URL equivalent of a fake mustache: technically a disguise, mostly a confession."
       ],
-      "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo over a cardboard box. It relies entirely on mobile browsers truncating everything after the first word."
+      "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo to a cardboard box. The whole con depends on your phone cutting the address off after the first word, which, to be fair, it will. Ours did."
     },
     {
       "id": "urlscan-019dfb7f-69ed-741c-a748-f5528fa3af1c",
@@ -44,18 +44,18 @@
       "public_record_url": "https://urlscan.io/result/019dfb7f-69ed-741c-a748-f5528fa3af1c/report/",
       "sketchy_segment": "walletsupport-ledger-live-login-ch[.]vercel[.]app",
       "tells": [
-        "Five hyphenated buzzwords ('walletsupport-ledger-live-login-ch') crammed into one subdomain.",
-        "Hosted on 'vercel.app' \u2014 a free developer hosting platform, not Ledger's domain.",
-        "Real hardware wallet support never asks you to 'log in' via a web URL."
+        "Five buzzwords walked into a subdomain ('walletsupport-ledger-live-login-ch') and none of them were hired by Ledger. Real companies don't need to shout every keyword at once to prove who they are.",
+        "The real owner of this address is 'vercel.app', a free hosting service anyone can sign up for in two minutes. That's like Rolex running its flagship store out of a borrowed folding table.",
+        "Ledger Live is an app on your own device. It has never needed you to 'log in' on a website, and no real support person will ever ask for your 24-word recovery phrase. Anyone who does isn't support; they're the robbery."
       ],
-      "critic_note": "Nothing screams 'official hardware security' like a 34-character hyphen-salad hosted on a free hobbyist tier. If a domain has more dashes than a Morse code message, keep walking."
+      "critic_note": "Nothing says 'official hardware security' like a 34-character hyphen salad on a free hobbyist hosting plan. If a domain has more dashes than a Morse code message, keep walking. Then run."
     }
   ],
   "rejected_log": [
     {
       "id": "urlscan-01a1f3b1-f851-7443-874b-0a167d2ad2a5",
       "defanged_domain": "webaccess-alert[.]net",
-      "reason": "Human review caught '_phishme.com_session_id' cookie in scan metadata \u2014 likely a corporate phishing simulation/training domain, not a criminal knockoff. Excluded from the main aisle.",
+      "reason": "Human review caught '_phishme.com_session_id' cookie in scan metadata — likely a corporate phishing simulation/training domain, not a criminal knockoff. Excluded from the main aisle.",
       "public_record_url": "https://urlscan.io/result/01a1f3b1-f851-7443-874b-0a167d2ad2a5/"
     }
   ]
