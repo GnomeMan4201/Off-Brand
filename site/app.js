@@ -124,7 +124,7 @@ function renderCard(item) {
 }
 
 async function init() {
-  const res = await fetch("data/reviews.json");
+  const res = await fetch("data/reviews.json", { cache: "no-cache" });
   const data = await res.json();
   const items = data.items || [];
   const rejected = data.rejected_log || [];
