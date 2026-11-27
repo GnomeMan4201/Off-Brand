@@ -852,3 +852,81 @@ def test_channel_on_air_stays_visible_in_the_scrolling_lineup(browser, grown_url
     assert page.evaluate(inside)
     assert page.evaluate("window.scrollY") == page_scroll, "keeping the lineup in view must not scroll the page"
     page.context.close()
+
+
+# ---------- final visual details ----------
+@pytest.mark.parametrize("width", [320, 390, 1440])
+def test_commercial_return_label_fits_without_shrinking_transport(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce",
+                              is_mobile=width < 700, has_touch=width < 700)
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.goto(base_url)
+    page.wait_for_selector(".watch-btn")
+    page.locator(".watch-btn").first.click()
+    button = page.locator(".ad-controls .skip-ad")
+    button.wait_for(state="visible")
+    page.evaluate("document.fonts.ready")
+    assert button.inner_text().startswith("Back to CH")
+    result = page.locator(".ad-controls").evaluate("""bar => {
+        const back = bar.querySelector('.skip-ad'), range = document.createRange();
+        range.selectNodeContents(back);
+        const text = [...range.getClientRects()];
+        const b = back.getBoundingClientRect(), a = bar.getBoundingClientRect();
+        return {
+            singleLine: text.length === 1,
+            textFits: text.every(r => r.left >= b.left - 1 && r.right <= b.right + 1),
+            buttonsFit: [...bar.querySelectorAll('button')].every(e => {
+                const r = e.getBoundingClientRect();
+                return r.width >= 44 && r.height >= 44 && r.left >= a.left - 1 && r.right <= a.right + 1;
+            }),
+            noOverflow: bar.scrollWidth <= bar.clientWidth + 1,
+        };
+    }""")
+    assert all(result.values()), (width, result)
+    button.click()
+    assert page.locator("#interstitial").is_hidden()
+    ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_mobile_masthead_is_compact_and_stamp_is_contained(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce",
+                              is_mobile=True, has_touch=True)
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.goto(base_url)
+    page.wait_for_selector("#lineup li")
+    page.evaluate("document.fonts.ready")
+    assert page.locator("#station-id").is_visible()
+    assert page.locator("#stats-bar").is_visible()
+    before = page.locator(".bezel").bounding_box()["y"]
+    # Compare with the previous masthead spacing, without hiding any metadata.
+    rules = [add_rule(page, rule) for rule in (
+        ".masthead { padding-top:16px; gap:8px; }",
+        ".masthead-top { gap:6px 16px; padding-bottom:8px; font-size:19px; line-height:1.15; }",
+        ".masthead-meta { gap:6px 14px; }",
+        ".on-air-pill { padding:2px 8px; }",
+        ".masthead-sub { margin-top:4px; gap:10px 24px; }",
+        ".stats { padding:4px 10px; font-size:20px; line-height:1.2; }",
+        ".crawl-bar { margin-top:16px; }",
+        ".tv-layout { padding-top:24px; }",
+    )]
+    previous = page.locator(".bezel").bounding_box()["y"]
+    for i in reversed(rules):
+        remove_rule(page, i)
+    assert previous - before >= 12, (width, previous, before)
+
+    # Select the widest verdict in the real archive, including uncertainty labels.
+    items = json.loads((ROOT / "data" / "reviews.json").read_text(encoding="utf-8"))["items"]
+    item = max(items, key=lambda x: len(f"{x.get('verdict', '')} · {x.get('rating', '')}"))
+    page.evaluate(f"location.hash = {json.dumps('#' + item['id'])}")
+    stamp = page.locator(".stamp")
+    wait_until(page, f"document.querySelector('.stamp').textContent === {json.dumps(item['verdict'] + ' · ' + item['rating'])}")
+    bounds = stamp.evaluate("""e => {
+        const a = e.getBoundingClientRect(), b = document.querySelector('.shot-area').getBoundingClientRect();
+        return {inside: a.left >= b.left - 1 && a.right <= b.right + 1,
+                size: parseFloat(getComputedStyle(e).fontSize), fit: e.scrollWidth <= e.clientWidth + 1};
+    }""")
+    assert bounds["inside"] and bounds["fit"] and bounds["size"] >= 12, (width, bounds)
+    ctx.close()
