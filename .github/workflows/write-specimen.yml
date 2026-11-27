@@ -9,10 +9,14 @@ on:
       specimen_id:
         description: "Specimen id, e.g. urlscan-<uuid> (shown on the specimen page)"
         required: true
+      replace_legacy:
+        description: "Optional mapped legacy issue number; create a new authenticated private draft"
+        required: false
+        default: ""
       dry_run:
         description: "Dry run: report what would happen, create nothing"
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -52,10 +56,13 @@ jobs:
           OFFBRAND_PROVENANCE_KEY: ${{ secrets.OFFBRAND_PROVENANCE_KEY }}
           SPECIMEN_ID: ${{ inputs.specimen_id }}
           DRY_RUN: ${{ inputs.dry_run }}
+          REPLACE_LEGACY: ${{ inputs.replace_legacy }}
+          URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
         run: |
           set -o pipefail
           ARGS=(--id "$SPECIMEN_ID")
           [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
+          [ -z "$REPLACE_LEGACY" ] || ARGS+=(--replace-legacy "$REPLACE_LEGACY")
           python3 scripts/write_specimen.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Record the draft link in the shelf
