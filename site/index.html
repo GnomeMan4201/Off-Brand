@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="referrer" content="no-referrer" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#140808" />
   <meta
     http-equiv="Content-Security-Policy"
@@ -22,12 +22,17 @@
 
   <header class="masthead">
     <div class="masthead-top">
-      <span>A SCREENSHOT ZINE BY GNOMEMAN4201</span>
-      <span><span class="rec" aria-hidden="true">●</span> ON AIR · <span id="last-updated">Updated --</span></span>
+      <span class="station-id">CH 01–30 · AFTER DARK BROADCAST</span>
+      <span class="masthead-meta">
+        <span>A SCREENSHOT ZINE BY GNOMEMAN4201</span>
+        <span class="on-air-pill"><span class="rec" aria-hidden="true">●</span> ON AIR · <span id="last-updated">Updated --</span></span>
+      </span>
     </div>
     <h1 class="logo" aria-label="Off-Brand"><span aria-hidden="true">O</span><span aria-hidden="true">F</span><span aria-hidden="true">F</span><span aria-hidden="true">-</span><span aria-hidden="true">B</span><span aria-hidden="true">R</span><span aria-hidden="true">A</span><span aria-hidden="true">N</span><span aria-hidden="true">D</span></h1>
-    <p class="tagline">The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
-    <p class="stats" id="stats-bar" aria-live="polite"></p>
+    <div class="masthead-sub">
+      <p class="tagline">The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
+      <p class="stats" id="stats-bar" aria-live="polite"></p>
+    </div>
   </header>
 
   <div class="crawl-bar">
@@ -39,6 +44,10 @@
   <main class="tv-layout" id="tv">
     <section class="broadcast" aria-label="Now showing">
       <div class="bezel">
+        <div class="bezel-plate" aria-hidden="true">
+          <span class="bezel-model">OB-TV · MODEL AD-26</span>
+          <span class="bezel-leds"><span class="led led-pwr" title="Power"></span><span class="led-label">PWR</span><span class="led led-sig" id="signal-led" title="Signal"></span><span class="led-label">SIG</span></span>
+        </div>
         <div class="screen" id="screen" tabindex="0" aria-label="Broadcast screen. Use the left and right arrow keys to change channel.">
           <div class="program" id="program"></div>
           <div class="interstitial" id="interstitial" hidden></div>
@@ -46,11 +55,16 @@
       </div>
 
       <div class="deck">
-        <button type="button" class="deck-btn" id="prev" aria-label="Previous channel">← CH</button>
-        <button type="button" class="deck-btn" id="next" aria-label="Next channel">CH →</button>
-        <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
-        <button type="button" class="sound-toggle" id="channel-sound" aria-pressed="true" hidden>Channel sound: <span>On</span></button>
-        <span class="now" id="now" role="status"></span>
+        <div class="deck-transport" role="group" aria-label="Channel controls">
+          <button type="button" class="deck-btn" id="prev" aria-label="Previous channel">← CH</button>
+          <button type="button" class="deck-btn" id="next" aria-label="Next channel">CH →</button>
+          <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
+          <button type="button" class="sound-toggle" id="channel-sound" aria-pressed="true" hidden>Channel sound: <span>On</span></button>
+        </div>
+        <div class="now-bar">
+          <span class="now-dot" aria-hidden="true"></span>
+          <span class="now" id="now" role="status"></span>
+        </div>
       </div>
       <p class="sr-only" id="break-status" role="status" aria-live="polite"></p>
 
@@ -66,14 +80,20 @@
     </section>
 
     <aside class="lineup" aria-label="Channel guide">
-      <h2>Tonight’s lineup</h2>
+      <div class="lineup-head">
+        <h2>Tonight’s lineup</h2>
+        <span class="lineup-count" id="lineup-count" aria-live="polite"></span>
+      </div>
       <div class="station-pref" id="station-pref" hidden>
         <button type="button" class="pref-btn" id="breaks-toggle" aria-pressed="true">Commercial breaks: <span>On</span></button>
         <span>Saved on this device. Breaks never play with sound until you ask.</span>
       </div>
       <label class="search-wrap">
         <span>Search reviews</span>
-        <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
+        <span class="search-box">
+          <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
+          <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>×</button>
+        </span>
       </label>
       <div class="filter-group" id="aisle-filters" role="group" aria-label="Filter by aisle"></div>
       <ol class="channels" id="lineup"></ol>
@@ -94,7 +114,7 @@
 
   <section class="held" aria-labelledby="held-title">
     <div class="held-inner">
-      <div>
+      <div class="held-intro">
         <span class="held-kicker">WE ARE EXPERIENCING TECHNICAL DIFFICULTIES</span>
         <h2 id="held-title">Held back at review</h2>
         <p>A report is a lead. Sometimes the most useful thing in the record is the reason to leave a page off the shelf.</p>
@@ -104,12 +124,15 @@
   </section>
 
   <section class="safety" aria-labelledby="safety-title">
-    <h2 id="safety-title">Phishing field guide</h2>
+    <div class="safety-head">
+      <span class="safety-kicker">STATION FIELD MANUAL</span>
+      <h2 id="safety-title">Phishing field guide</h2>
+    </div>
     <div class="guide-grid">
-      <section><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>
-      <section><h3>Check the request elsewhere</h3><p>A logo is easy to copy. If a message asks you to sign in, pay, or fix an account problem, open the app yourself or call a number you already trust. You can check the claim without using the sender’s link.</p></section>
-      <section><h3>If you entered details</h3><p>Open the service directly, change the exposed password and any reused copies, and review active sessions. For payment details, call the number printed on your card.</p></section>
-      <section><h3>Report a suspicious message</h3><p>In the US, forward scam texts to <strong>7726</strong>. You can also <a href="https://reportfraud.ftc.gov/">report fraud to the FTC</a> or read its <a href="https://consumer.ftc.gov/articles/how-recognize-avoid-phishing-scams">phishing guide</a>.</p></section>
+      <section><span class="guide-num" aria-hidden="true">01</span><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>
+      <section><span class="guide-num" aria-hidden="true">02</span><h3>Check the request elsewhere</h3><p>A logo is easy to copy. If a message asks you to sign in, pay, or fix an account problem, open the app yourself or call a number you already trust. You can check the claim without using the sender’s link.</p></section>
+      <section><span class="guide-num" aria-hidden="true">03</span><h3>If you entered details</h3><p>Open the service directly, change the exposed password and any reused copies, and review active sessions. For payment details, call the number printed on your card.</p></section>
+      <section><span class="guide-num" aria-hidden="true">04</span><h3>Report a suspicious message</h3><p>In the US, forward scam texts to <strong>7726</strong>. You can also <a href="https://reportfraud.ftc.gov/">report fraud to the FTC</a> or read its <a href="https://consumer.ftc.gov/articles/how-recognize-avoid-phishing-scams">phishing guide</a>.</p></section>
     </div>
   </section>
 

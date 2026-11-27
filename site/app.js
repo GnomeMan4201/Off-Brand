@@ -206,13 +206,20 @@ function renderFacts(item) {
 
   if (tells.length > 1) {
     const more = el("details", "evidence");
-    more.appendChild(el("summary", null, "Evidence and assessment"));
-    for (const tell of tells.slice(1)) more.appendChild(el("p", null, tell));
+    more.appendChild(el("summary", null, `Evidence and assessment (${tells.length - 1} more)`));
+    const list = el("div", "evidence-list");
+    for (const tell of tells.slice(1)) list.appendChild(el("p", null, tell));
+    more.appendChild(list);
     frag.appendChild(more);
   }
 
   const meta = el("div", "fact-meta");
-  const row = (label, val) => meta.appendChild(el("div", null, `${label} · ${val}`));
+  const row = (label, val) => {
+    const r = el("div", "fact-meta-row");
+    r.appendChild(el("span", "fact-meta-label", label));
+    r.appendChild(el("span", "fact-meta-val", val));
+    meta.appendChild(r);
+  };
   row("Verdict", `${displayOrMissing(item.verdict)} · ${displayOrMissing(item.rating)}`);
   if (item.impersonated_brand && item.impersonated_brand !== "Not established") row("Brand pictured", item.impersonated_brand);
   row("IP", displayOrMissing(item.ip));
@@ -225,7 +232,7 @@ function renderFacts(item) {
   const links = el("div", "fact-links");
   const uuid = scanUuid(item);
   if (uuid) links.appendChild(externalLink("https://urlscan.io/result/" + uuid + "/", null, "Read the urlscan evidence ↗"));
-  if (isSafeRecordUrl(item.public_record_url)) links.appendChild(externalLink(item.public_record_url, null, "Verify Public Record ->"));
+  if (isSafeRecordUrl(item.public_record_url)) links.appendChild(externalLink(item.public_record_url, null, "Verify public record ↗"));
   frag.appendChild(links);
   return frag;
 }
@@ -342,9 +349,16 @@ async function init() {
   document.getElementById("stats-bar").textContent = `${items.length} specimens on air · ${rejected.length} held back at review`;
 
   const $ = (id) => document.getElementById(id);
+  const bezel = document.querySelector(".bezel");
   const screen = $("screen"), program = $("program"), inter = $("interstitial");
   const now = $("now"), address = $("address"), facts = $("fact-body");
   const lineupEl = $("lineup"), emptyEl = $("lineup-empty"), searchEl = $("search-input");
+  const searchClearEl = $("search-clear"), lineupCountEl = $("lineup-count");
+  const setBezelState = (state) => {
+    if (!bezel) return;
+    bezel.classList.toggle("is-tuning", state === "tuning");
+    bezel.classList.toggle("is-break", state === "break");
+  };
 
   // The crawl: every satirical caption, looping. Hidden from screen readers;
   // the same text is on the chyron for each channel.
@@ -392,6 +406,7 @@ async function init() {
   }
 
   function finish() {
+    setBezelState("on");
     channelSound.stop();
     clearTimeout(timer);
     inter.hidden = true;
@@ -428,6 +443,7 @@ async function init() {
     // The field-guide PSA keeps its every-4th slot, but never right after a commercial.
     const psa = hops % 4 === 0 && sinceBreak > 2;
     inter.replaceChildren(psa ? psaCard(() => { finish(); screen.focus({ preventScroll: true }); }) : staticCard(pad2(i + 1)));
+    setBezelState("tuning");
     inter.hidden = false;
     // Snow plays only while the tuning card is visible. A PSA gets one
     // short cue instead of 4.5 seconds of noise.
@@ -508,6 +524,7 @@ async function init() {
     }
     if (document.fullscreenElement && inter.contains(document.fullscreenElement)) document.exitFullscreen().catch(() => {});
     const hadFocus = inter.contains(document.activeElement);
+    setBezelState("on");
     inter.hidden = true;
     inter.replaceChildren();
     breakState = null;
@@ -542,6 +559,7 @@ async function init() {
     const id = opts.id || (rotation && rotation.next());
     const c = id && byId.get(id);
     if (!c) { show(target); return; }
+    setBezelState("break");
     breakState = { target, c, voluntary: Boolean(opts.voluntary), timers: [], video: null };
     now.textContent = `Now showing CH 00 · Off-Brand Originals · ${c.title}`;
 
@@ -790,6 +808,9 @@ async function init() {
       li.appendChild(b);
       lineupEl.appendChild(li);
     }
+    if (lineupCountEl) {
+      lineupCountEl.textContent = list.length === items.length ? `${items.length} channels` : `${list.length} of ${items.length}`;
+    }
     emptyEl.hidden = list.length > 0;
     const off = list.length < 2;
     $("prev").disabled = $("next").disabled = off;
@@ -809,7 +830,17 @@ async function init() {
     });
     filtersEl.appendChild(btn);
   }
-  searchEl.addEventListener("input", (e) => { query = e.target.value.trim().toLowerCase(); renderLineup(); });
+  const syncSearchClear = () => { if (searchClearEl) searchClearEl.hidden = !searchEl.value.length; };
+  searchEl.addEventListener("input", (e) => { query = e.target.value.trim().toLowerCase(); syncSearchClear(); renderLineup(); });
+  if (searchClearEl) {
+    searchClearEl.addEventListener("click", () => {
+      searchEl.value = "";
+      query = "";
+      syncSearchClear();
+      renderLineup();
+      searchEl.focus();
+    });
+  }
 
   $("prev").addEventListener("click", () => step(-1));
   $("next").addEventListener("click", () => step(1));
