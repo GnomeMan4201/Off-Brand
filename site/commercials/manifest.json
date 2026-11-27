@@ -37,6 +37,42 @@
       "poster": "commercials/garys-testimonial.jpg",
       "captions": "burned-in",
       "description": "A satisfied customer explains exactly what he consented to."
+    },
+    {
+      "id": "eau-de-credentials",
+      "title": "Eau de Credentials",
+      "runtime_seconds": 15,
+      "src": "commercials/eau-de-credentials.mp4",
+      "poster": "commercials/eau-de-credentials.jpg",
+      "captions": "not available",
+      "description": "Luxury fragrance for the person who shares everything."
+    },
+    {
+      "id": "knockoff-station",
+      "title": "Support Your Local Knockoff Station",
+      "runtime_seconds": 15,
+      "src": "commercials/knockoff-station.mp4",
+      "poster": "commercials/knockoff-station.jpg",
+      "captions": "not available",
+      "description": "A fictional public-access pledge drive with a very small phone bank. No donations."
+    },
+    {
+      "id": "phishing-forecast",
+      "title": "The Phishing Forecast",
+      "runtime_seconds": 15,
+      "src": "commercials/phishing-forecast.mp4",
+      "poster": "commercials/phishing-forecast.jpg",
+      "captions": "not available",
+      "description": "Scattered login showers and a fake invoice front. A satirical weather bulletin."
+    },
+    {
+      "id": "r4b1t-h0l3",
+      "title": "R4B1T H0L3",
+      "runtime_seconds": 25,
+      "src": "commercials/r4b1t-h0l3.mp4",
+      "poster": "commercials/r4b1t-h0l3.jpg",
+      "captions": "not available",
+      "description": "A house promo for the research discovery project: no feed, no ranking, just a hole."
     }
   ],
   "bumpers": [
