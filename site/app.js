@@ -56,62 +56,75 @@ const isRated = (item) => Boolean(item.rating && item.rating !== "Unrated");
 
 // ---------- channel audio ----------
 
-// A short, low-volume analog tuning burst. No asset, network request or
-// autoplay: create/resume the audio context only inside a viewer's gesture.
+// Short, locally hosted CC0 recordings. Fetching is silent; AudioContext
+// creation and resume occur only as a result of a viewer's gesture.
 function channelAudio(button) {
   const Audio = window.AudioContext || window.webkitAudioContext;
   const key = "offbrand.channelSound";
-  let enabled = true, ctx = null, buffer = null, active = null, generation = 0;
+  let enabled = true, ctx = null, active = null, generation = 0;
+  const bytes = new Map(), decoded = new Map();
+  const paths = { channel: "sounds/crt-switch.mp3", commercial: "sounds/vhs-rewind.mp3" };
   try { enabled = localStorage.getItem(key) !== "off"; } catch (e) { /* optional storage */ }
   function render() {
     button.setAttribute("aria-pressed", String(enabled));
     button.querySelector("span").textContent = enabled ? "On" : "Off";
   }
   function stop() {
+    generation++;
     if (active) { try { active.stop(); } catch (e) { /* already ended */ } active = null; }
   }
+  function load(kind) {
+    if (!bytes.has(kind)) {
+      const pending = fetch(paths[kind]).then(r => {
+        if (!r.ok) throw new Error("sound unavailable");
+        return r.arrayBuffer();
+      }).catch(() => { bytes.delete(kind); return null; });
+      bytes.set(kind, pending);
+    }
+    return bytes.get(kind);
+  }
+  function preload() { for (const kind of Object.keys(paths)) load(kind); }
   if (Audio) {
     render();
     button.hidden = false;
+    if (enabled) preload();
     button.addEventListener("click", () => {
       enabled = !enabled;
-      generation++;
       stop();
+      if (enabled) preload();
       try { localStorage.setItem(key, enabled ? "on" : "off"); } catch (e) { /* optional storage */ }
       render();
     });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
   }
-  function play() {
+  function play(kind = "channel") {
     if (!Audio || !enabled || document.hidden) return;
-    const request = ++generation;
     stop();
+    const request = generation, requestedAt = performance.now();
     try {
-      if (!ctx || ctx.state === "closed") { ctx = new Audio(); buffer = null; }
-      const ready = ctx.state === "running" ? Promise.resolve() : ctx.resume();
-      Promise.resolve(ready).then(() => {
-        if (!enabled || request !== generation || document.hidden || ctx.state !== "running") return;
-        if (!buffer) {
-          const length = Math.round(ctx.sampleRate * 0.14);
-          buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-          let smooth = 0;
-          for (let i = 0; i < length; i++) {
-            const t = i / ctx.sampleRate;
-            smooth = 0.65 * smooth + 0.35 * (Math.random() * 2 - 1);
-            const envelope = Math.min(1, t / 0.005) * Math.pow(1 - i / length, 2);
-            data[i] = envelope * (0.16 * smooth + 0.025 * Math.sin(2 * Math.PI * 180 * t));
-          }
-        }
-        const source = ctx.createBufferSource();
+      if (!ctx || ctx.state === "closed") { ctx = new Audio(); decoded.clear(); }
+      const audio = ctx;
+      const ready = audio.state === "running" ? Promise.resolve() : audio.resume();
+      if (!decoded.has(kind)) {
+        const pending = load(kind).then(b => b ? new Promise((resolve, reject) => {
+          audio.decodeAudioData(b.slice(0), resolve, reject);
+        }) : null).catch(() => null);
+        decoded.set(kind, pending);
+        pending.then(b => { if (!b && decoded.get(kind) === pending) decoded.delete(kind); });
+      }
+      Promise.all([ready, decoded.get(kind)]).then(([, buffer]) => {
+        if (!buffer || !enabled || request !== generation || document.hidden ||
+            audio.state !== "running" || performance.now() - requestedAt > 1000) return;
+        const source = audio.createBufferSource();
         source.buffer = buffer;
-        source.connect(ctx.destination);
+        source.connect(audio.destination);
         active = source;
         source.onended = () => { if (active === source) active = null; source.disconnect(); };
         source.start();
       }).catch(() => { /* sound must never block tuning */ });
     } catch (e) { /* unsupported or blocked audio */ }
   }
-  return { play };
+  return { play, stop };
 }
 
 // ---------- screen ----------
@@ -387,11 +400,19 @@ async function init() {
   function tune(i, userInitiated = false) {
     // Only genuine viewer-requested channel changes produce a tuning sound.
     const from = breakState ? breakState.target : (pending ?? current);
-    if (userInitiated && i !== from) channelSound.play();
     // Changing channel during a break skips it and goes where the viewer asked.
-    if (breakState) { endBreak(i); return; }
+    if (breakState) {
+      endBreak(i);
+      if (userInitiated && i !== from) channelSound.play();
+      return;
+    }
     if (i === current && pending === null) return;
-    if (breakDue()) { startBreak(i); return; }
+    if (breakDue()) {
+      if (userInitiated && i !== from) channelSound.play("commercial");
+      startBreak(i);
+      return;
+    }
+    if (userInitiated && i !== from) channelSound.play();
     sinceBreak += 1;
     if (reducedMotion.matches) { show(i); return; }
     hops += 1;
@@ -486,6 +507,7 @@ async function init() {
   function endBreak(to) {
     const s = breakState;
     if (!s) return;
+    channelSound.stop();
     const hadFocus = teardown();
     sinceBreak = 0;
     show(to === undefined ? s.target : to);
@@ -533,6 +555,7 @@ async function init() {
   function playCommercial(withSound) {
     const s = breakState;
     if (!s) return;
+    channelSound.stop();
     const c = s.c;
     const back = "CH " + pad2(s.target + 1);
 
@@ -666,6 +689,7 @@ async function init() {
   }
 
   function playOriginal(id) {
+    channelSound.stop();
     const target = breakState ? breakState.target : (pending ?? current);
     teardown();
     clearTimeout(timer);
