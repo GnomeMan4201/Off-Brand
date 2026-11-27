@@ -10,6 +10,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from evidence import LABELS, NEEDS_ACK, sanitize_evidence
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 from voices import load_roster, validate as validate_voice
 
@@ -27,7 +28,7 @@ def parse_kv_block(text: str) -> dict[str, str]:
 
 
 REVIEW_FIELDS = {"brand", "aisle", "knockoff_label", "verdict", "rating",
-                 "sketchy_segment", "tells", "critic_note", "voice", "edge"}
+                 "sketchy_segment", "tells", "critic_note", "voice", "edge", "evidence_ack"}
 
 
 def parse_review_block(text: str) -> dict[str, str]:
@@ -55,6 +56,26 @@ def is_excluded(data: dict, specimen_id: str) -> bool:
     redacted = "withheld-" + hashlib.sha256(specimen_id.encode()).hexdigest()
     return any(row.get("id") in (specimen_id, redacted)
                for row in data.get("rejected_log", []))
+
+
+def evidence_for(meta: dict, review: dict) -> tuple[dict | None, str | None]:
+    """(evidence to publish, error). Issues from before evidence levels carry none."""
+    raw = meta.get("evidence_json")
+    if raw is None:
+        return None, None
+    try:
+        ev = sanitize_evidence(json.loads(raw))
+    except (json.JSONDecodeError, TypeError, AttributeError, KeyError):
+        ev = None
+    if ev is None:
+        return None, "The issue's evidence block is malformed; refusing to publish without it."
+    if ev["level"] in NEEDS_ACK:
+        ack = sanitize_text(review.get("evidence_ack"), max_len=240)
+        if not ack:
+            return None, (f"Evidence level is {LABELS[ev['level']]}: add an evidence_ack: line "
+                          "explaining why this specimen should still air.")
+        ev["editor_ack"] = ack
+    return ev, None
 
 
 def main() -> int:
@@ -94,6 +115,11 @@ def main() -> int:
         if sanitize_text(t, max_len=280)
     ]
 
+    ev, ev_error = evidence_for(meta, review)
+    if ev_error:
+        print(ev_error, file=sys.stderr)
+        return 1
+
     voice = validate_voice(review.get("voice"), review.get("edge"))
     if review.get("voice") and not voice:
         print(f"Unknown voice or edge not allowed for it: {review.get('voice')} / {review.get('edge')}", file=sys.stderr)
@@ -121,6 +147,8 @@ def main() -> int:
     }
     if review.get("sketchy_segment"):
         entry["sketchy_segment"] = sanitize_text(review["sketchy_segment"], max_len=120)
+    if ev:
+        entry["evidence"] = ev
     if voice:
         entry["voice"], entry["voice_name"], entry["edge"] = voice
         entry["edge_name"] = edge_names[str(voice[2])]["name"]

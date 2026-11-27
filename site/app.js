@@ -197,6 +197,87 @@ function renderAddress(item) {
   return box;
 }
 
+// ---------- EVIDENCE LOCKER ----------
+// Mirrors scripts/evidence.py. Only links to the exact record pages below are ever made.
+
+const EVIDENCE_LINK_RES = [
+  /^https:\/\/urlscan\.io\/result\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(report\/)?$/,
+  /^https:\/\/www\.phishtank\.com\/phish_detail\.php\?phish_id=\d{1,12}$/,
+  /^https:\/\/openphish\.com\/feed\.txt$/,
+];
+const EVIDENCE_LEVELS = {
+  "corroborated": { label: "CORROBORATED", blurb: "Independent sources list this exact page." },
+  "source-confirmed": { label: "SOURCE-CONFIRMED", blurb: "A verifying source confirmed this exact page." },
+  "suspected": { label: "SUSPECTED", blurb: "Indicators exist, but nothing verified this page." },
+  "unverified": { label: "UNVERIFIED", blurb: "No supporting record in the sources checked." },
+  "disputed": { label: "DISPUTED", blurb: "The available records conflict." },
+};
+const SOURCE_STATUS_TEXT = {
+  ok: "checked", rate_limited: "not checked (download limit)", unavailable: "not checked (unavailable)",
+  malformed: "not checked (unreadable response)", too_large: "not checked (response too large)",
+  not_attempted: "not checked",
+};
+
+function isEvidenceLink(url) {
+  return typeof url === "string" && EVIDENCE_LINK_RES.some((re) => re.test(url));
+}
+
+function renderEvidence(item) {
+  const ev = item.evidence && typeof item.evidence === "object" ? item.evidence : null;
+  const level = ev && EVIDENCE_LEVELS[ev.level] ? ev.level : null;
+  const box = el("section", "locker" + (level ? " locker-" + level : " locker-legacy"));
+  box.setAttribute("aria-labelledby", "locker-title");
+  const head = el("div", "locker-head");
+  head.appendChild(el("h3", null, "EVIDENCE LOCKER")).id = "locker-title";
+  const stamp = el("span", "locker-stamp", level ? EVIDENCE_LEVELS[level].label : "NOT YET RATED");
+  stamp.setAttribute("aria-label", "Evidence level: " + (level ? EVIDENCE_LEVELS[level].label.toLowerCase() : "not yet rated"));
+  head.appendChild(stamp);
+  box.appendChild(head);
+
+  if (!level) {
+    box.appendChild(el("p", "locker-reason",
+      "Aired before evidence levels existed. The scan record linked below is the evidence on file; nothing was added afterward."));
+    return box;
+  }
+  box.appendChild(el("p", "locker-reason", ev.reason || EVIDENCE_LEVELS[level].blurb));
+  if (ev.editor_ack) box.appendChild(el("p", "locker-ack", "Editor's note: " + ev.editor_ack));
+
+  const records = Array.isArray(ev.records) ? ev.records : [];
+  const sources = ev.sources && typeof ev.sources === "object" ? Object.entries(ev.sources) : [];
+  const limits = Array.isArray(ev.limitations) ? ev.limitations : [];
+  const more = el("details", "evidence locker-more");
+  more.appendChild(el("summary", null, `On file: ${records.length} record${records.length === 1 ? "" : "s"}, ${sources.length} source${sources.length === 1 ? "" : "s"} checked`));
+  const list = el("div", "evidence-list");
+  for (const r of records) {
+    const p = el("p", "locker-record");
+    p.appendChild(el("span", "locker-tag", r.match === "exact" ? "EXACT PAGE" : "SAME HOST"));
+    p.appendChild(document.createTextNode(` ${r.source || "Source"}: ${r.detail || "record"}`));
+    if (r.stance === "contradicts") p.classList.add("locker-against");
+    if (isEvidenceLink(r.record_url)) {
+      p.appendChild(document.createTextNode(" "));
+      p.appendChild(externalLink(r.record_url, "locker-link", "record ↗"));
+    }
+    list.appendChild(p);
+  }
+  for (const [name, s] of sources) {
+    list.appendChild(el("p", "locker-source", `${name}: ${SOURCE_STATUS_TEXT[s && s.status] || "status unknown"}${s && s.checked_at ? " · " + String(s.checked_at).slice(0, 10) : ""}`));
+  }
+  if (ev.specimen && ev.specimen.redirected && ev.specimen.defanged_final_host) {
+    list.appendChild(el("p", null, "The scan finished on another host: " + ev.specimen.defanged_final_host));
+  }
+  for (const lim of limits) list.appendChild(el("p", "locker-limit", "Limitation: " + lim));
+  more.appendChild(list);
+  box.appendChild(more);
+
+  const dates = el("p", "locker-dates");
+  const day = (v) => (v ? String(v).slice(0, 10) : "date not recorded");
+  dates.appendChild(el("span", null, "Captured " + day(ev.captured_at)));
+  dates.appendChild(document.createTextNode(" · "));
+  dates.appendChild(el("span", null, "assessed " + day(ev.assessed_at)));
+  box.appendChild(dates);
+  return box;
+}
+
 // ---------- WHAT TO NOTICE ----------
 
 function renderFacts(item) {
@@ -212,6 +293,8 @@ function renderFacts(item) {
     more.appendChild(list);
     frag.appendChild(more);
   }
+
+  frag.appendChild(renderEvidence(item));
 
   const meta = el("div", "fact-meta");
   const row = (label, val) => {

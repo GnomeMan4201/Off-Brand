@@ -3,6 +3,10 @@
 Sources:
 1. urlscan.io Public Search API (free-tier searchable fields only; uses URLSCAN_API_KEY if set)
 2. OpenPhish Community Feed (https://openphish.com/feed.txt) as fallback
+
+Every staged candidate is then correlated with the PhishTank dump and the OpenPhish
+feed (each downloaded once per run, looked up locally) and carries an evidence block
+with its confidence level. See scripts/evidence.py.
 """
 
 from __future__ import annotations
@@ -16,6 +20,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
+import evidence
+import feeds
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -110,27 +116,24 @@ def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
                 "page_title": sanitize_text(page.get("title"), max_len=140),
                 "scanned_at": sanitize_text(task.get("time"), max_len=40),
                 "auto_tells": infer_tells(raw_url, domain),
+                "urlscan_source": sanitize_text(task.get("source"), max_len=40),
+                "urlscan_tags": [t for t in (sanitize_text(x, max_len=30) for x in (task.get("tags") or [])[:10]) if t],
             }
         )
     return candidates
 
 
-def fetch_openphish_candidates(limit: int = 25) -> list[dict]:
-    req = Request("https://openphish.com/feed.txt", headers={"User-Agent": "OffBrand-Triage/0.1"})
-    try:
-        with urlopen(req, timeout=20) as resp:
-            lines = resp.read().decode("utf-8", errors="replace").splitlines()
-    except (HTTPError, URLError, TimeoutError) as exc:
-        print(f"[warn] OpenPhish fetch skipped: {exc}", file=sys.stderr)
+def fetch_openphish_candidates(limit: int = 25, snapshot: feeds.Snapshot | None = None) -> list[dict]:
+    snapshot = snapshot or feeds.fetch_openphish()
+    if not snapshot.ok:
+        print(f"[warn] OpenPhish fetch skipped: {snapshot.status} ({snapshot.detail})", file=sys.stderr)
         return []
 
     candidates = []
-    for raw_url in lines[:limit]:
-        raw_url = raw_url.strip()
-        if not raw_url:
-            continue
+    for rec in snapshot.records[:limit]:
+        raw_url = rec["_line"]
         defanged = defang_url(raw_url)
-        domain = urlparse(raw_url).hostname
+        domain = rec["_norm"]["host_key"]
         if not defanged or not domain:
             continue
         url_digest = hashlib.sha256(raw_url.encode("utf-8")).hexdigest()[:16]
@@ -146,9 +149,24 @@ def fetch_openphish_candidates(limit: int = 25) -> list[dict]:
                 "page_title": None,
                 "scanned_at": None,
                 "auto_tells": infer_tells(raw_url, domain),
+                "lead": "openphish",
             }
         )
     return candidates
+
+
+def attach_evidence(candidates: list[dict], snapshots: list[feeds.Snapshot]) -> None:
+    """Give each candidate an evidence block. Unread sources stay marked unread."""
+    for c in candidates:
+        if c.get("lead") == "openphish":
+            lead = evidence.openphish_listing(c.get("scanned_at"))
+        else:
+            lead = evidence.urlscan_record(c.get("public_record_url"), c.get("urlscan_source"),
+                                           c.get("urlscan_tags"), c.get("scanned_at"))
+        final = (c.get("defanged_domain") or "").replace("[.]", ".") or None
+        c["evidence"] = evidence.assess(c["defanged_url"], lead=lead, snapshots=snapshots,
+                                        final_host=final if c.get("lead") != "openphish" else None,
+                                        captured_at=c.get("scanned_at"))
 
 
 def filter_fresh(candidates: list[dict], known_ids: set[str]) -> list[dict]:
@@ -165,6 +183,10 @@ def filter_fresh(candidates: list[dict], known_ids: set[str]) -> list[dict]:
     return fresh
 
 
+def _no_private(obj):
+    raise TypeError(f"unserializable {type(obj).__name__}")
+
+
 def main() -> int:
     reviews_data = load_json(REVIEWS_PATH, {"items": []})
     seen_ids = set(load_json(SEEN_PATH, []))
@@ -176,12 +198,18 @@ def main() -> int:
     def eligible(candidates):
         return [c for c in candidates if not is_excluded(reviews_data, c["id"])]
 
+    openphish = feeds.fetch_openphish()
     fresh = filter_fresh(eligible(fetch_urlscan_candidates(limit=25)), known_ids)
     if not fresh:
-        fresh = filter_fresh(eligible(fetch_openphish_candidates(limit=25)), known_ids)
+        fresh = filter_fresh(eligible(fetch_openphish_candidates(limit=25, snapshot=openphish)), known_ids)
+    if fresh:
+        snapshots = [feeds.fetch_phishtank(), openphish]
+        for snap in snapshots:
+            print(f"[evidence] {snap.source}: {snap.status} ({snap.detail})", file=sys.stderr)
+        attach_evidence(fresh, snapshots)
 
     out_path = ROOT / "data" / "pending_candidates.json"
-    out_path.write_text(json.dumps(fresh, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    out_path.write_text(json.dumps(fresh, indent=2, ensure_ascii=True, default=_no_private) + "\n", encoding="utf-8")
 
     if fresh:
         for c in fresh:

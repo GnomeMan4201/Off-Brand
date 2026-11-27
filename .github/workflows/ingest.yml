@@ -20,6 +20,9 @@ jobs:
       - name: Run ingestion (no target contact)
         env:
           URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          # Optional: only pre-2020 PhishTank accounts have keys; without one the public
+          # dump is used and allows a few downloads per day.
+          PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
         run: python3 scripts/ingest.py
 
       - name: Open GitHub Issues for human review
@@ -31,6 +34,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "scripts")
           from voices import assign_batch, assignment_markdown
+          from evidence import issue_lines
 
           p = Path("data/pending_candidates.json")
           if not p.exists():
@@ -54,6 +58,8 @@ jobs:
                   "### Auto-detected tells",
                   *[f"- {t}" for t in c.get("auto_tells", [])],
                   "",
+                  *(issue_lines(c["evidence"]) if c.get("evidence") else ["### Evidence level: not assessed"]),
+                  "",
                   *assignment_markdown(a),
                   "",
                   "### How to publish from your phone",
@@ -70,6 +76,7 @@ jobs:
                   f"voice: {a['voice']}",
                   f"edge: {a['edge']}",
                   "```",
+                  "Unverified or Disputed specimens also need `evidence_ack: <why it still airs>`.",
               ])
               title = f"[Triage] {c.get('defanged_domain') or c['id']}"
               subprocess.run(

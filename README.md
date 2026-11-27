@@ -70,6 +70,7 @@ A report is a lead, not a verdict. Some records are held back when the evidence 
 
 - Each published review links to a public scan record. Captures document a moment, not the entire history or behavior of a site.
 - Source classifications are attributed to their sources. Suspicious or reported does not automatically mean confirmed phishing.
+- Each new review carries an Evidence Locker: a level (Corroborated, Source-confirmed, Suspected, Unverified or Disputed), the reason for it, the records behind it and the sources that could not be checked. Earlier reviews are marked Not yet rated.
 - Ratings and verdicts are satirical editorial judgments, not measured risk scores. Comedy targets deceptive design, not victims, nationalities or impersonated brands.
 - Missing evidence is identified as missing. Publication requires editorial approval.
 - Suspect addresses are defanged and non-clickable. Collection reads public scan records and feeds rather than visiting suspect sites.

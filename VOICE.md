@@ -11,6 +11,34 @@ Off-Brand reviews phishing pages the way a sharp, slightly mean critic reviews c
 5. **One strong line beats three okay ones.** Cut the second joke in a sentence.
 6. **Safety advice is never a punchline.** Advice like "never share your recovery phrase" is stated plainly. Only the setup around it is funny.
 
+## What to Notice: three kinds of claim
+
+Every tell is one of three things. Keep them distinguishable in the wording.
+
+- **Observed:** visible in the saved screenshot or present in the scan record ("the page asks for a card number to pay a $1.99 redelivery fee"). Say where you saw it.
+- **Verified:** stated by an outside record in the Evidence Locker ("PhishTank verified this exact page"). Name the source.
+- **Inferred:** your analysis of why it works or what it is for ("each social button is another chance to collect a different sign-in"). Phrase it as analysis, not fact.
+
+Aim past typography and clip art. The useful tells are the ones that still work on a polished page: the claimed brand versus the actual hosting domain, the login or payment form, the urgency or authority it leans on, where the scan ended up after redirects, and what the page asks for that the real service never would.
+
+Never claim a technical finding the screenshot or record does not show. A screenshot cannot prove where a button posts, what a script does or that credentials were stolen.
+
+Vary the joke shapes. Avoid stock openers such as "Nothing says…".
+
+## Evidence levels
+
+Each triage issue carries an **Evidence level**, worked out by `scripts/evidence.py` from the source records, never from the review text:
+
+| Level | Meaning |
+|---|---|
+| Corroborated | Two or more independent, credible sources list this exact page. |
+| Source-confirmed | A source that verifies submissions (PhishTank) verified this exact page. |
+| Suspected | A feed label, an automated listing or a record for another page on the same host, but nothing verified this page. |
+| Unverified | No supporting record in the sources that could be checked. |
+| Disputed | A record conflicts with the phishing classification. |
+
+A source that could not be read is shown as *not checked*, never as "no record". Records that trace back to the same feed count once. Unverified and Disputed specimens publish only with an `evidence_ack:` line in your review explaining why the page still deserves air time; the note is shown publicly. Reviews published before evidence levels show **Not yet rated** and keep their original record link; nothing is added to them retroactively.
+
 ## Voice rotation (keeps it from going stale)
 
 Each new triage issue comes with a **writing assignment**: one of 12 comedic voices plus an edge level. They're picked by `scripts/voices.py` and defined in `data/voices.json`.

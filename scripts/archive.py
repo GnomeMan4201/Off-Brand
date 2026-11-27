@@ -1,7 +1,8 @@
 """Collect public urlscan.io scan records and their archived screenshots into archive/.
 
-Nothing here contacts a suspicious site: only urlscan.io is fetched (search API and
-its stored screenshots). Collecting never opens an issue.
+Nothing here contacts a suspicious site: urlscan.io is fetched for its search API and
+stored screenshots, and the PhishTank dump and OpenPhish feed are each downloaded once
+per run for local evidence lookups (scripts/feeds.py). Collecting never opens an issue.
 
 Two sweeps share one engine and are tracked in data/archive_state.json:
 - "scheduled": newest captures down to the last completed sweep's watermark.
@@ -27,6 +28,8 @@ from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID
 
+import evidence
+import feeds
 from ingest import URLSCAN_FREE_QUERY, load_json
 from shelf import Shelf, assert_separate_checkout, shelf_dir
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
@@ -437,6 +440,35 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: She
     return stats
 
 
+def needs_assessment(spec: dict) -> bool:
+    ev = spec.get("evidence")
+    return not ev or any(s.get("status") != "ok" for s in (ev.get("sources") or {}).values())
+
+
+def assess_specimens(index: dict, snapshots: list, limit: int = 500, now: str | None = None) -> dict:
+    """Attach or refresh evidence on the newest specimens that lack a complete check.
+
+    A specimen keeps a previous assessment if this run could read none of the feeds,
+    so an outage never replaces real findings with an emptier result.
+    """
+    counts = {"assessed": 0, "kept": 0}
+    any_ok = any(s.ok for s in snapshots)
+    for spec in index.get("specimens", [])[:limit]:
+        if not needs_assessment(spec):
+            continue
+        if spec.get("evidence") and not any_ok:
+            counts["kept"] += 1
+            continue
+        cls = spec.get("classification") or {}
+        lead = evidence.urlscan_record(spec.get("source_record_url"), cls.get("source"),
+                                       cls.get("tags"), spec.get("captured_at"))
+        final = (spec.get("defanged_domain") or "").replace("[.]", ".") or None
+        spec["evidence"] = evidence.assess(spec["defanged_url"], lead=lead, snapshots=snapshots,
+                                           final_host=final, captured_at=spec.get("captured_at"), now=now)
+        counts["assessed"] += 1
+    return counts
+
+
 def format_mb(n: int) -> str:
     return f"{n / (1024 * 1024):.1f} MB"
 
@@ -471,6 +503,11 @@ def main(argv: list[str] | None = None) -> int:
                       max_pages=max(1, args.max_pages), max_new=max(1, args.max_new),
                       max_seconds=args.max_seconds, dry_run=args.dry_run, restart=args.restart,
                       save=save)
+    snapshots = [feeds.fetch_phishtank(), feeds.fetch_openphish()]
+    stats["evidence_sources"] = {s.source: s.status for s in snapshots}
+    stats["evidence"] = assess_specimens(index, snapshots)
+    if not args.dry_run:
+        save()
     print(json.dumps(stats, indent=2))
     label = "DRY RUN: would add" if args.dry_run else "Added"
     print(f"{label} {stats['added']} specimen(s); {stats['repeat']} repeat, "

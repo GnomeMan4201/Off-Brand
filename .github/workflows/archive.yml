@@ -1,6 +1,7 @@
 name: Collect Specimen Archive
 
-# Collects public urlscan.io scan records + saved screenshots into the PRIVATE shelf repo.
+# Collects public urlscan.io scan records + saved screenshots into the PRIVATE shelf repo,
+# then looks each specimen up in the PhishTank dump and OpenPhish feed (downloaded once).
 # Never opens issues and never writes to this public repo. Manual runs default to a dry run.
 # The daily schedule only runs when the repository variable ARCHIVE_SCHEDULE_ENABLED is "true"
 # Needs: variable SHELF_REPO (owner/name) and secret SHELF_TOKEN (access to that repo only).
@@ -69,6 +70,7 @@ jobs:
       - name: Collect (urlscan.io only, no target contact)
         env:
           URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
           MODE: ${{ inputs.mode || 'scheduled' }}
           DAYS: ${{ inputs.days || '7' }}
           MAX_PAGES: ${{ inputs.max_pages || '5' }}

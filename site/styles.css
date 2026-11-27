@@ -539,6 +539,47 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   line-height: 1.52;
 }
 
+/* Evidence locker: a stamped case file inside the fact file */
+.locker {
+  margin-top: 18px;
+  padding: 12px 14px 10px;
+  border: 2px dashed rgba(255, 225, 77, 0.55);
+  background: rgba(5, 10, 48, 0.38);
+  --stamp: var(--yellow);
+}
+.locker-suspected { --stamp: #ffb347; }
+.locker-unverified, .locker-legacy { --stamp: #d8e2ff; }
+.locker-disputed { --stamp: #ff7ab8; }
+.locker-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.locker-head h3 { margin: 0; font: 400 24px/1 var(--tty); color: #9fe8ff; letter-spacing: 0.04em; }
+.locker-stamp {
+  font: 400 22px/1 var(--tty);
+  color: var(--stamp);
+  border: 3px double var(--stamp);
+  padding: 3px 10px 1px;
+  transform: rotate(-2deg);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.locker-reason { margin: 10px 0 0; font-size: 15.5px; line-height: 1.5; max-width: 66ch; }
+.locker-ack { margin: 8px 0 0; font-size: 14.5px; line-height: 1.45; color: #ffe9a8; max-width: 66ch; }
+.locker .evidence { margin-top: 10px; }
+.locker .evidence summary { font-size: 20px; }
+.locker-tag {
+  font: 700 11px/1 var(--sans);
+  letter-spacing: 0.08em;
+  color: var(--tele-deep);
+  background: var(--stamp);
+  padding: 2px 5px;
+  vertical-align: 1px;
+}
+.locker-against { border-left-color: #ff7ab8 !important; }
+.locker-link { color: var(--yellow); font-weight: 800; white-space: nowrap; }
+.locker-source, .locker-limit { font-size: 14px !important; color: var(--tele-ink); }
+.locker-record, .locker-source, .locker-limit { overflow-wrap: anywhere; }
+.locker-dates { margin: 10px 0 0; font: 18px/1.1 var(--tty); color: #9fe8ff; }
+.locker-dates span { white-space: nowrap; }
+
 .fact-meta {
   margin-top: 18px;
   display: grid;
