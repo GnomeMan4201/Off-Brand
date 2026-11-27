@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -122,6 +123,24 @@ def open_page(browser, base_url, *, mobile=False, reduce=False, block_video=Fals
         page.wait_for_selector("#originals:not([hidden])")
     return page
 
+
+
+def wait_until(page, js, timeout=5000, interval=50):
+    """Poll a page expression from Python.
+
+    page.wait_for_function() with an expression string makes Playwright compile
+    that string inside the page while polling, which the site's CSP
+    (script-src 'self', no 'unsafe-eval') correctly refuses with an EvalError.
+    page.evaluate() runs over the DevTools protocol instead, so the CSP stays
+    exactly as strict as production and the test still waits for the condition.
+    """
+    deadline = time.monotonic() + timeout / 1000
+    while True:
+        if page.evaluate(js):
+            return
+        if time.monotonic() > deadline:
+            raise AssertionError(f"timed out after {timeout} ms waiting for: {js}")
+        page.wait_for_timeout(interval)
 
 def ch(page):
     return int(re.search(r"CH (\d+)", page.inner_text("#now")).group(1))
@@ -493,7 +512,7 @@ def test_channel_sound_is_gesture_only_and_preference_persists(browser, base_url
     assert toggle.get_attribute("aria-pressed") == "true"
     assert page.evaluate("window.tuningStarts") == 0
     page.click("#next")
-    page.wait_for_function("window.tuningStarts === 1", timeout=5000)
+    wait_until(page, "window.tuningStarts === 1", timeout=5000)
     page.locator("#lineup button[aria-current='true']").click()
     assert page.evaluate("window.tuningStarts") == 1
     toggle.click()
@@ -510,7 +529,7 @@ def test_channel_sound_is_gesture_only_and_preference_persists(browser, base_url
     toggle.click()
     page.focus("#screen")
     page.keyboard.press("ArrowLeft")
-    page.wait_for_function("window.tuningStarts === 1", timeout=5000)
+    wait_until(page, "window.tuningStarts === 1", timeout=5000)
     assert not page.problems, page.problems
     page.context.close()
 
@@ -520,9 +539,9 @@ def test_recorded_cues_differ_for_channel_and_commercial(browser, base_url):
     for _ in range(PAST_THRESHOLD):
         page.click("#next")
         if page.locator(".bumper").count():
-            page.wait_for_function("window.tuningDurations.at(-1) > 0.8", timeout=5000)
+            wait_until(page, "window.tuningDurations.at(-1) > 0.8", timeout=5000)
             break
-        page.wait_for_function("window.tuningDurations.length > 0 && window.tuningDurations.at(-1) < 0.6", timeout=5000)
+        wait_until(page, "window.tuningDurations.length > 0 && window.tuningDurations.at(-1) < 0.6", timeout=5000)
         page.wait_for_timeout(550)
     else:
         raise AssertionError("commercial break did not occur")
@@ -542,4 +561,20 @@ def test_missing_recorded_sound_does_not_block_tuning(browser, base_url):
     page.click("#next")
     assert ch(page) == expected_next(page, before)
     assert not [p for p in page.problems if p.startswith("pageerror")], page.problems
+    page.context.close()
+
+
+def test_no_specimen_widens_the_page_on_a_phone(browser, base_url):
+    """Every published review must fit a 390 px screen, however long its defanged addresses."""
+    items = json.loads((ROOT / "data" / "reviews.json").read_text(encoding="utf-8"))["items"]
+    page = open_page(browser, base_url, mobile=True, reduce=True,
+                     init="try { localStorage.setItem('offbrand.breaks.enabled', 'off'); } catch (e) {}")
+    wide = []
+    for n, item in enumerate(items, 1):
+        page.evaluate(f"location.hash = {json.dumps('#' + item['id'])}")
+        wait_until(page, f"document.getElementById('now').textContent.includes('CH {n:02d}')", timeout=3000)
+        width = page.evaluate("document.documentElement.scrollWidth")
+        if width > 390:
+            wide.append(f"CH {n:02d} {item['knockoff_label']}: {width}px")
+    assert not wide, wide
     page.context.close()

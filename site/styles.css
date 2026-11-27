@@ -263,6 +263,11 @@ button { font: inherit; cursor: pointer; }
   .listing .watch-btn { grid-column: 1 / -1; justify-self: start; }
 }
 
+/* Long defanged addresses (hxxps://brand[.]long-host[.]top/path) are single
+   unbreakable tokens. Let review text wrap anywhere so no specimen can push the
+   page wider than a phone screen. */
+.lead-tell, .evidence p, .chyron p, .rejected-list p, .rejected-list strong, .ch-text strong { overflow-wrap: anywhere; }
+
 /* ---------- motion ---------- */
 @keyframes jitter { 0%, 100% { transform: none; } 25% { transform: translate(-3px, 2px) skewX(-6deg); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(0, 3px) skewX(4deg); } }
 @keyframes blink { 50% { opacity: 0; } }
