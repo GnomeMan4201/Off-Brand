@@ -1,56 +1,116 @@
 # OFF-BRAND
 
+[![OFF-BRAND After Dark — independent transmission. Please do not adjust your set.](docs/media/station-id.svg)](https://gnomeman4201.github.io/Off-Brand/)
+
 **The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201**
 
-A late-night television station for the internet's questionable merchandise. Off-Brand is a screenshot comedy zine about phishing, impersonation and the warning signs hiding in plain sight.
+[**WATCH THE BROADCAST ↗**](https://gnomeman4201.github.io/Off-Brand/) · [Editorial standards](VOICE.md) · [Station maintenance](docs/MAINTAINING.md)
 
-**[Watch Off-Brand After Dark](https://gnomeman4201.github.io/Off-Brand/)**
+---
 
-## The broadcast
+## Somewhere between a security blog and a television station nobody asked for.
 
-- **Tonight's lineup:** browse reviews by channel, brand, domain or aisle.
-- **What to notice:** a fact file and practical observations tied to each public scan record.
-- **CH 00 — Off-Brand Originals:** fictional commercials, available on demand and during optional commercial breaks.
-- **Held back at review:** records excluded from publication and the reasons for those decisions.
-- **Phishing field guide:** practical advice for recognizing, verifying and reporting suspicious requests.
+I collect real pages from public phishing scan records, review them, and turn them into late-night television.
 
-## Editorial standards
+There are channels, questionable commercials, a ticker full of bad decisions, and an actual investigation hiding underneath the jokes.
 
-The specimens are real captured pages, not reconstructed scam websites. Each published review links to its public record. Source classifications are attributed to the source; a suspicious or reported page is not automatically confirmed phishing. A screenshot documents one moment and cannot establish everything that happened before or after capture.
+Some pages look ridiculous. Some look exactly like the real thing. That's the part worth paying attention to.
 
-The ratings and verdicts are satirical editorial judgments, not measured risk scores. The comedy targets deceptive design, not victims, nationalities or the brands being impersonated. Missing evidence is identified as missing rather than filled in with guesses.
+[![The actual Off-Brand desktop broadcast interface playing a fictional station recap, with channel guide and search controls](docs/media/broadcast-desktop.jpg)](https://gnomeman4201.github.io/Off-Brand/)
 
-Reviews are subject to editorial approval. Creative production may be AI-assisted; fictional commercials and their imagery are separate from the public scan evidence. See the [editorial guide](VOICE.md) for review standards.
+<sub>Desktop capture of the deployed interface, November 27, 2026. CH 00 is playing fictional station programming.</sub>
 
-## Safety and privacy
+## The good stuff is underneath the joke.
 
-- Suspect addresses are defanged and are not clickable.
-- Collection reads public scan records and feeds rather than visiting suspect sites.
-- Captured text is treated as untrusted data and displayed as plain text.
-- The site uses a restrictive content security policy. Screenshots are served from urlscan.io; commercial media, fonts and sounds are served locally.
-- A source may remove a public screenshot or record at any time. Its scan date is not proof that the suspect site is still active.
-- Unapproved archived specimens and draft reviews are maintained separately in a private repository.
+Every reviewed specimen has a **What to Notice** section. That's where the comedy stops and the evidence starts.
 
-## Repository
+| From the broadcast | From the fact file |
+| --- | --- |
+| [Spotify Login (Cellar-Aged Domain)](https://gnomeman4201.github.io/Off-Brand/#urlscan-01a1f8dd-b83d-7541-b503-42125f30510e) | A familiar sign-in screen hosted in an unrelated domain's images directory. |
+| [Netflix Sign-In (Site-Builder Edition)](https://gnomeman4201.github.io/Off-Brand/#urlscan-01a217c3-10b8-71e9-ba7a-64c078f954cc) | A convincing copy on a website-builder subdomain rather than the service's own domain. |
+| [USPS Redelivery (Card Required)](https://gnomeman4201.github.io/Off-Brand/#urlscan-01a1a583-5919-702e-b4e1-d2330a5d977e) | A small redelivery fee alongside a request for extensive payment and contact information. |
 
-Off-Brand is a static site published using GitHub Pages. The collection, review, approval and publication workflows run through GitHub Actions.
+Each links to a published review with its source record. These observations describe the available evidence; they do not establish that anyone's credentials were stolen.
+
+The point isn't to get better at spotting ugly websites. It's to get better at questioning convincing ones.
+
+---
+
+## We'll be right back after these questionable messages.
+
+<table>
+<tr>
+<td width="37%" valign="top">
+<a href="https://gnomeman4201.github.io/Off-Brand/#originals"><img src="docs/media/originals-mobile.jpg" alt="Mobile view of the actual Off-Brand Originals program guide"></a>
+</td>
+<td width="63%" valign="top">
+<h3>CH 00 — Off-Brand Originals</h3>
+<p>Because apparently a phishing zine needed its own commercial breaks.</p>
+<img src="site/commercials/night-estimates.jpg" alt="Night Estimates fictional animated commercial poster">
+<p><b>Night Estimates.</b> Free Quote and Calculator work the overnight desk.</p>
+<img src="site/commercials/somebody-stole-infinity.jpg" alt="Somebody Stole Infinity fictional commercial poster">
+<p><b>Somebody Stole Infinity.</b> Two museum guards. One missing exhibit. Thirty-two pixels of trouble.</p>
+<p><a href="https://gnomeman4201.github.io/Off-Brand/#originals"><b>WATCH CH 00 ↗</b></a></p>
+</td>
+</tr>
+</table>
+
+<sub>Mobile interface capture, November 27, 2026. The commercials are fictional productions, may be AI-assisted, and are not phishing evidence. No actual sponsors.</sub>
+
+---
+
+## Not everything makes it on air.
+
+A report is a lead, not a verdict. Some records are held back when the evidence doesn't support publication. The site includes the reasons for exclusion, as well as a field guide for recognizing, verifying and reporting suspicious requests.
+
+**The captures are real. The commercials are fictional. The ratings are jokes. The source records are evidence.**
+
+<details>
+<summary><b>Station policy — evidence, editorial standards and safety</b></summary>
+
+- Each published review links to a public scan record. Captures document a moment, not the entire history or behavior of a site.
+- Source classifications are attributed to their sources. Suspicious or reported does not automatically mean confirmed phishing.
+- Ratings and verdicts are satirical editorial judgments, not measured risk scores. Comedy targets deceptive design, not victims, nationalities or impersonated brands.
+- Missing evidence is identified as missing. Publication requires editorial approval.
+- Suspect addresses are defanged and non-clickable. Collection reads public scan records and feeds rather than visiting suspect sites.
+- Captured text is treated as untrusted data and rendered as plain text. A restrictive content security policy limits resources; scan screenshots are served from urlscan.io, while commercial media, fonts and sounds are local.
+- Public records and screenshots may disappear; a scan date does not establish that a site is still active. Unapproved specimens and drafts are maintained separately in a private repository.
+- Off-Brand is an editorial publication, not a detection service or live blocklist.
+
+Read the [editorial guide](VOICE.md).
+
+</details>
+
+<details>
+<summary><b>Behind the broadcast — repository and maintenance</b></summary>
+
+Off-Brand is a static GitHub Pages site. GitHub Actions handles collection, review, explicit editorial approval and publication.
 
 | Path | Purpose |
 | --- | --- |
-| `site/` | Broadcast interface, player, commercial assets and local resources |
-| `data/reviews.json` | Published reviews and excluded-record log |
-| `data/voices.json` | Editorial voice and tone definitions |
+| `site/` | Broadcast interface, player, commercials and local resources |
+| `data/reviews.json` | Published reviews and exclusion log |
+| `data/voices.json` | Editorial voices and tone |
 | `data/seen.json` | Candidate deduplication |
 | `scripts/` | Collection, sanitization, archive and publication tooling |
-| `.github/workflows/` | Collection, approval and deployment workflows |
+| `.github/workflows/` | Collection, approval and deployment |
 | `tests/` | Automated regression tests |
+| `docs/media/` | README station artwork and interface captures |
 
-See [maintenance documentation](docs/MAINTAINING.md) for configuration, review publication, commercial management and local testing.
+See [maintenance documentation](docs/MAINTAINING.md) for setup, publication, commercial management and local checks.
 
-## Credits
+Public scan records and screenshots: [urlscan.io](https://urlscan.io). Candidate-feed fallback: [OpenPhish](https://openphish.com). Published reviews currently use public urlscan records.
 
-Public scan records and screenshots: [urlscan.io](https://urlscan.io). Candidate-feed fallback: [OpenPhish](https://openphish.com). The currently published review collection uses public urlscan records.
+[Sound credits](site/sounds/SOURCES.md) · [Font licenses](site/fonts/) · [badBANANA Research Collective](https://badbananaresearch.com)
 
-[Broadcast sound sources](site/sounds/SOURCES.md) · [Font licenses](site/fonts/)
+</details>
 
-Off-Brand is a [badBANANA Research Collective](https://badbananaresearch.com) project.
+---
+
+<div align="center">
+
+**THIS CONCLUDES ABSOLUTELY NOTHING.**
+
+[**RETURN TO THE BROADCAST ↗**](https://gnomeman4201.github.io/Off-Brand/)
+
+</div>
