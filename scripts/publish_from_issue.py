@@ -10,7 +10,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from evidence import LABELS, NEEDS_ACK, sanitize_evidence
+from evidence import LABELS, PUBLISHABLE, sanitize_evidence
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 from voices import load_roster, validate as validate_voice
 
@@ -28,7 +28,7 @@ def parse_kv_block(text: str) -> dict[str, str]:
 
 
 REVIEW_FIELDS = {"brand", "aisle", "knockoff_label", "verdict", "rating",
-                 "sketchy_segment", "tells", "critic_note", "voice", "edge", "evidence_ack"}
+                 "sketchy_segment", "tells", "critic_note", "voice", "edge"}
 
 
 def parse_review_block(text: str) -> dict[str, str]:
@@ -58,23 +58,26 @@ def is_excluded(data: dict, specimen_id: str) -> bool:
                for row in data.get("rejected_log", []))
 
 
-def evidence_for(meta: dict, review: dict) -> tuple[dict | None, str | None]:
-    """(evidence to publish, error). Issues from before evidence levels carry none."""
+def evidence_for(meta: dict) -> tuple[dict | None, str | None]:
+    """(public evidence to publish, error).
+
+    Publication requires an evidence block whose level, recomputed from its own records
+    with private-triage sources removed, is Corroborated, Source-confirmed or Suspected.
+    Nothing in the review comment can raise or override it.
+    """
     raw = meta.get("evidence_json")
     if raw is None:
-        return None, None
+        return None, ("No evidence block on this issue. Re-run intake or the shelf collector so the "
+                      "specimen is assessed before publishing.")
     try:
         ev = sanitize_evidence(json.loads(raw))
-    except (json.JSONDecodeError, TypeError, AttributeError, KeyError):
+    except (json.JSONDecodeError, TypeError, AttributeError, KeyError, ValueError):
         ev = None
     if ev is None:
-        return None, "The issue's evidence block is malformed; refusing to publish without it."
-    if ev["level"] in NEEDS_ACK:
-        ack = sanitize_text(review.get("evidence_ack"), max_len=240)
-        if not ack:
-            return None, (f"Evidence level is {LABELS[ev['level']]}: add an evidence_ack: line "
-                          "explaining why this specimen should still air.")
-        ev["editor_ack"] = ack
+        return None, "The issue's evidence block is malformed or inconsistent; refusing to publish."
+    if ev["level"] not in PUBLISHABLE:
+        return None, (f"Evidence level is {LABELS[ev['level']]}; it cannot be published. "
+                      "Unverified and Disputed specimens stay off the air.")
     return ev, None
 
 
@@ -115,7 +118,7 @@ def main() -> int:
         if sanitize_text(t, max_len=280)
     ]
 
-    ev, ev_error = evidence_for(meta, review)
+    ev, ev_error = evidence_for(meta)
     if ev_error:
         print(ev_error, file=sys.stderr)
         return 1
@@ -147,8 +150,7 @@ def main() -> int:
     }
     if review.get("sketchy_segment"):
         entry["sketchy_segment"] = sanitize_text(review["sketchy_segment"], max_len=120)
-    if ev:
-        entry["evidence"] = ev
+    entry["evidence"] = ev
     if voice:
         entry["voice"], entry["voice_name"], entry["edge"] = voice
         entry["edge_name"] = edge_names[str(voice[2])]["name"]

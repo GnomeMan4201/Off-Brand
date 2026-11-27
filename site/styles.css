@@ -482,6 +482,7 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   border-bottom: 3px solid var(--hot);
 }
 .address-note { margin: 8px 0 0; font-size: 13.5px; color: var(--yellow); font-weight: 600; }
+.address-caution { margin: 8px 0 0; padding: 6px 10px; border: 2px dashed #ffb347; color: #ffd8a8; font-size: 13.5px; font-weight: 700; max-width: 66ch; }
 
 /* ---------- WHAT TO NOTICE: the fact file ---------- */
 .fact-file {

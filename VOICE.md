@@ -31,13 +31,13 @@ Each triage issue carries an **Evidence level**, worked out by `scripts/evidence
 
 | Level | Meaning |
 |---|---|
-| Corroborated | Two or more independent, credible sources list this exact page. |
+| Corroborated | A verifying source verified this exact page and at least one other independent, credible source lists it. |
 | Source-confirmed | A source that verifies submissions (PhishTank) verified this exact page. |
-| Suspected | A feed label, an automated listing or a record for another page on the same host, but nothing verified this page. |
+| Suspected (not confirmed) | A feed label, an automated listing or a record for another page on the same host, but nothing verified this page. Always shown on air as not confirmed. |
 | Unverified | No supporting record in the sources that could be checked. |
 | Disputed | A record conflicts with the phishing classification. |
 
-A source that could not be read is shown as *not checked*, never as "no record". Records that trace back to the same feed count once. Unverified and Disputed specimens publish only with an `evidence_ack:` line in your review explaining why the page still deserves air time; the note is shown publicly. Reviews published before evidence levels show **Not yet rated** and keep their original record link; nothing is added to them retroactively.
+A source that could not be read is shown as *not checked*, never as "no record". Records that trace back to the same feed count once. Unverified and Disputed specimens are not published. Suspected specimens may air, but only labelled *Suspected, not confirmed phishing*; write the review accordingly ("this page shows the signs" rather than "this phishing site"). The level comes from the records alone; nothing in your review can raise it. OpenPhish listings help triage but are never shown publicly (see docs/SOURCES.md). Reviews published before evidence levels show **Not yet rated** and keep their original record link; nothing is added to them retroactively.
 
 ## Voice rotation (keeps it from going stale)
 

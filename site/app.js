@@ -194,6 +194,10 @@ function renderAddress(item) {
   }
   box.appendChild(p);
   if (seg) box.appendChild(el("p", "address-note", "Highlighted: the address detail flagged in the review · " + seg));
+  if (item.evidence && item.evidence.level === "suspected") {
+    box.appendChild(el("p", "address-caution",
+      "Suspected, not confirmed phishing. The signs are here, but no source has verified this page. See the evidence locker."));
+  }
   return box;
 }
 
@@ -208,7 +212,7 @@ const EVIDENCE_LINK_RES = [
 const EVIDENCE_LEVELS = {
   "corroborated": { label: "CORROBORATED", blurb: "Independent sources list this exact page." },
   "source-confirmed": { label: "SOURCE-CONFIRMED", blurb: "A verifying source confirmed this exact page." },
-  "suspected": { label: "SUSPECTED", blurb: "Indicators exist, but nothing verified this page." },
+  "suspected": { label: "SUSPECTED · NOT CONFIRMED", blurb: "Indicators exist, but no source verified this page as phishing." },
   "unverified": { label: "UNVERIFIED", blurb: "No supporting record in the sources checked." },
   "disputed": { label: "DISPUTED", blurb: "The available records conflict." },
 };
@@ -899,7 +903,8 @@ async function init() {
       b.appendChild(el("span", "ch-num", pad2(i + 1)));
       const text = el("span", "ch-text");
       text.appendChild(el("strong", null, item.knockoff_label));
-      text.appendChild(el("span", null, item.aisle || "Uncategorized"));
+      const suspected = item.evidence && item.evidence.level === "suspected";
+      text.appendChild(el("span", null, (item.aisle || "Uncategorized") + (suspected ? " · suspected, not confirmed" : "")));
       b.appendChild(text);
       b.addEventListener("click", () => {
         tune(i, true);

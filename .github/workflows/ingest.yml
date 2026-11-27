@@ -58,7 +58,7 @@ jobs:
                   "### Auto-detected tells",
                   *[f"- {t}" for t in c.get("auto_tells", [])],
                   "",
-                  *(issue_lines(c["evidence"]) if c.get("evidence") else ["### Evidence level: not assessed"]),
+                  *(issue_lines(c["evidence"], private=False) if c.get("evidence") else ["### Evidence level: not assessed"]),
                   "",
                   *assignment_markdown(a),
                   "",
@@ -76,7 +76,6 @@ jobs:
                   f"voice: {a['voice']}",
                   f"edge: {a['edge']}",
                   "```",
-                  "Unverified or Disputed specimens also need `evidence_ack: <why it still airs>`.",
               ])
               title = f"[Triage] {c.get('defanged_domain') or c['id']}"
               subprocess.run(

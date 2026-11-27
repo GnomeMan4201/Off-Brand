@@ -41,6 +41,13 @@ def staged(tmp_path_factory):
     if len(data["items"]) < 2:
         pytest.skip("needs two published specimens")
     data["items"][0] = dict(data["items"][0], evidence=SYNTHETIC)
+    if len(data["items"]) >= 3:
+        data["items"][2] = dict(data["items"][2], evidence=dict(
+            SYNTHETIC, level="suspected", editor_ack=None,
+            reason="urlscan.io: scan submitted from the PhishTank feed; no source verified this page.",
+            records=[SYNTHETIC["records"][0] | {"source": "urlscan.io", "strength": "label",
+                                                 "detail": "scan submitted from the PhishTank feed",
+                                                 "record_url": "https://urlscan.io/result/01a1f8dd-b83d-7541-b503-42125f30510e/"}]))
     (out / "data" / "reviews.json").write_text(json.dumps(data), encoding="utf-8")
     index = out / "index.html"
     index.write_text(index.read_text(encoding="utf-8").replace("__BUILD__", "e2e"), encoding="utf-8")
@@ -115,4 +122,20 @@ def test_locker_fits_small_phones(browser, staged, width):
     right = page.evaluate("Math.max(...[...document.querySelectorAll('.locker, .locker *')].map(e => e.getBoundingClientRect().right))")
     assert right <= width + 0.5
     assert page.evaluate("document.documentElement.scrollWidth") <= width
+    ctx.close()
+
+
+def test_suspected_is_never_presented_as_confirmed(browser, staged):
+    url, items = staged
+    if len(items) < 3:
+        pytest.skip("needs three published specimens")
+    ctx, page = tune(browser, url, items[2])
+    assert page.locator(".locker-stamp").inner_text() == "SUSPECTED · NOT CONFIRMED"
+    caution = page.locator(".address-caution")
+    assert caution.count() == 1 and "not confirmed phishing" in caution.inner_text()
+    lineup = page.locator(f"#lineup button[data-i='2']").inner_text()
+    assert "suspected, not confirmed" in lineup
+    # Confirmed and legacy specimens carry no caution line.
+    page.evaluate(f"location.hash = {json.dumps('#' + items[0]['id'])}")
+    wait_until(page, "!document.querySelector('.address-caution')")
     ctx.close()

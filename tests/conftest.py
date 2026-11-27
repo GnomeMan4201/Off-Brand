@@ -18,9 +18,9 @@ _real_http_get = feeds._http_get
 
 @pytest.fixture(autouse=True)
 def no_live_feeds(monkeypatch):
-    def guarded(url, max_bytes, opener=None):
+    def guarded(url, max_bytes, opener=None, headers=None):
         if opener is None:
             raise URLError("live feed access is disabled in tests")
-        return _real_http_get(url, max_bytes, opener)
+        return _real_http_get(url, max_bytes, opener, headers)
 
     monkeypatch.setattr(feeds, "_http_get", guarded)

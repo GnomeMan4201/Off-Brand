@@ -442,7 +442,10 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: She
 
 def needs_assessment(spec: dict) -> bool:
     ev = spec.get("evidence")
-    return not ev or any(s.get("status") != "ok" for s in (ev.get("sources") or {}).values())
+    if not ev or ev.get("version") != evidence.VERSION:
+        return True
+    return any(s.get("status") != "ok" or (s.get("detail") or "").endswith("(carried from an earlier check)")
+               for s in (ev.get("sources") or {}).values())
 
 
 def assess_specimens(index: dict, snapshots: list, limit: int = 500, now: str | None = None) -> dict:
@@ -463,8 +466,10 @@ def assess_specimens(index: dict, snapshots: list, limit: int = 500, now: str | 
         lead = evidence.urlscan_record(spec.get("source_record_url"), cls.get("source"),
                                        cls.get("tags"), spec.get("captured_at"))
         final = (spec.get("defanged_domain") or "").replace("[.]", ".") or None
+        previous = spec.get("evidence") if (spec.get("evidence") or {}).get("version") == evidence.VERSION else None
         spec["evidence"] = evidence.assess(spec["defanged_url"], lead=lead, snapshots=snapshots,
-                                           final_host=final, captured_at=spec.get("captured_at"), now=now)
+                                           final_host=final, captured_at=spec.get("captured_at"),
+                                           previous=previous, now=now)
         counts["assessed"] += 1
     return counts
 

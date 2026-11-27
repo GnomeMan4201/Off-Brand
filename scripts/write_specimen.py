@@ -56,7 +56,7 @@ def build_body(spec: dict, bullets: list[dict], shelf_repo: str) -> str:
         "### Evidence (attributed; nothing here is written copy)",
         *[f"- {b['text']} _({b['source']})_" for b in bullets],
         "",
-        *(issue_lines(spec["evidence"]) if spec.get("evidence") else ["### Evidence level: not assessed"]),
+        *(issue_lines(spec["evidence"], private=True) if spec.get("evidence") else ["### Evidence level: not assessed"]),
         "",
         "### How to publish from your phone",
         "Reply with a comment using these `key: value` lines (your own words), then add the `approved` label. Copy the comment link and use its numeric comment ID with the publication workflow:",
@@ -70,7 +70,6 @@ def build_body(spec: dict, bullets: list[dict], shelf_repo: str) -> str:
         "tells: ",
         "critic_note: ",
         "```",
-        "Unverified or Disputed specimens also need `evidence_ack: <why it still airs>`.",
     ])
 
 
