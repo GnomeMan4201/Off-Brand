@@ -9,7 +9,9 @@ def test_studio_shell_and_integration():
     assert "<style" not in html and " style=" not in html
     assert 'studio.js?v=__BUILD__' in html and 'studio.css?v=__BUILD__' in html
     assert "NOT A LIVE SCHEDULE" in html
-    assert "_site/studio.html" in (ROOT/".github/workflows/deploy.yml").read_text()
+    from stage_site import PAGES
+    assert "studio.html" in PAGES
+    assert "scripts/stage_site.py _site" in (ROOT/".github/workflows/deploy.yml").read_text()
     for page in ("continuity","props","readings"):
         assert "studio.html#"+page in (SITE/"teletext.js").read_text()
 

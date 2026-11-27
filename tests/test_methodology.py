@@ -53,5 +53,6 @@ def test_broadcast_links_and_deploy_cache_bust():
     links = {a.get("href") for t, a in page.tags if t == "a"}
     assert {"methodology.html", "methodology.html#corrections"} <= links
     deploy = (ROOT / ".github" / "workflows" / "deploy.yml").read_text()
-    assert "_site/index.html _site/methodology.html" in deploy
-    assert "cp -r site/* _site/" in deploy
+    assert "scripts/stage_site.py _site" in deploy
+    from stage_site import PAGES
+    assert {"index.html", "methodology.html"} <= set(PAGES)

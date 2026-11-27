@@ -26,7 +26,9 @@ def test_reading_edition_preserves_public_archive_and_is_script_free():
     assert "script-src 'none'" in text
     assert "Not yet rated" in text
     assert "existing published review text" in text
-    assert "reading.html" in (ROOT / ".github/workflows/deploy.yml").read_text()
+    from stage_site import PAGES
+    assert "reading.html" in PAGES
+    assert "scripts/stage_site.py _site" in (ROOT / ".github/workflows/deploy.yml").read_text()
 
 
 def test_hostile_record_text_cannot_create_tags_or_active_target_links():

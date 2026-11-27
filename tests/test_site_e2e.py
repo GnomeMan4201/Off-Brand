@@ -9,7 +9,6 @@ import http.server
 import json
 import os
 import re
-import shutil
 import threading
 import time
 from pathlib import Path
@@ -48,23 +47,15 @@ class _Quiet(http.server.SimpleHTTPRequestHandler):
 def _stage(tmp_path_factory, grow_to=None):
     # Stage the site exactly the way .github/workflows/deploy.yml does.
     out = tmp_path_factory.mktemp("_site")
-    shutil.copytree(ROOT / "site", out, dirs_exist_ok=True)
-    (out / "data").mkdir()
-    shutil.copy(ROOT / "data" / "reviews.json", out / "data" / "reviews.json")
-    index = out / "index.html"
-    index.write_text(index.read_text(encoding="utf-8").replace("__BUILD__", "e2e"), encoding="utf-8")
-    reviews_path = out / "data" / "reviews.json"
+    from stage_site import stage
+    data = json.loads((ROOT / "data" / "reviews.json").read_text(encoding="utf-8"))
     if grow_to:
-        # Test-only copy of a larger archive: the real specimens repeated with
-        # unique ids. It lives in the temp dir and is never published.
-        data = json.loads(reviews_path.read_text(encoding="utf-8"))
+        # Test-only copy of a larger collection, never published.
         real = data["items"]
         data["items"] = [dict(real[k % len(real)], id=f"{real[k % len(real)]['id']}-copy{k}") if k >= len(real) else real[k]
                          for k in range(grow_to)]
-        reviews_path.write_text(json.dumps(data), encoding="utf-8")
-    from build_reading_edition import build
-    (out / "reading.html").write_text(build(json.loads(reviews_path.read_text(encoding="utf-8"))).replace("__BUILD__", "e2e"), encoding="utf-8")
-    count = len(json.loads(reviews_path.read_text(encoding="utf-8")).get("items") or [])
+    stage(out, "e2e", fixture_reviews=data if grow_to else None)
+    count = len(data["items"])
     if count < 2:
         pytest.skip("channel switching needs at least two published specimens")
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(_Quiet, directory=str(out)))

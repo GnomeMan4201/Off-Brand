@@ -6,7 +6,6 @@ block (reserved example names, test-only), the rest stay exactly as published.
 import functools
 import http.server
 import json
-import shutil
 import threading
 
 import pytest
@@ -35,8 +34,6 @@ SYNTHETIC = {
 @pytest.fixture(scope="module")
 def staged(tmp_path_factory):
     out = tmp_path_factory.mktemp("_site_evidence")
-    shutil.copytree(ROOT / "site", out, dirs_exist_ok=True)
-    (out / "data").mkdir()
     data = json.loads((ROOT / "data" / "reviews.json").read_text(encoding="utf-8"))
     if len(data["items"]) < 2:
         pytest.skip("needs two published specimens")
@@ -48,9 +45,8 @@ def staged(tmp_path_factory):
             records=[SYNTHETIC["records"][0] | {"source": "urlscan.io", "strength": "label",
                                                  "detail": "scan submitted from the PhishTank feed",
                                                  "record_url": "https://urlscan.io/result/01a1f8dd-b83d-7541-b503-42125f30510e/"}]))
-    (out / "data" / "reviews.json").write_text(json.dumps(data), encoding="utf-8")
-    index = out / "index.html"
-    index.write_text(index.read_text(encoding="utf-8").replace("__BUILD__", "e2e"), encoding="utf-8")
+    from stage_site import stage
+    stage(out, "e2e", fixture_reviews=data)
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(_Quiet, directory=str(out)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_address[1]}/index.html", data["items"]

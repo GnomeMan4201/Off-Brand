@@ -1,0 +1,4 @@
+# Direct test dependencies used by GitHub Actions.
+pytest==9.2.0
+pillow==13.0.0
+playwright==1.65.2
