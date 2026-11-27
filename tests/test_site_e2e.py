@@ -475,12 +475,13 @@ def test_crt_texture_is_scoped_to_the_picture(browser, base_url, mobile):
 # Spy on real Web Audio source starts; the tests do not require speakers.
 AUDIO_SPY = """
 window.tuningStarts = 0;
+window.tuningDurations = [];
 const Audio = window.AudioContext || window.webkitAudioContext;
 const original = Audio.prototype.createBufferSource;
 Audio.prototype.createBufferSource = function () {
     const source = original.call(this);
     const start = source.start.bind(source);
-    source.start = (...args) => { window.tuningStarts++; return start(...args); };
+    source.start = (...args) => { window.tuningStarts++; window.tuningDurations.push(source.buffer.duration); return start(...args); };
     return source;
 };
 """
@@ -511,4 +512,34 @@ def test_channel_sound_is_gesture_only_and_preference_persists(browser, base_url
     page.keyboard.press("ArrowLeft")
     page.wait_for_function("window.tuningStarts === 1", timeout=5000)
     assert not page.problems, page.problems
+    page.context.close()
+
+
+def test_recorded_cues_differ_for_channel_and_commercial(browser, base_url):
+    page = open_page(browser, base_url, reduce=True, init=AUDIO_SPY)
+    for _ in range(PAST_THRESHOLD):
+        page.click("#next")
+        if page.locator(".bumper").count():
+            page.wait_for_function("window.tuningDurations.at(-1) > 0.8", timeout=5000)
+            break
+        page.wait_for_function("window.tuningDurations.length > 0 && window.tuningDurations.at(-1) < 0.6", timeout=5000)
+        page.wait_for_timeout(550)
+    else:
+        raise AssertionError("commercial break did not occur")
+    durations = page.evaluate("window.tuningDurations")
+    assert any(0.4 < d < 0.6 for d in durations)
+    assert 0.8 < durations[-1] < 1.1
+    page.locator("#channel-sound").click()
+    skip_break(page)
+    page.context.close()
+
+
+def test_missing_recorded_sound_does_not_block_tuning(browser, base_url):
+    page = open_page(browser, base_url, reduce=True, routes={
+        "**/sounds/*.mp3": lambda r: r.fulfill(status=404, body="missing")
+    })
+    before = ch(page)
+    page.click("#next")
+    assert ch(page) == expected_next(page, before)
+    assert not [p for p in page.problems if p.startswith("pageerror")], page.problems
     page.context.close()
