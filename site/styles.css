@@ -200,6 +200,67 @@ button { font: inherit; cursor: pointer; }
 .footer strong { font: 400 26px var(--display); color: var(--ink); }
 .footer p { margin: 0; flex: 1 1 320px; max-width: 70ch; }
 
+/* ---------- commercial breaks ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.station-pref { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--dim); }
+.pref-btn { align-self: flex-start; min-height: 44px; padding: 0 14px; border: 2px solid var(--chroma); background: transparent; color: var(--ink); font-weight: 800; font-size: 14px; }
+.pref-btn span { color: var(--chroma); }
+.pref-btn[aria-pressed="false"] { border-color: var(--bezel-edge); }
+.pref-btn[aria-pressed="false"] span { color: var(--dim); }
+
+.bumper { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(6px, 1.4vw, 14px); padding: 18px; text-align: center; background: #0b0b0a; }
+.bumper.noisy::before { content: ""; position: absolute; inset: 0; opacity: 0.18; background: repeating-radial-gradient(circle at 31% 42%, #eee 0 1px, #111 1px 3px); animation: noise 0.18s steps(3) infinite; }
+.bumper > * { position: relative; }
+.bumper-kicker { font: clamp(14px, 1.8vw, 20px)/1 var(--tty); letter-spacing: 0.45em; color: var(--dim); }
+.bumper strong { font: 400 clamp(30px, 6vw, 76px)/0.9 var(--display); }
+.bumper p { margin: 0; max-width: 34ch; font-weight: 600; font-size: clamp(14px, 1.8vw, 20px); color: var(--yellow); text-wrap: balance; }
+.bumper .bars { width: min(260px, 70%); height: 14px; min-height: 0; flex: none; }
+.bumper-foot { font: clamp(14px, 1.6vw, 18px)/1 var(--tty); color: var(--dim); }
+.bumper-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.bumper-actions button { min-height: 44px; padding: 0 16px; border: 2px solid var(--ink); background: transparent; color: var(--ink); font-weight: 800; }
+.bumper-actions button:first-child { background: var(--ink); color: var(--night); }
+
+.commercial { position: absolute; inset: 0; display: flex; flex-direction: column; background: #000; }
+.ad-top { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 8px 4px 12px; background: var(--hot); color: #fff; font: 15px/1.1 var(--tty); }
+.ad-top span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-top button { flex: none; min-height: 36px; padding: 0 10px; border: 0; background: transparent; color: #fff; font: 700 12px var(--sans); text-decoration: underline; }
+.ad-stage { position: relative; flex: 1; min-height: 0; }
+.ad-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.ad-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; text-align: center; background: rgba(5, 5, 5, 0.72); }
+.ad-overlay strong { font: 400 clamp(20px, 3vw, 34px)/1 var(--display); }
+.ad-overlay .bumper-actions button:first-child { background: var(--chroma); border-color: var(--chroma); color: #050505; }
+.ad-controls { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 6px; background: #120b09; border-top: 2px solid var(--bezel-edge); }
+.ad-controls button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--ink); font-weight: 800; font-size: 14px; }
+.ad-controls button:hover { background: var(--night-2); }
+.ad-controls svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ad-controls .skip-ad { margin-left: auto; padding: 0 12px; background: var(--yellow); color: #050505; }
+.ad-controls .skip-ad:hover { background: #fff; }
+.ad-progress { flex: none; height: 4px; background: #2b1b14; }
+.ad-progress span { display: block; height: 100%; width: 0; background: var(--hot); }
+.commercial:fullscreen, .commercial:-webkit-full-screen { position: static; width: 100%; height: 100%; }
+
+/* ---------- CH 00: Off-Brand Originals ---------- */
+.originals { padding: 0 var(--gutter) 48px; }
+.originals-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 24px; padding-bottom: 14px; border-bottom: 3px solid var(--hot); }
+.originals-ch { font: clamp(64px, 9vw, 120px)/0.8 var(--tty); color: var(--hot); text-shadow: 4px 4px 0 #000; }
+.originals-head h2 { font: 400 clamp(32px, 4.4vw, 56px)/1 var(--display); }
+.originals-head p { margin: 6px 0 0; max-width: 52ch; color: var(--dim); }
+.listings { list-style: none; margin: 0; padding: 0; }
+.listing { display: grid; grid-template-columns: 120px minmax(0, 220px) minmax(0, 1fr) auto; gap: 8px 22px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--bezel-edge); }
+.listing time { font: 26px/1 var(--tty); color: var(--chroma); }
+.listing img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border: 3px solid var(--bezel); }
+.listing h3 { font: 400 clamp(20px, 2.2vw, 26px)/1.1 var(--display); }
+.listing .runtime { font: 19px var(--tty); color: var(--dim); }
+.listing p { margin: 4px 0 0; max-width: 58ch; }
+.watch-btn { min-height: 48px; padding: 0 18px; border: 3px solid var(--ink); background: transparent; color: var(--ink); font: 16px var(--display); }
+.watch-btn:hover { background: var(--ink); color: var(--night); }
+.originals-off { margin: 16px 0 0; color: var(--dim); }
+@media (max-width: 720px) {
+  .listing { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  .listing time { grid-column: 1 / -1; }
+  .listing .watch-btn { grid-column: 1 / -1; justify-self: start; }
+}
+
 /* ---------- motion ---------- */
 @keyframes jitter { 0%, 100% { transform: none; } 25% { transform: translate(-3px, 2px) skewX(-6deg); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(0, 3px) skewX(4deg); } }
 @keyframes blink { 50% { opacity: 0; } }

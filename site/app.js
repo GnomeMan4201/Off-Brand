@@ -191,6 +191,71 @@ function psaCard(onSkip) {
 
 // ---------- app ----------
 
+// ---------- commercial breaks: markup ----------
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ICON_PATHS = {
+  play: ["M7 4l13 8-13 8z"],
+  pause: ["M9 5v14", "M15 5v14"],
+  sound: ["M4 9h4l5-4v14l-5-4H4z", "M17 9a4 4 0 0 1 0 6", "M19.5 6.5a8 8 0 0 1 0 11"],
+  muted: ["M4 9h4l5-4v14l-5-4H4z", "M17 9l5 6", "M22 9l-5 6"],
+  replay: ["M4 12a8 8 0 1 0 2.4-5.7", "M4 4v4h4"],
+  fullscreen: ["M4 9V4h5", "M20 9V4h-5", "M4 15v5h5", "M20 15v5h-5"],
+};
+
+// Icons are inline SVG, never emoji or symbol glyphs: iOS draws ▶ and ⏸ as emoji.
+function icon(name) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  for (const d of ICON_PATHS[name]) {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
+function iconButton(name, label, onClick) {
+  const b = el("button");
+  b.type = "button";
+  b.setAttribute("aria-label", label);
+  b.appendChild(icon(name));
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function setIcon(button, name, label) {
+  button.replaceChildren(icon(name));
+  button.setAttribute("aria-label", label);
+}
+
+function actionRow(actions) {
+  const row = el("div", "bumper-actions");
+  for (const [label, fn] of actions) {
+    const b = el("button", null, label);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    row.appendChild(b);
+  }
+  return row;
+}
+
+function bumperCard(line, { noisy, actions }) {
+  const card = el("div", "bumper" + (noisy ? " noisy" : ""));
+  card.appendChild(el("span", "bumper-kicker", "PLEASE STAND BY"));
+  card.appendChild(el("strong", null, "COMMERCIAL BREAK"));
+  if (line) card.appendChild(el("p", null, line));
+  const bars = el("div", "bars");
+  bars.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < 7; i++) bars.appendChild(el("span"));
+  card.appendChild(bars);
+  if (actions) card.appendChild(actionRow(actions));
+  card.appendChild(el("span", "bumper-foot", "CH 00 · OFF-BRAND ORIGINALS"));
+  return card;
+}
+
 const release = new URL(document.currentScript.src).searchParams.get("v");
 
 async function init() {
@@ -259,12 +324,17 @@ async function init() {
   }
 
   function tune(i) {
+    // Changing channel during a break skips it and goes where the viewer asked.
+    if (breakState) { endBreak(i); return; }
     if (i === current && pending === null) return;
+    if (breakDue()) { startBreak(i); return; }
+    sinceBreak += 1;
     if (reducedMotion.matches) { show(i); return; }
     hops += 1;
     clearTimeout(timer);
     pending = i;
-    const psa = hops % 4 === 0;
+    // The field-guide PSA keeps its every-4th slot, but never right after a commercial.
+    const psa = hops % 4 === 0 && sinceBreak > 2;
     inter.replaceChildren(psa ? psaCard(() => { finish(); screen.focus({ preventScroll: true }); }) : staticCard(pad2(i + 1)));
     inter.hidden = false;
     timer = setTimeout(finish, psa ? 4500 : 600);
@@ -273,7 +343,8 @@ async function init() {
   function step(delta) {
     const list = visible();
     if (!list.length) return;
-    let p = list.findIndex(({ i }) => i === (pending ?? current));
+    const from = breakState ? breakState.target : (pending ?? current);
+    let p = list.findIndex(({ i }) => i === from);
     p = p < 0 ? 0 : (p + delta + list.length) % list.length;
     tune(list[p].i);
   }
@@ -286,6 +357,276 @@ async function init() {
     do { r = pool[Math.floor(Math.random() * pool.length)].i; } while (r === current);
     tune(r);
   }
+
+  // ---------- commercial breaks ----------
+  // Breaks are optional, start muted, and any failure falls straight back to
+  // the specimen the viewer was heading to. Nothing here can block browsing.
+
+  const Breaks = window.OffBrandBreaks;
+  const store = Breaks.safeStore((() => { try { return window.localStorage; } catch (e) { return null; } })());
+  const breakStatus = $("break-status");
+  const toggleBtn = $("breaks-toggle");
+  const originals = $("originals");
+  const listings = $("listings");
+  const scheduler = Breaks.createScheduler();
+  let breaksOn = Breaks.loadEnabled(store);
+  let commercials = [], byId = new Map(), rotation = null, bumperDeck = Breaks.createBumperDeck([]);
+  let breakState = null, sinceBreak = 99;
+
+  const announce = (msg) => { breakStatus.textContent = ""; breakStatus.textContent = msg; };
+
+  function renderToggle() {
+    toggleBtn.setAttribute("aria-pressed", String(breaksOn));
+    toggleBtn.querySelector("span").textContent = breaksOn ? "On" : "Off";
+  }
+  renderToggle();
+
+  function setBreaks(on) {
+    breaksOn = on;
+    Breaks.saveEnabled(store, on);
+    renderToggle();
+    if (!on && breakState && !breakState.voluntary) endBreak();
+    announce(on ? "Commercial breaks are on." : "Commercial breaks are off. Off-Brand Originals stay on CH 00.");
+  }
+  toggleBtn.addEventListener("click", () => setBreaks(!breaksOn));
+
+  function breakDue() {
+    if (!breaksOn || !rotation || !rotation.available()) return false;
+    if (!scheduler.tick()) return false;
+    scheduler.reset();
+    return true;
+  }
+
+  function teardown() {
+    const s = breakState;
+    if (!s) return false;
+    for (const t of s.timers) clearTimeout(t);
+    if (s.video) {
+      s.video.pause();
+      s.video.removeAttribute("src");
+      s.video.load(); // abort any download in flight
+    }
+    if (document.fullscreenElement && inter.contains(document.fullscreenElement)) document.exitFullscreen().catch(() => {});
+    const hadFocus = inter.contains(document.activeElement);
+    inter.hidden = true;
+    inter.replaceChildren();
+    breakState = null;
+    return hadFocus;
+  }
+
+  function endBreak(to) {
+    const s = breakState;
+    if (!s) return;
+    const hadFocus = teardown();
+    sinceBreak = 0;
+    show(to === undefined ? s.target : to);
+    if (hadFocus) screen.focus({ preventScroll: true });
+  }
+
+  function failBreak(c) {
+    if (rotation) rotation.markFailed(c.id);
+    const btn = listings.querySelector(`[data-id="${c.id}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = "Off the air"; }
+    announce(`${c.title} is unavailable right now. Back to the program.`);
+    endBreak();
+  }
+
+  function startBreak(target, opts) {
+    opts = opts || {};
+    clearTimeout(timer);
+    inter.replaceChildren();
+    if (pending !== null) { target = pending; pending = null; }
+    const id = opts.id || (rotation && rotation.next());
+    const c = id && byId.get(id);
+    if (!c) { show(target); return; }
+    breakState = { target, c, voluntary: Boolean(opts.voluntary), timers: [], video: null };
+    now.textContent = `Now showing CH 00 · Off-Brand Originals · ${c.title}`;
+
+    if (opts.voluntary) { playCommercial(true); return; }
+
+    const line = bumperDeck.next();
+    const skip = () => endBreak();
+    if (reducedMotion.matches) {
+      // No motion, no autoplay: the viewer chooses.
+      inter.replaceChildren(bumperCard(line, { noisy: false, actions: [["Watch the commercial", () => playCommercial(false)], ["Skip to CH " + pad2(target + 1), skip]] }));
+    } else {
+      inter.replaceChildren(bumperCard(line, { noisy: true }));
+      breakState.timers.push(setTimeout(() => playCommercial(false), 1900));
+    }
+    inter.hidden = false;
+    announce(`Commercial break: ${c.title}. Press Escape or Skip to return to channel ${target + 1}.`);
+  }
+
+  function playCommercial(withSound) {
+    const s = breakState;
+    if (!s) return;
+    const c = s.c;
+    const back = "CH " + pad2(s.target + 1);
+
+    const wrap = el("div", "commercial");
+    const top = el("div", "ad-top");
+    top.appendChild(el("span", null, `${s.voluntary ? "OFF-BRAND ORIGINALS" : "COMMERCIAL"} · ${c.title} · ${Breaks.formatRuntime(c.runtime_seconds)}`));
+    if (!s.voluntary) {
+      const off = el("button", null, "Turn off breaks");
+      off.type = "button";
+      off.addEventListener("click", () => setBreaks(false));
+      top.appendChild(off);
+    }
+    wrap.appendChild(top);
+
+    const stage = el("div", "ad-stage");
+    const video = document.createElement("video");
+    video.muted = !withSound;
+    if (!withSound) video.setAttribute("muted", "");
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.preload = "auto";
+    video.disablePictureInPicture = true;
+    video.setAttribute("aria-label", `Commercial: ${c.title}. Captions are part of the picture.`);
+    if (c.poster) video.poster = c.poster;
+    if (c.captions_vtt) {
+      const track = document.createElement("track");
+      track.kind = "captions";
+      track.srclang = "en";
+      track.label = "English";
+      track.src = c.captions_vtt;
+      track.default = true;
+      video.appendChild(track);
+    }
+    stage.appendChild(video);
+    wrap.appendChild(stage);
+
+    const bar = el("div", "ad-progress");
+    const fill = el("span");
+    bar.appendChild(fill);
+    bar.setAttribute("aria-hidden", "true");
+    wrap.appendChild(bar);
+
+    const controls = el("div", "ad-controls");
+    controls.setAttribute("role", "group");
+    controls.setAttribute("aria-label", "Commercial controls");
+    const playBtn = iconButton("pause", "Pause", () => (video.paused ? video.play().catch(() => {}) : video.pause()));
+    const soundBtn = iconButton(video.muted ? "muted" : "sound", video.muted ? "Turn sound on" : "Mute", () => {
+      video.muted = !video.muted;
+      if (!video.muted && video.paused) video.play().catch(() => {});
+    });
+    const replayBtn = iconButton("replay", "Replay from the start", () => { clearOverlay(); video.currentTime = 0; video.play().catch(() => {}); });
+    controls.append(playBtn, soundBtn, replayBtn);
+    const canFull = wrap.requestFullscreen || wrap.webkitRequestFullscreen || video.webkitEnterFullscreen;
+    if (canFull) {
+      controls.appendChild(iconButton("fullscreen", "Fullscreen", () => {
+        try {
+          if (wrap.requestFullscreen) wrap.requestFullscreen().catch(() => {});
+          else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+          else video.webkitEnterFullscreen(); // iPhone Safari: native player
+        } catch (e) { /* stay inline */ }
+      }));
+    }
+    const skipBtn = el("button", "skip-ad", s.voluntary ? `Back to ${back} »` : "Skip ad »");
+    skipBtn.type = "button";
+    skipBtn.addEventListener("click", () => endBreak());
+    controls.appendChild(skipBtn);
+    wrap.appendChild(controls);
+
+    let overlay = null;
+    function clearOverlay() { if (overlay) { overlay.remove(); overlay = null; } }
+    function showOverlay(title, actions) {
+      clearOverlay();
+      overlay = el("div", "ad-overlay");
+      overlay.appendChild(el("strong", null, title));
+      overlay.appendChild(actionRow(actions));
+      stage.appendChild(overlay);
+    }
+
+    // A file that never starts, or errors, quietly returns the viewer to the program.
+    let loaded = false;
+    const fail = () => { if (breakState === s) failBreak(c); };
+    s.timers.push(setTimeout(() => { if (!loaded) fail(); }, 8000));
+    video.addEventListener("loadeddata", () => { loaded = true; });
+    video.addEventListener("error", fail);
+    video.addEventListener("play", () => { clearOverlay(); setIcon(playBtn, "pause", "Pause"); });
+    video.addEventListener("pause", () => setIcon(playBtn, "play", "Play"));
+    video.addEventListener("volumechange", () => setIcon(soundBtn, video.muted ? "muted" : "sound", video.muted ? "Turn sound on" : "Mute"));
+    video.addEventListener("timeupdate", () => {
+      if (video.duration) fill.style.width = Math.min(100, (video.currentTime / video.duration) * 100) + "%";
+    });
+    video.addEventListener("ended", () => {
+      if (s.voluntary) showOverlay(`That was ${c.title}`, [["Replay", () => replayBtn.click()], [`Back to ${back}`, () => endBreak()]]);
+      else endBreak();
+    });
+
+    s.video = video;
+    inter.replaceChildren(wrap);
+    inter.hidden = false;
+    video.src = c.src;
+    const attempt = video.play();
+    if (attempt && attempt.catch) {
+      attempt.catch((err) => {
+        if (breakState !== s) return;
+        // Autoplay refused (Low Power Mode, browser policy): wait for a tap, not a failure.
+        if (err && err.name === "NotAllowedError") showOverlay(c.title, [["Play", () => video.play().catch(() => {})], [s.voluntary ? `Back to ${back}` : "Skip ad", () => endBreak()]]);
+      });
+    }
+  }
+
+  function playOriginal(id) {
+    const target = breakState ? breakState.target : (pending ?? current);
+    teardown();
+    clearTimeout(timer);
+    pending = null;
+    inter.hidden = true;
+    screen.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "center" });
+    startBreak(target, { id, voluntary: true });
+    const skip = inter.querySelector(".skip-ad");
+    if (skip) skip.focus({ preventScroll: true });
+  }
+
+  function renderListings() {
+    const times = Breaks.airTimes(commercials);
+    listings.replaceChildren();
+    commercials.forEach((c, k) => {
+      const li = el("li", "listing");
+      li.appendChild(el("time", null, times[k]));
+      if (c.poster) {
+        const img = document.createElement("img");
+        img.src = c.poster;
+        img.alt = "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        li.appendChild(img);
+      } else {
+        li.appendChild(el("span"));
+      }
+      const info = el("div");
+      info.appendChild(el("h3", null, c.title));
+      info.appendChild(el("span", "runtime", `${Breaks.formatRuntime(c.runtime_seconds)} · captions ${c.captions_vtt ? "available" : c.captions === "burned-in" ? "in picture" : "not available"}`));
+      if (c.description) info.appendChild(el("p", null, c.description));
+      li.appendChild(info);
+      const watch = el("button", "watch-btn", "Watch on CH 00");
+      watch.type = "button";
+      watch.dataset.id = c.id;
+      watch.setAttribute("aria-label", `Watch ${c.title}, ${Breaks.formatRuntime(c.runtime_seconds)}, with sound`);
+      watch.addEventListener("click", () => playOriginal(c.id));
+      li.appendChild(watch);
+      listings.appendChild(li);
+    });
+  }
+
+  async function loadCommercials() {
+    const r = await fetch(release ? `commercials/manifest.json?v=${encodeURIComponent(release)}` : "commercials/manifest.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error("manifest " + r.status);
+    const m = Breaks.validateManifest(await r.json());
+    commercials = m.commercials;
+    byId = new Map(commercials.map((c) => [c.id, c]));
+    bumperDeck = Breaks.createBumperDeck(m.bumpers.length ? m.bumpers : ["Unfortunately, we’ll be right back."]);
+    rotation = Breaks.createRotation(commercials.map((c) => c.id), store);
+    if (commercials.length) { renderListings(); originals.hidden = false; }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && breakState && breakState.video) breakState.video.pause();
+  });
 
   function renderLineup() {
     const list = visible();
@@ -333,6 +674,7 @@ async function init() {
   $("next").addEventListener("click", () => step(1));
   $("surf").addEventListener("click", surf);
   screen.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && breakState) { e.preventDefault(); endBreak(); return; }
     if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
   });
@@ -354,6 +696,10 @@ async function init() {
   renderLineup();
   const start = fromHash();
   show(start >= 0 ? start : 0);
+
+  // Commercials load after the shelf is on screen. If anything goes wrong the
+  // station simply runs without breaks.
+  loadCommercials().catch(() => { rotation = null; });
 }
 
 init().catch((err) => {

@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "about": "Off-Brand Originals. Add, remove or reorder commercials here; app.js reads this file and needs no changes. Each src/poster must be a file in site/commercials/ (lowercase letters, digits and hyphens). Set \"enabled\": false to pull one without deleting it. Listing order is the order shown in CH 00.",
+  "commercials": [
+    {
+      "id": "reruns",
+      "title": "Previously on Off-Brand",
+      "runtime_seconds": 20,
+      "src": "commercials/reruns.mp4",
+      "poster": "commercials/reruns.jpg",
+      "captions": "burned-in",
+      "description": "The demolition quote, DANTE and the favicon gallery, back for one more lap."
+    },
+    {
+      "id": "night-estimates",
+      "title": "Night Estimates",
+      "runtime_seconds": 28,
+      "src": "commercials/night-estimates.mp4",
+      "poster": "commercials/night-estimates.jpg",
+      "captions": "burned-in",
+      "description": "Free Quote and Calculator work the overnight desk. Line two has a question about a kitchen."
+    },
+    {
+      "id": "somebody-stole-infinity",
+      "title": "Somebody Stole Infinity",
+      "runtime_seconds": 23,
+      "src": "commercials/somebody-stole-infinity.mp4",
+      "poster": "commercials/somebody-stole-infinity.jpg",
+      "captions": "burned-in",
+      "description": "Two museum guards, one exhibit, 32 × 32 pixels of trouble."
+    },
+    {
+      "id": "garys-testimonial",
+      "title": "Gary’s Testimonial",
+      "runtime_seconds": 29,
+      "src": "commercials/garys-testimonial.mp4",
+      "poster": "commercials/garys-testimonial.jpg",
+      "captions": "burned-in",
+      "description": "A satisfied customer explains exactly what he consented to."
+    }
+  ],
+  "bumpers": [
+    "Unfortunately, we’ll be right back.",
+    "The following advertisement is more trustworthy than our regularly scheduled programming.",
+    "No credentials were harvested during the making of this commercial.",
+    "Paid for by absolutely nobody.",
+    "Broadcasting from somewhere we probably shouldn’t be.",
+    "This break is brought to you by the letters h, x, x and p.",
+    "Please do not adjust your set. Adjust your expectations.",
+    "Signal strength: suspicious.",
+    "Our sponsors have asked to remain anonymous, which tracks.",
+    "Stay tuned. The scams will still be here when we get back."
+  ]
+}

@@ -7,10 +7,13 @@
   <meta name="theme-color" content="#140808" />
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://urlscan.io; object-src 'none'; base-uri 'none'; form-action 'none';"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; media-src 'self'; img-src 'self' https://urlscan.io; object-src 'none'; base-uri 'none'; form-action 'none';"
   />
   <title>OFF-BRAND // The Internet's Knockoff Aisle</title>
   <meta name="description" content="A screenshot comedy zine about phishing and the odd pages that turn up in public scans. Each caption comes with a detail you can check." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preload" href="fonts/archivo-black-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="styles.css?v=__BUILD__" />
 </head>
@@ -49,6 +52,7 @@
         <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
         <span class="now" id="now" role="status"></span>
       </div>
+      <p class="sr-only" id="break-status" role="status" aria-live="polite"></p>
 
       <div class="address" id="address"></div>
 
@@ -63,6 +67,10 @@
 
     <aside class="lineup" aria-label="Channel guide">
       <h2>Tonight’s lineup</h2>
+      <div class="station-pref">
+        <button type="button" class="pref-btn" id="breaks-toggle" aria-pressed="true">Commercial breaks: <span>On</span></button>
+        <span>Saved on this device. Breaks never play with sound until you ask.</span>
+      </div>
       <label class="search-wrap">
         <span>Search reviews</span>
         <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
@@ -72,6 +80,17 @@
       <p class="empty" id="lineup-empty" hidden>No reviews match. Try another aisle or search.</p>
     </aside>
   </main>
+
+  <section class="originals" id="originals" aria-labelledby="originals-title" hidden>
+    <div class="originals-head">
+      <span class="originals-ch">CH 00</span>
+      <div>
+        <h2 id="originals-title">Off-Brand Originals</h2>
+        <p>Overnight programming from the station. Every commercial that airs during the breaks, available on demand.</p>
+      </div>
+    </div>
+    <ol class="listings" id="listings"></ol>
+  </section>
 
   <section class="held" aria-labelledby="held-title">
     <div class="held-inner">
@@ -96,6 +115,7 @@
 
   <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="#tv">Back to reviews ↑</a></footer>
 
+  <script src="breaks.js?v=__BUILD__" defer></script>
   <script src="app.js?v=__BUILD__" defer></script>
 </body>
 </html>

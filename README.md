@@ -140,6 +140,25 @@ The full guide is in [VOICE.md](VOICE.md). The short version:
 
 ---
 
+## Commercial breaks (Off-Brand Originals)
+
+After Dark cuts to a commercial every 4–7 channel changes. A station bumper plays, then one of the Off-Brand Originals plays inside the TV, muted, and the viewer lands on the channel they were heading to. Every original is also listed on **CH 00**, where visitors can watch any of them with sound.
+
+- **Muted by default.** Breaks never play sound until the viewer asks. With reduced motion turned on, a break waits for the viewer to press play.
+- **Optional.** The *Commercial breaks: On/Off* button is saved on the device.
+- **Fails safe.** If a video is missing or never starts, the station skips it and goes back to the program.
+
+**To add, swap or pull a commercial, edit only [`site/commercials/manifest.json`](site/commercials/manifest.json):**
+
+1. Export the video as H.264/AAC MP4 (720p is plenty) and prepare it with fast-start, with metadata stripped:
+   `ffmpeg -i in.mov -c copy -map_metadata -1 -movflags +faststart site/commercials/my-ad.mp4`
+   (re-encode with `-c:v libx264 -c:a aac` if the source isn't H.264/AAC).
+2. Add a poster frame: `ffmpeg -ss 1 -i site/commercials/my-ad.mp4 -frames:v 1 -vf scale=640:-2 -q:v 5 site/commercials/my-ad.jpg`
+3. Add an entry with `id`, `title`, `runtime_seconds`, `src`, `poster` and an optional `description`. Use `"captions": "burned-in"` if the captions are part of the picture, or `"captions_vtt": "commercials/my-ad.vtt"` for a caption file.
+4. Set `"enabled": false` to pull one without deleting it. Rotating bumper lines live in the same file under `bumpers`.
+
+File names must be lowercase letters, digits and hyphens inside `site/commercials/`; anything else is ignored. `pytest` checks that every listed file exists, stays under 25 MB, is H.264/AAC and matches its runtime.
+
 ## What's in the box
 
 ```
@@ -162,7 +181,8 @@ tests/                pytest suite
 mkdir -p _site/data && cp -r site/* _site/ && cp data/reviews.json _site/data/
 python3 -m http.server -d _site 8000      # then open localhost:8000
 
-# the tests
+# the tests (also runs the Node unit tests in tests/js/ when node is installed;
+# browser tests run when Playwright + Chrome are present, else they skip)
 python3 -m pytest -q tests
 
 # fetch candidates yourself
