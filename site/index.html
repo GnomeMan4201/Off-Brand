@@ -4,58 +4,97 @@
   <meta charset="utf-8" />
   <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#140808" />
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://urlscan.io; object-src 'none'; base-uri 'none'; form-action 'none';"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://urlscan.io; object-src 'none'; base-uri 'none'; form-action 'none';"
   />
   <title>OFF-BRAND // The Internet's Knockoff Aisle</title>
   <meta name="description" content="A screenshot comedy zine about phishing and the odd pages that turn up in public scans. Each caption comes with a detail you can check." />
+  <link rel="preload" href="fonts/archivo-black-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="styles.css?v=__BUILD__" />
 </head>
 <body>
-  <a class="skip" href="#reviews">Skip to reviews</a>
+  <a class="skip" href="#tv">Skip to the broadcast</a>
+
   <header class="masthead">
     <div class="masthead-top">
-      <span class="issue-tag">A SCREENSHOT ZINE BY GNOMEMAN4201</span>
-      <span class="issue-tag" id="last-updated">UPDATED: --</span>
+      <span>A SCREENSHOT ZINE BY GNOMEMAN4201</span>
+      <span><span class="rec" aria-hidden="true">●</span> ON AIR · <span id="last-updated">Updated --</span></span>
     </div>
-    <h1>OFF-BRAND</h1>
-    <p class="tagline">the internets knock off aisle. Real phishing sites reviewed by me GnomeMan4201</p>
-    <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    <h1 class="logo" aria-label="Off-Brand"><span aria-hidden="true">O</span><span aria-hidden="true">F</span><span aria-hidden="true">F</span><span aria-hidden="true">-</span><span aria-hidden="true">B</span><span aria-hidden="true">R</span><span aria-hidden="true">A</span><span aria-hidden="true">N</span><span aria-hidden="true">D</span></h1>
+    <p class="tagline">The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
+    <p class="stats" id="stats-bar" aria-live="polite"></p>
   </header>
 
-  <main class="container" id="reviews">
-    <div class="section-heading"><h2>The reviews</h2><a href="#safety-title">Phishing field guide ↓</a></div>
-    <section class="controls" aria-label="Filter aisle">
-      <div class="filter-group" id="aisle-filters"></div>
+  <div class="crawl-bar">
+    <span class="crawl-label">THE BITS</span>
+    <div class="crawl-window" aria-hidden="true"><div class="crawl" id="crawl"></div></div>
+    <button type="button" class="crawl-toggle" id="crawl-toggle" aria-label="Pause the crawl of satirical captions">Pause</button>
+  </div>
+
+  <main class="tv-layout" id="tv">
+    <section class="broadcast" aria-label="Now showing">
+      <div class="bezel">
+        <div class="screen" id="screen" tabindex="0" aria-label="Broadcast screen. Use the left and right arrow keys to change channel.">
+          <div class="program" id="program"></div>
+          <div class="interstitial" id="interstitial" hidden></div>
+          <div class="scanlines" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="deck">
+        <button type="button" class="deck-btn" id="prev" aria-label="Previous channel">← CH</button>
+        <button type="button" class="deck-btn" id="next" aria-label="Next channel">CH →</button>
+        <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
+        <span class="now" id="now" role="status"></span>
+      </div>
+
+      <div class="address" id="address"></div>
+
+      <section class="fact-file" aria-labelledby="wtn-title">
+        <div class="fact-head">
+          <h2 id="wtn-title">WHAT TO NOTICE</h2>
+          <span>FACT FILE · from the public scan record · no jokes on this page</span>
+        </div>
+        <div id="fact-body"></div>
+      </section>
+    </section>
+
+    <aside class="lineup" aria-label="Channel guide">
+      <h2>Tonight’s lineup</h2>
       <label class="search-wrap">
-        <span class="sr-only">Search reviews</span>
+        <span>Search reviews</span>
         <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
       </label>
-    </section>
-
-    <section id="aisle-grid" class="aisle-grid" aria-live="polite"></section>
-
-    <section class="rejected-shelf">
-      <h2>Held back at review</h2>
-      <p class="shelf-note">
-        A report is a lead. Sometimes the most useful thing in the record is the reason to leave a page off the shelf.
-      </p>
-      <ul id="rejected-list" class="rejected-list"></ul>
-    </section>
-
-    <section class="safety" aria-labelledby="safety-title">
-      <h2 id="safety-title">Phishing field guide</h2>
-      <div class="guide-grid">
-        <section><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>
-        <section><h3>Check the request elsewhere</h3><p>A logo is easy to copy. If a message asks you to sign in, pay, or fix an account problem, open the app yourself or call a number you already trust. You can check the claim without using the sender’s link.</p></section>
-        <section><h3>If you entered details</h3><p>Open the service directly, change the exposed password and any reused copies, and review active sessions. For payment details, call the number printed on your card.</p></section>
-        <section><h3>Report a suspicious message</h3><p>In the US, forward scam texts to <strong>7726</strong>. You can also <a href="https://reportfraud.ftc.gov/">report fraud to the FTC</a> or read its <a href="https://consumer.ftc.gov/articles/how-recognize-avoid-phishing-scams">phishing guide</a>.</p></section>
-      </div>
-    </section>
+      <div class="filter-group" id="aisle-filters" role="group" aria-label="Filter by aisle"></div>
+      <ol class="channels" id="lineup"></ol>
+      <p class="empty" id="lineup-empty" hidden>No reviews match. Try another aisle or search.</p>
+    </aside>
   </main>
 
-  <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="#reviews">Back to reviews ↑</a></footer>
+  <section class="held" aria-labelledby="held-title">
+    <div class="held-inner">
+      <div>
+        <span class="held-kicker">WE ARE EXPERIENCING TECHNICAL DIFFICULTIES</span>
+        <h2 id="held-title">Held back at review</h2>
+        <p>A report is a lead. Sometimes the most useful thing in the record is the reason to leave a page off the shelf.</p>
+      </div>
+      <ul id="rejected-list" class="rejected-list"></ul>
+    </div>
+  </section>
+
+  <section class="safety" aria-labelledby="safety-title">
+    <h2 id="safety-title">Phishing field guide</h2>
+    <div class="guide-grid">
+      <section><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>
+      <section><h3>Check the request elsewhere</h3><p>A logo is easy to copy. If a message asks you to sign in, pay, or fix an account problem, open the app yourself or call a number you already trust. You can check the claim without using the sender’s link.</p></section>
+      <section><h3>If you entered details</h3><p>Open the service directly, change the exposed password and any reused copies, and review active sessions. For payment details, call the number printed on your card.</p></section>
+      <section><h3>Report a suspicious message</h3><p>In the US, forward scam texts to <strong>7726</strong>. You can also <a href="https://reportfraud.ftc.gov/">report fraud to the FTC</a> or read its <a href="https://consumer.ftc.gov/articles/how-recognize-avoid-phishing-scams">phishing guide</a>.</p></section>
+    </div>
+  </section>
+
+  <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="#tv">Back to reviews ↑</a></footer>
 
   <script src="app.js?v=__BUILD__" defer></script>
 </body>
