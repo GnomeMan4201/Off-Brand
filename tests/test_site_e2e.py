@@ -992,9 +992,15 @@ def test_craftsmanship_controls_and_loupe(browser, base_url, width):
     assert "does not determine the registrable domain" in page.locator(".ob-loupe").inner_text()
     assert page.locator(".address-text").inner_text() == original
     assert page.locator(".locker").inner_text() == locker
-    scan = page.get_by_role("button", name="Scanlines: off")
+    scan = page.get_by_role("button", name=re.compile(r"^Scanlines: (off|on)$"))
+    assert scan.inner_text() == "Scanlines: off"
+    assert scan.get_attribute("aria-pressed") == "false"
+    assert not page.locator("#screen").evaluate("e => e.classList.contains('ob-scanlines')")
     scan.click()
+    assert scan.inner_text() == "Scanlines: on"
     assert scan.get_attribute("aria-pressed") == "true"
+    assert page.locator("#screen").evaluate("e => e.classList.contains('ob-scanlines')")
+    assert page.evaluate("localStorage.getItem('offbrand.scanlines')") == "on"
     page.get_by_role("button", name="Degauss", exact=True).click()
     assert page.locator(".ob-control-strip").evaluate("e => !e.classList.contains('ob-servicing')")
     page.get_by_role("button", name="Station ID", exact=True).click()
@@ -1055,12 +1061,20 @@ def test_teletext_public_navigation_and_return(browser, base_url, width):
     select.select_option(expected["items"][1]["id"])
     assert page.locator(".txt-record li").all_text_contents() == expected["items"][1]["tells"]
     page.get_by_role("link", name="505 ARCHIVE").click()
-    page.wait_for_selector("#txt-body li")
-    assert page.locator("#txt-body li").count() == len(expected["items"])
+    page.get_by_role("heading", name="Broadcast archive", exact=True).wait_for()
+    archive = page.locator("#txt-body > .txt-rows > li")
+    wait_until(page, f"document.querySelectorAll('#txt-body > .txt-rows > li').length === {len(expected['items'])}")
+    assert archive.count() == len(expected["items"])
+    assert archive.locator("a").evaluate_all("links => links.map(a => a.getAttribute('href'))") == [
+        "index.html#" + item["id"] for item in expected["items"]
+    ]
     page.get_by_role("link", name="606 ORIGINALS").click()
-    page.wait_for_selector("#txt-body li")
+    page.get_by_role("heading", name="Off-Brand Originals", exact=True).wait_for()
     manifest = json.loads((ROOT / "site" / "commercials" / "manifest.json").read_text())
-    assert page.locator("#txt-body li").count() == len(manifest["commercials"])
+    wait_until(page, f"document.querySelectorAll('#txt-body > .txt-rows > li').length === {len(manifest['commercials'])}")
+    assert page.locator("#txt-body > .txt-rows > li").all_text_contents() == [
+        item["title"] for item in manifest["commercials"]
+    ]
     page.locator("#txt-number").fill("999")
     page.locator("#txt-number").press("Enter")
     page.get_by_role("heading", name="Page not transmitted").wait_for()
@@ -1069,6 +1083,7 @@ def test_teletext_public_navigation_and_return(browser, base_url, width):
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     page.locator("#txt-return").click()
     page.wait_for_selector("#lineup li")
+    wait_until(page, "location.hash === " + json.dumps(channel))
     assert page.evaluate("location.hash") == channel
     assert not problems
     ctx.close()
