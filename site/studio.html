@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="theme-color" content="#080808" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';" />
+  <title>OFF-BRAND // Studio B</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="studio.css?v=__BUILD__" />
+</head>
+<body>
+  <a class="skip" href="#studio-title">Skip to the program</a>
+  <main class="studio">
+    <header class="station"><span>OFF-BRAND / STUDIO B</span><a id="program-guide" href="teletext.html#412">← PROGRAM GUIDE</a><a id="return-broadcast" href="index.html">RETURN TO BROADCAST</a></header>
+    <p class="kicker">ON-DEMAND SPECIAL PROGRAMMING · NOT A LIVE SCHEDULE</p>
+    <nav class="lineup" aria-label="Studio B programs">
+      <a href="#continuity">01 · Continuity booth</a>
+      <a href="#props">02 · The Props Department</a>
+      <a href="#readings">03 · The Hostname Readings</a>
+    </nav>
+    <section class="stage" id="stage" aria-labelledby="studio-title">
+      <div class="stage-top"><span id="reel">REEL 01</span><span id="type">STUDIO B</span></div>
+      <h1 id="studio-title" tabindex="-1">Studio B Continuity Booth</h1>
+      <div id="program-card" class="program-card" aria-live="polite"></div>
+      <div id="source" class="source"></div>
+      <p id="status" class="status" role="status"></p>
+      <div class="transport" role="group" aria-label="Program playback">
+        <button id="previous" type="button">← Previous</button>
+        <button id="play" type="button" aria-pressed="false">Play episode</button>
+        <button id="next" type="button">Next →</button>
+        <button id="cue" type="button">Play station cue</button>
+      </div>
+      <p class="caption">Manual viewing by default. Playback advances cards every 18 seconds, stops at the end, and pauses when this page is hidden. Audio cues play only on request.</p>
+    </section>
+    <footer><span>PRODUCTION NOTE / A documentary stops where the footage stops.</span><a href="methodology.html">Station standards</a></footer>
+    <noscript><p>The program viewer requires JavaScript. Return to the <a href="index.html">broadcast</a>.</p></noscript>
+  </main>
+  <script src="studio.js?v=__BUILD__" defer></script>
+</body>
+</html>
