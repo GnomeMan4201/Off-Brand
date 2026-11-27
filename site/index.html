@@ -22,7 +22,7 @@
 
   <header class="masthead">
     <div class="masthead-top">
-      <span class="station-id">CH 01–30 · AFTER DARK BROADCAST</span>
+      <span class="station-id" id="station-id">AFTER DARK BROADCAST</span>
       <span class="masthead-meta">
         <span>A SCREENSHOT ZINE BY GNOMEMAN4201</span>
         <span class="on-air-pill"><span class="rec" aria-hidden="true">●</span> ON AIR · <span id="last-updated">Updated --</span></span>
@@ -88,13 +88,13 @@
         <button type="button" class="pref-btn" id="breaks-toggle" aria-pressed="true">Commercial breaks: <span>On</span></button>
         <span>Saved on this device. Breaks never play with sound until you ask.</span>
       </div>
-      <label class="search-wrap">
-        <span>Search reviews</span>
-        <span class="search-box">
+      <div class="search-wrap" role="search">
+        <label for="search-input">Search reviews</label>
+        <div class="search-box">
           <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
-          <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>×</button>
-        </span>
-      </label>
+          <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" aria-controls="search-input" hidden><span aria-hidden="true">×</span></button>
+        </div>
+      </div>
       <div class="filter-group" id="aisle-filters" role="group" aria-label="Filter by aisle"></div>
       <ol class="channels" id="lineup"></ol>
       <p class="empty" id="lineup-empty" hidden>No reviews match. Try another aisle or search.</p>

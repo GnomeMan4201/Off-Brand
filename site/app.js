@@ -347,6 +347,12 @@ async function init() {
 
   document.getElementById("last-updated").textContent = `Updated ${String(data.last_updated || "").slice(0, 10)}`;
   document.getElementById("stats-bar").textContent = `${items.length} specimens on air · ${rejected.length} held back at review`;
+  // The station ID follows the shelf: CH 01–NN, where NN is the last channel.
+  const stationId = document.getElementById("station-id");
+  if (stationId) {
+    const range = items.length > 1 ? `CH 01–${pad2(items.length)}` : items.length === 1 ? "CH 01" : "OFF AIR";
+    stationId.textContent = `${range} · AFTER DARK BROADCAST`;
+  }
 
   const $ = (id) => document.getElementById(id);
   const bezel = document.querySelector(".bezel");
@@ -402,7 +408,18 @@ async function init() {
     facts.replaceChildren(renderFacts(item));
     now.textContent = `Now showing CH ${ch} · ${item.knockoff_label} · ${item.aisle || "Uncategorized"}`;
     for (const b of lineupEl.querySelectorAll("button")) b.setAttribute("aria-current", String(Number(b.dataset.i) === i));
+    revealInLineup();
     if (typeof item.id === "string" && location.hash !== "#" + item.id) history.replaceState(null, "", "#" + item.id);
+  }
+
+  // On wide screens the lineup is its own scroll box. Keep the channel on air
+  // visible inside it without scrolling the page.
+  function revealInLineup() {
+    const cur = lineupEl.querySelector('button[aria-current="true"]');
+    if (!cur || lineupEl.scrollHeight <= lineupEl.clientHeight) return;
+    const r = cur.getBoundingClientRect(), box = lineupEl.getBoundingClientRect();
+    if (r.top < box.top) lineupEl.scrollTop -= box.top - r.top;
+    else if (r.bottom > box.bottom) lineupEl.scrollTop += r.bottom - box.bottom;
   }
 
   function finish() {
@@ -808,6 +825,7 @@ async function init() {
       li.appendChild(b);
       lineupEl.appendChild(li);
     }
+    revealInLineup();
     if (lineupCountEl) {
       lineupCountEl.textContent = list.length === items.length ? `${items.length} channels` : `${list.length} of ${items.length}`;
     }

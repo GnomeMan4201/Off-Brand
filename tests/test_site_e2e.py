@@ -631,3 +631,224 @@ def test_rapid_tuning_never_overlaps_snow(browser, base_url):
     interstitial_closed(page, 3000)
     assert page.evaluate("window.tuningStarts") == 2
     page.context.close()
+
+
+# ---------- visual refinement regressions ----------
+
+def _fake_screenshot(route):
+    # Test-only stand-in for a urlscan capture: a flat mid-grey PNG, so the glass
+    # sheen has pixels to tint. The real capture is never fetched in tests.
+    import struct, zlib
+    w, h = 64, 40
+    raw = b"".join(b"\x00" + bytes([128, 128, 128]) * w for _ in range(h))
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    route.fulfill(status=200, content_type="image/png", body=png)
+
+
+def _open_with_screenshots(browser, url, *, mobile=False, init=None):
+    page = open_page(browser, url, mobile=mobile, reduce=True, init=init)
+    # Playwright tries the newest route first, so this one wins for screenshots
+    # while open_page's abort-everything route still guards the rest of urlscan.
+    page.route("https://urlscan.io/screenshots/**", _fake_screenshot)
+    page.reload()
+    page.wait_for_selector(".shot-area img")
+    page.wait_for_function("() => { const i = document.querySelector('.shot-area img'); return i && i.complete && i.naturalWidth > 0; }")
+    return page
+
+
+NO_GLASS = ".shot-area > a::after { display: none !important; }"
+
+
+def add_rule(page, rule):
+    # The CSP forbids inline <style>, so tests change styles through the CSSOM.
+    return page.evaluate("""(rule) => { const s = [...document.styleSheets].find(x => x.href && x.href.includes('styles.css'));
+        return s.insertRule(rule, s.cssRules.length); }""", rule)
+
+
+def remove_rule(page, index):
+    page.evaluate("""(i) => { const s = [...document.styleSheets].find(x => x.href && x.href.includes('styles.css')); s.deleteRule(i); }""", index)
+
+
+def _shot_with_and_without_glass(page, selector, rotated=False):
+    box = page.locator(selector).first.bounding_box()
+    if rotated:
+        # A tilted stamp's bounding box includes screenshot corners. Compare a
+        # band through its middle that stays inside the tilted rectangle.
+        w, h = page.locator(selector).first.evaluate("e => [e.offsetWidth, e.offsetHeight]")
+        bw = w * 0.5
+        bh = max(2.0, (h - 2 * (bw / 2) * 0.141) * 0.8)  # tan(8 deg) ~ 0.141
+        cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+        box = {"x": cx - bw / 2, "y": cy - bh / 2, "width": bw, "height": bh}
+    with_glass = page.screenshot(clip=box, animations="disabled")
+    index = add_rule(page, NO_GLASS)
+    without = page.screenshot(clip=box, animations="disabled")
+    remove_rule(page, index)
+    return with_glass, without
+
+
+@pytest.mark.parametrize("mobile", [False, True], ids=["desktop", "phone"])
+def test_glass_sheen_tints_only_the_screenshot(browser, base_url, mobile):
+    page = _open_with_screenshots(browser, base_url, mobile=mobile)
+    # No full-screen overlay is left on the set itself.
+    for sel in (".bezel", ".screen", ".program", "#interstitial"):
+        for pseudo in ("::before", "::after"):
+            assert page.evaluate(f"getComputedStyle(document.querySelector('{sel}'), '{pseudo}').content") in ("none", "normal"), (sel, pseudo)
+    shot, plain = _shot_with_and_without_glass(page, ".shot-area img")
+    assert shot != plain, "the sheen should still be visible on the screenshot"
+    # The bugs and the stamp have translucent backings, so make them opaque for
+    # the comparison: any difference left would mean the glass is painted on top.
+    add_rule(page, ".stamp, .ch-bug, .station-bug { background: #000 !important; border-color: #000 !important; border-radius: 0 !important; }")
+    for sel in (".chyron", ".stamp", ".ch-bug", ".station-bug"):
+        if not page.locator(sel).count():
+            continue
+        tinted, untinted = _shot_with_and_without_glass(page, sel, rotated=sel == ".stamp")
+        assert tinted == untinted, f"glass sheen covers {sel}"
+    page.context.close()
+
+
+def test_glass_sheen_stays_off_the_static_card_and_commercials(browser, base_url):
+    page = _open_with_screenshots(browser, base_url,
+                                  init="try { localStorage.setItem('offbrand.breaks.enabled', 'on'); } catch (e) {}")
+    page.locator(".watch-btn").first.click()  # CH 00: plays a commercial on demand
+    page.wait_for_selector("#interstitial:not([hidden]) video")
+    # Hold one frame still so the comparison sees only the overlay, not playback.
+    page.evaluate("""() => new Promise(done => { const v = document.querySelector('#interstitial video');
+        const hold = () => { v.pause(); v.currentTime = 0.5; v.addEventListener('seeked', () => done(), { once: true }); };
+        if (v.readyState >= 1) hold(); else v.addEventListener('loadedmetadata', hold, { once: true }); })""")
+    page.wait_for_timeout(300)
+    # The paused picture is the part that must stay untouched; the countdown and
+    # progress bar around it keep moving on their own.
+    tinted, untinted = _shot_with_and_without_glass(page, "#interstitial .ad-stage")
+    assert tinted == untinted, "glass sheen covers the commercial"
+    # Nothing outside the commercial (no overlay on the screen, the bezel or the
+    # program underneath) may paint over it either.
+    stage = page.locator("#interstitial .ad-stage").bounding_box()
+    as_shown = page.screenshot(clip=stage, animations="disabled")
+    index = add_rule(page, ".bezel::before, .bezel::after, .screen::before, .screen::after,"
+                           " .program *::before, .program *::after { display: none !important; }")
+    bare = page.screenshot(clip=stage, animations="disabled")
+    remove_rule(page, index)
+    assert as_shown == bare, "an overlay outside the commercial paints over it"
+    # Sanity check: the comparison does catch a full-screen overlay like the
+    # original .screen::after sheen.
+    index = add_rule(page, ".screen::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none;"
+                           " background: radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.34) 100%); }")
+    covered, _ = _shot_with_and_without_glass(page, "#interstitial .ad-stage")
+    remove_rule(page, index)
+    assert covered != untinted
+    page.context.close()
+
+
+def test_station_id_follows_the_channel_count(browser, base_url, grown_url):
+    for url in (base_url, grown_url):
+        page = open_page(browser, url, wait_originals=False)
+        n = channels(page)
+        text = page.inner_text("#station-id")
+        assert text == f"CH 01–{n:02d} · AFTER DARK BROADCAST", text
+        page.context.close()
+    source = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    assert not re.search(r"CH 01[–-]\d", source), "the channel range must not be hardcoded"
+
+
+def test_search_field_and_clear_button_are_separate_accessible_controls(browser, base_url):
+    page = open_page(browser, base_url, wait_originals=False)
+    box = page.get_by_role("searchbox", name="Search reviews")
+    assert box.count() == 1
+    # The label names only the input; the clear button is not inside it.
+    assert page.evaluate("document.querySelector('label[for=search-input]') !== null")
+    assert page.evaluate("!document.getElementById('search-clear').closest('label')")
+    assert page.locator("#search-clear").is_hidden()
+    total = channels(page)
+    box.fill("usps")
+    clear = page.get_by_role("button", name="Clear search")
+    clear.wait_for(state="visible")
+    shown = page.locator("#lineup li").count()
+    assert 0 < shown < total
+    assert page.inner_text("#lineup-count") == f"{shown} of {total}"
+    box.focus()
+    page.keyboard.press("Tab")
+    assert page.evaluate("document.activeElement.id") == "search-clear"
+    page.keyboard.press("Enter")
+    assert box.input_value() == ""
+    assert page.evaluate("document.activeElement.id") == "search-input"
+    assert page.locator("#search-clear").is_hidden()
+    assert page.locator("#lineup li").count() == total
+    assert page.inner_text("#lineup-count") == f"{total} channels"
+    page.context.close()
+
+
+UNCLIP = ("html, body { overflow: visible !important; }",)
+
+
+@pytest.mark.parametrize("width", [320, 360, 390, 768, 1024, 1440])
+def test_layout_fits_without_the_global_overflow_clip(browser, base_url, width):
+    """body { overflow-x: clip } must be a safety net, not the thing hiding a too-wide layout."""
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce",
+                              is_mobile=width < 700, has_touch=width < 700)
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.add_init_script("try { localStorage.setItem('offbrand.breaks.enabled', 'off'); } catch (e) {}")
+    page.goto(base_url)
+    page.wait_for_selector("#lineup li")
+    for rule in UNCLIP:
+        add_rule(page, rule)
+    assert page.evaluate("getComputedStyle(document.body).overflowX") == "visible"
+    items = json.loads((ROOT / "data" / "reviews.json").read_text(encoding="utf-8"))["items"]
+    wide = []
+    for n, item in enumerate(items, 1):
+        page.evaluate(f"location.hash = {json.dumps('#' + item['id'])}")
+        wait_until(page, f"document.getElementById('now').textContent.includes('CH {n:02d}')", timeout=3000)
+        for summary in page.locator("details.evidence:not([open]) summary").all():
+            summary.click()
+        w = page.evaluate("document.documentElement.scrollWidth")
+        if w > width:
+            culprit = page.evaluate(f"""() => [...document.querySelectorAll('body *')].filter(e => {{
+                    if (e.getBoundingClientRect().right <= {width} + 0.5) return false;
+                    for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) {{
+                        const o = getComputedStyle(a).overflowX;
+                        if (o !== 'visible') return false;  // clipped by its own container: not a page overflow
+                    }}
+                    return true;
+                }}).map(e => e.tagName + '.' + e.className + ' ' + Math.round(e.getBoundingClientRect().right)).slice(0, 4)""")
+            wide.append(f"CH {n:02d}: {w}px {culprit}")
+    assert not wide, wide
+    ctx.close()
+
+
+def test_signal_led_follows_tuning_and_breaks(browser, base_url):
+    page = open_page(browser, base_url,
+                     init="try { localStorage.setItem('offbrand.breaks.enabled', 'on'); } catch (e) {}")
+    led = "document.querySelector('.bezel').className"
+    assert page.evaluate(led) == "bezel"
+    page.click("#next")
+    assert "is-tuning" in page.evaluate(led)
+    interstitial_closed(page, 3000)
+    assert page.evaluate(led) == "bezel"
+    page.locator(".watch-btn").first.click()
+    page.wait_for_selector("#interstitial:not([hidden]) .commercial")
+    assert "is-break" in page.evaluate(led)
+    skip_break(page)
+    assert page.evaluate(led) == "bezel"
+    page.context.close()
+
+
+def test_channel_on_air_stays_visible_in_the_scrolling_lineup(browser, grown_url):
+    page = open_page(browser, grown_url, reduce=True, wait_originals=False,
+                     init="try { localStorage.setItem('offbrand.breaks.enabled', 'off'); } catch (e) {}")
+    assert page.evaluate("(() => { const l = document.getElementById('lineup'); return l.scrollHeight > l.clientHeight; })()"), \
+        "expected the lineup to scroll on a wide screen"
+    page_scroll = page.evaluate("window.scrollY")
+    inside = """(() => { const l = document.getElementById('lineup'), c = l.querySelector('button[aria-current="true"]');
+        const a = l.getBoundingClientRect(), b = c.getBoundingClientRect(); return b.top >= a.top - 1 && b.bottom <= a.bottom + 1; })()"""
+    page.evaluate("document.getElementById('screen').focus({ preventScroll: true })")
+    page.keyboard.press("ArrowLeft")  # wraps to the last channel, far below the fold of the list
+    wait_until(page, f"document.getElementById('now').textContent.includes('CH {channels(page)}')", timeout=3000)
+    assert page.evaluate(inside)
+    for _ in range(3):
+        page.keyboard.press("ArrowRight")
+    wait_until(page, "document.getElementById('now').textContent.includes('CH 03 ')", timeout=3000)
+    assert page.evaluate(inside)
+    assert page.evaluate("window.scrollY") == page_scroll, "keeping the lineup in view must not scroll the page"
+    page.context.close()
