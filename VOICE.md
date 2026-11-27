@@ -11,6 +11,8 @@ Off-Brand reviews phishing pages the way a sharp, slightly mean critic reviews c
 5. **One strong line beats three okay ones.** Cut the second joke in a sentence.
 6. **Safety advice is never a punchline.** Advice like "never share your recovery phrase" is stated plainly. Only the setup around it is funny.
 
+Use the [investigation standard](docs/INVESTIGATION_STANDARD.md) for the private claim ledger, six research questions and review checklist. It supplements the voice guide without changing the broadcast format.
+
 ## What to Notice: three kinds of claim
 
 Every tell is one of three things. Keep them distinguishable in the wording.

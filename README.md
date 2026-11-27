@@ -78,7 +78,7 @@ A report is a lead, not a verdict. Some records are held back when the evidence 
 - Public records and screenshots may disappear; a scan date does not establish that a site is still active. Unapproved specimens and drafts are maintained separately in a private repository.
 - Off-Brand is an editorial publication, not a detection service or live blocklist.
 
-Read the [editorial guide](VOICE.md).
+Read the [editorial guide](VOICE.md) and [investigation standard](docs/INVESTIGATION_STANDARD.md).
 
 </details>
 
