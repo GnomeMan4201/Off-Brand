@@ -850,3 +850,10 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
 
 /* Public station standards link; keep the broadcast controls unchanged. */
 .station-nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; }
+
+/* Static standby slate, also used for unavailable and empty archives. */
+.standby-card { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: clamp(18px, 4vw, 36px); text-align: center; background: radial-gradient(ellipse at center, #251b16, #090807 80%); color: var(--ink); overflow-wrap: anywhere; }
+.standby-card p { margin: 0; max-width: 48ch; }
+.standby-card .standby-kicker { font: 20px var(--tty); color: var(--chroma); }
+.standby-card strong { font: clamp(23px, 4vw, 38px)/1.1 var(--display); color: var(--yellow); }
+.standby-card a { display: inline-flex; align-items: center; min-height: 44px; color: var(--yellow); text-decoration: underline; }
