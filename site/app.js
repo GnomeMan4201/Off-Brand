@@ -362,16 +362,21 @@ async function init() {
   // Breaks are optional, start muted, and any failure falls straight back to
   // the specimen the viewer was heading to. Nothing here can block browsing.
 
-  const Breaks = window.OffBrandBreaks;
-  const store = Breaks.safeStore((() => { try { return window.localStorage; } catch (e) { return null; } })());
+  // breaks.js is optional. If it failed to load, the station runs without
+  // commercials and every Breaks.* call below is unreachable.
+  const Breaks = window.OffBrandBreaks && typeof window.OffBrandBreaks.createRotation === "function" ? window.OffBrandBreaks : null;
+  const store = Breaks ? Breaks.safeStore((() => { try { return window.localStorage; } catch (e) { return null; } })()) : null;
   const breakStatus = $("break-status");
   const toggleBtn = $("breaks-toggle");
+  const prefBox = $("station-pref");
   const originals = $("originals");
   const listings = $("listings");
-  const scheduler = Breaks.createScheduler();
-  let breaksOn = Breaks.loadEnabled(store);
-  let commercials = [], byId = new Map(), rotation = null, bumperDeck = Breaks.createBumperDeck([]);
+  const scheduler = Breaks ? Breaks.createScheduler() : null;
+  let breaksOn = Breaks ? Breaks.loadEnabled(store) : false;
+  let commercials = [], byId = new Map(), rotation = null, bumperDeck = null;
   let breakState = null, sinceBreak = 99;
+  const STALL_MS = 8000;   // no playback progress for this long ends the break
+  const CHOICE_MS = 12000; // a reduced-motion bumper waits this long for a choice
 
   const announce = (msg) => { breakStatus.textContent = ""; breakStatus.textContent = msg; };
 
@@ -383,7 +388,7 @@ async function init() {
 
   function setBreaks(on) {
     breaksOn = on;
-    Breaks.saveEnabled(store, on);
+    if (Breaks) Breaks.saveEnabled(store, on);
     renderToggle();
     if (!on && breakState && !breakState.voluntary) endBreak();
     announce(on ? "Commercial breaks are on." : "Commercial breaks are off. Off-Brand Originals stay on CH 00.");
@@ -391,7 +396,7 @@ async function init() {
   toggleBtn.addEventListener("click", () => setBreaks(!breaksOn));
 
   function breakDue() {
-    if (!breaksOn || !rotation || !rotation.available()) return false;
+    if (!Breaks || !breaksOn || !rotation || !rotation.available()) return false;
     if (!scheduler.tick()) return false;
     scheduler.reset();
     return true;
@@ -400,7 +405,7 @@ async function init() {
   function teardown() {
     const s = breakState;
     if (!s) return false;
-    for (const t of s.timers) clearTimeout(t);
+    for (const t of s.timers) { clearTimeout(t); clearInterval(t); }
     if (s.video) {
       s.video.pause();
       s.video.removeAttribute("src");
@@ -435,7 +440,9 @@ async function init() {
     opts = opts || {};
     clearTimeout(timer);
     inter.replaceChildren();
-    if (pending !== null) { target = pending; pending = null; }
+    // `target` is the viewer's newest request. A static switch still in flight
+    // is older, so it is dropped, never substituted.
+    pending = null;
     const id = opts.id || (rotation && rotation.next());
     const c = id && byId.get(id);
     if (!c) { show(target); return; }
@@ -449,6 +456,8 @@ async function init() {
     if (reducedMotion.matches) {
       // No motion, no autoplay: the viewer chooses.
       inter.replaceChildren(bumperCard(line, { noisy: false, actions: [["Watch the commercial", () => playCommercial(false)], ["Skip to CH " + pad2(target + 1), skip]] }));
+      // Nobody chose? The break ends by itself; nothing waits on the viewer forever.
+      breakState.timers.push(setTimeout(() => { if (breakState && !breakState.video) endBreak(); }, CHOICE_MS));
     } else {
       inter.replaceChildren(bumperCard(line, { noisy: true }));
       breakState.timers.push(setTimeout(() => playCommercial(false), 1900));
@@ -539,14 +548,35 @@ async function init() {
       stage.appendChild(overlay);
     }
 
-    // A file that never starts, or errors, quietly returns the viewer to the program.
-    let loaded = false;
+    // Watchdog: the break must keep making progress. A video that errors,
+    // never starts, or freezes mid-play returns the viewer to the program after
+    // STALL_MS. Only a pause the viewer chose (our button or the native player)
+    // stops the clock; pauses we make ourselves (tab hidden) do not count.
     const fail = () => { if (breakState === s) failBreak(c); };
-    s.timers.push(setTimeout(() => { if (!loaded) fail(); }, 8000));
-    video.addEventListener("loadeddata", () => { loaded = true; });
+    let userPaused = false, blocked = false, lastTime = -1, lastProgress = Date.now();
+    s.systemPause = false;
+    s.timers.push(setInterval(() => {
+      if (breakState !== s) return;
+      const t = Date.now();
+      if (userPaused || video.ended || document.hidden) { lastProgress = t; return; }
+      if (video.currentTime !== lastTime) { lastTime = video.currentTime; lastProgress = t; return; }
+      if (t - lastProgress < STALL_MS) return;
+      if (blocked) {
+        // Autoplay was refused and nobody tapped Play: not the video's fault,
+        // so it stays in rotation. The break just ends.
+        announce("Commercial skipped. Back to the program.");
+        endBreak();
+      } else {
+        fail();
+      }
+    }, 500));
     video.addEventListener("error", fail);
-    video.addEventListener("play", () => { clearOverlay(); setIcon(playBtn, "pause", "Pause"); });
-    video.addEventListener("pause", () => setIcon(playBtn, "play", "Play"));
+    video.addEventListener("play", () => { userPaused = false; blocked = false; clearOverlay(); setIcon(playBtn, "pause", "Pause"); });
+    video.addEventListener("pause", () => {
+      if (!video.ended && !s.systemPause) userPaused = true;
+      s.systemPause = false;
+      setIcon(playBtn, "play", "Play");
+    });
     video.addEventListener("volumechange", () => setIcon(soundBtn, video.muted ? "muted" : "sound", video.muted ? "Turn sound on" : "Mute"));
     video.addEventListener("timeupdate", () => {
       if (video.duration) fill.style.width = Math.min(100, (video.currentTime / video.duration) * 100) + "%";
@@ -565,6 +595,7 @@ async function init() {
       attempt.catch((err) => {
         if (breakState !== s) return;
         // Autoplay refused (Low Power Mode, browser policy): wait for a tap, not a failure.
+        if (err && err.name === "NotAllowedError") blocked = true;
         if (err && err.name === "NotAllowedError") showOverlay(c.title, [["Play", () => video.play().catch(() => {})], [s.voluntary ? `Back to ${back}` : "Skip ad", () => endBreak()]]);
       });
     }
@@ -614,6 +645,7 @@ async function init() {
   }
 
   async function loadCommercials() {
+    if (!Breaks) throw new Error("breaks.js unavailable");
     const r = await fetch(release ? `commercials/manifest.json?v=${encodeURIComponent(release)}` : "commercials/manifest.json", { cache: "no-cache" });
     if (!r.ok) throw new Error("manifest " + r.status);
     const m = Breaks.validateManifest(await r.json());
@@ -621,11 +653,22 @@ async function init() {
     byId = new Map(commercials.map((c) => [c.id, c]));
     bumperDeck = Breaks.createBumperDeck(m.bumpers.length ? m.bumpers : ["Unfortunately, we’ll be right back."]);
     rotation = Breaks.createRotation(commercials.map((c) => c.id), store);
-    if (commercials.length) { renderListings(); originals.hidden = false; }
+    if (commercials.length) { renderListings(); originals.hidden = false; prefBox.hidden = false; }
   }
 
+  // Leaving the tab pauses the commercial; coming back resumes it. Neither
+  // counts as the viewer pausing, so the watchdog stays honest.
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden && breakState && breakState.video) breakState.video.pause();
+    const s = breakState;
+    if (!s || !s.video) return;
+    if (document.hidden && !s.video.paused) {
+      s.systemPause = true;
+      s.resumeOnShow = true;
+      s.video.pause();
+    } else if (!document.hidden && s.resumeOnShow) {
+      s.resumeOnShow = false;
+      s.video.play().catch(() => {});
+    }
   });
 
   function renderLineup() {

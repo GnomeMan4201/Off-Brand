@@ -138,8 +138,10 @@
       next() {
         if (!list.length) return "";
         if (list.length === 1) return list[0];
-        let i;
-        do { i = Math.floor(rand() * list.length); } while (i === last);
+        // Choose among the others directly: no retry loop, so even a stuck
+        // random source can never hang the page.
+        const others = list.map((_, k) => k).filter((k) => k !== last);
+        const i = others[Math.min(others.length - 1, Math.floor(rand() * others.length))];
         last = i;
         return list[i];
       },

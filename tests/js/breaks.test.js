@@ -144,3 +144,11 @@ test("runtimes and air times format like a TV guide", () => {
   assert.deepEqual(B.airTimes([{ runtime_seconds: 20 }, { runtime_seconds: 28 }, { runtime_seconds: 23 }]), ["2:00:00 AM", "2:00:20 AM", "2:00:48 AM"]);
   assert.deepEqual(B.airTimes([{ runtime_seconds: 5 }], 0), ["12:00:00 AM"]);
 });
+
+test("bumper deck cannot hang on a stuck random source", () => {
+  for (const r of [0, 0.999999, 1]) {
+    const deck = B.createBumperDeck(["x", "y", "z"], () => r);
+    let last = "";
+    for (let k = 0; k < 50; k++) { const b = deck.next(); assert.notEqual(b, last); assert.ok(b); last = b; }
+  }
+});

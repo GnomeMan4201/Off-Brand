@@ -50,7 +50,7 @@ def browser():
         b.close()
 
 
-def open_page(browser, base_url, *, mobile=False, reduce=False, block_video=False):
+def open_page(browser, base_url, *, mobile=False, reduce=False, block_video=False, init=None, routes=None, wait_originals=True):
     ctx = browser.new_context(
         viewport={"width": 390, "height": 844} if mobile else {"width": 1440, "height": 1000},
         reduced_motion="reduce" if reduce else "no-preference",
@@ -63,9 +63,14 @@ def open_page(browser, base_url, *, mobile=False, reduce=False, block_video=Fals
     page.route("https://urlscan.io/**", lambda route: route.abort())  # never leave the test box
     if block_video:
         page.route("**/commercials/*.mp4", lambda route: route.fulfill(status=404, body="gone"))
+    for pattern, handler in (routes or {}).items():
+        page.route(pattern, handler)
+    if init:
+        page.add_init_script(init)
     page.goto(base_url)
     page.wait_for_selector("#lineup li")
-    page.wait_for_selector("#originals:not([hidden])")
+    if wait_originals:
+        page.wait_for_selector("#originals:not([hidden])")
     return page
 
 
@@ -216,4 +221,171 @@ def test_page_has_a_favicon_and_no_missing_files(browser, base_url):
     assert icon == 200
     page.wait_for_timeout(500)
     assert not page.problems, page.problems
+    page.context.close()
+
+
+# ---------- regressions found in review of PR #19 ----------
+
+def interstitial_closed(page, timeout):
+    page.wait_for_function("() => document.getElementById('interstitial').hidden", timeout=timeout)
+
+
+def skip_break(page):
+    page.evaluate("document.getElementById('screen').focus()")
+    page.keyboard.press("Escape")
+    interstitial_closed(page, 3000)
+
+
+def test_rapid_switching_into_a_break_keeps_the_latest_destination(browser, base_url):
+    """Issue 1: a pending static switch must not overwrite the newer break target."""
+    page = open_page(browser, base_url)
+    for _ in range(3):  # several breaks, each reached by clicking faster than the static clears
+        start = ch(page)
+        clicks = 0
+        while not page.locator(".bumper, .commercial").count():
+            assert clicks < 8, "no break within 8 rapid clicks"
+            page.click("#next")
+            clicks += 1
+            page.wait_for_timeout(60)
+        skip_break(page)
+        assert ch(page) == (start - 1 + clicks) % 9 + 1, f"after {clicks} rapid clicks from CH {start:02d}"
+    page.context.close()
+
+
+def test_rapid_lineup_pick_into_a_break_lands_on_the_pick(browser, base_url):
+    page = open_page(browser, base_url)
+    target = None
+    for _ in range(9):
+        page.click("#next")
+        page.wait_for_timeout(60)
+        pick = (ch(page) + 3) % 9  # 0-based index of a channel several steps away
+        page.locator("#lineup button").nth(pick).click()
+        target = pick + 1
+        page.wait_for_timeout(60)
+        if page.locator(".bumper, .commercial").count():
+            break
+        settle(page)
+        interstitial_closed(page, 6000)
+    else:
+        raise AssertionError("no break reached")
+    skip_break(page)
+    assert ch(page) == target
+    page.context.close()
+
+
+NEVER_STARTS = """
+HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+"""
+
+AUTOPLAY_BLOCKED = """
+HTMLMediaElement.prototype.play = function () { return Promise.reject(new DOMException('blocked', 'NotAllowedError')); };
+"""
+
+
+def test_video_that_loads_but_never_starts_returns_to_the_program(browser, base_url):
+    """Issue 2a: loadeddata alone must not satisfy the watchdog."""
+    page = open_page(browser, base_url, init=NEVER_STARTS)
+    _, before = next_until_break(page)
+    page.wait_for_selector(".commercial video")
+    page.wait_for_function("() => document.querySelector('.commercial video').readyState >= 2", timeout=6000)
+    interstitial_closed(page, 14000)
+    assert ch(page) == expected_next(before)
+    assert "unavailable" in page.inner_text("#break-status")
+    page.context.close()
+
+
+def test_video_that_stalls_mid_playback_returns_to_the_program(browser, base_url):
+    """Issue 2b: playback that freezes without a pause event must time out."""
+    page = open_page(browser, base_url)
+    _, before = next_until_break(page)
+    wait_playing(page)
+    page.wait_for_function("() => document.querySelector('.commercial video').currentTime > 1", timeout=8000)
+    page.evaluate("document.querySelector('.commercial video').playbackRate = 0")  # frozen, not paused
+    assert page.evaluate("document.querySelector('.commercial video').paused") is False
+    interstitial_closed(page, 14000)
+    assert ch(page) == expected_next(before)
+    page.context.close()
+
+
+def test_intentional_pause_is_not_treated_as_a_failure(browser, base_url):
+    """Issue 2c: a viewer's pause must never trip the stall watchdog."""
+    page = open_page(browser, base_url)
+    next_until_break(page)
+    wait_playing(page)
+    page.click(".ad-controls button[aria-label='Pause']")
+    page.wait_for_timeout(11000)
+    assert page.locator(".commercial video").count() == 1
+    assert "unavailable" not in page.inner_text("#break-status")
+    page.click(".ad-controls button[aria-label='Play']")
+    page.wait_for_function("() => !document.querySelector('.commercial video').paused", timeout=3000)
+    page.click(".skip-ad")
+    page.context.close()
+
+
+def test_autoplay_refusal_does_not_strand_the_viewer(browser, base_url):
+    """Issue 2d: a break that is waiting for a tap still ends on its own, and the ad is not blacklisted."""
+    page = open_page(browser, base_url, init=AUTOPLAY_BLOCKED)
+    _, before = next_until_break(page)
+    page.wait_for_selector(".ad-overlay")
+    interstitial_closed(page, 14000)
+    assert ch(page) == expected_next(before)
+    assert page.locator(".watch-btn[disabled]").count() == 0  # not marked as broken
+    page.context.close()
+
+
+def _browse_nine(page):
+    for _ in range(9):
+        b = ch(page)
+        page.click("#next")
+        assert settle(page) is False, "a break started without its pieces"
+        interstitial_closed(page, 6000)
+        assert ch(page) == expected_next(b)
+    assert not [p for p in page.problems if p.startswith("pageerror")], page.problems
+
+
+@pytest.mark.parametrize("failure", ["breaks.js 404", "manifest 404", "manifest garbage", "manifest wrong shape"])
+def test_specimens_still_browse_when_break_pieces_fail(browser, base_url, failure):
+    """Issue 3: nothing about commercials may stop ordinary browsing."""
+    routes = {
+        "breaks.js 404": {"**/breaks.js*": lambda r: r.fulfill(status=404, body="gone")},
+        "manifest 404": {"**/commercials/manifest.json*": lambda r: r.fulfill(status=404, body="gone")},
+        "manifest garbage": {"**/commercials/manifest.json*": lambda r: r.fulfill(status=200, body="{not json", content_type="application/json")},
+        "manifest wrong shape": {"**/commercials/manifest.json*": lambda r: r.fulfill(status=200, body='{"commercials": {"id": 1}, "bumpers": null}', content_type="application/json")},
+    }[failure]
+    page = open_page(browser, base_url, routes=routes, wait_originals=False)
+    page.problems[:] = [p for p in page.problems if "breaks.js" not in p and "manifest.json" not in p]
+    assert page.inner_text("#now").startswith("Now showing CH")
+    assert page.locator("#originals").is_hidden()
+    assert page.locator(".station-pref").is_hidden()  # no switch for a feature that is not there
+    _browse_nine(page)
+    page.context.close()
+
+
+def test_reduced_motion_break_ends_by_itself_if_nobody_chooses(browser, base_url):
+    """Issue 2e: a break waiting on the viewer must not wait forever."""
+    page = open_page(browser, base_url, reduce=True)
+    _, before = next_until_break(page)
+    assert page.locator(".bumper-actions").count() == 1
+    interstitial_closed(page, 16000)
+    assert ch(page) == expected_next(before)
+    page.context.close()
+
+
+def test_hiding_the_tab_mid_commercial_is_not_a_failure(browser, base_url):
+    page = open_page(browser, base_url)
+    next_until_break(page)
+    wait_playing(page)
+    page.evaluate("""() => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+        document.dispatchEvent(new Event('visibilitychange'));
+    }""")
+    assert page.locator(".commercial video").evaluate("v => v.paused") is True
+    page.wait_for_timeout(10000)
+    assert page.locator(".commercial video").count() == 1, "tab switch was treated as a stall"
+    page.evaluate("""() => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+        document.dispatchEvent(new Event('visibilitychange'));
+    }""")
+    page.wait_for_function("() => !document.querySelector('.commercial video').paused", timeout=3000)
+    page.click(".skip-ad")
     page.context.close()
