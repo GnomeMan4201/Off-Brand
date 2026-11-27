@@ -413,7 +413,7 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   font-size: 15px;
   box-shadow: 0 3px 0 #070202;
 }
-.deck-btn:hover:not(:disabled) { background: var(--ink); color: var(--night); transform: translateY(-1px); }
+.deck-btn:hover:not(:disabled) { background: var(--ink); color: var(--night); }
 .deck-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .sound-toggle {
   min-height: 46px;
@@ -435,9 +435,10 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   padding: 0 18px;
   box-shadow: 0 3px 0 #5b092c;
 }
-.surf-btn:hover { background: #ff4898; transform: translateY(-1px); }
+.surf-btn:hover { background: #ff4898; }
 .deck-btn, .surf-btn, .channels button, .filter-btn, .watch-btn { transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
-.deck-btn:active:not(:disabled), .surf-btn:active, .filter-btn:active, .watch-btn:active { transform: translateY(1px); box-shadow: none; }
+.deck-btn:active:not(:disabled), .surf-btn:active { box-shadow: none; }
+.filter-btn:active, .watch-btn:active { transform: translateY(1px); box-shadow: none; }
 
 .now-bar {
   display: flex;

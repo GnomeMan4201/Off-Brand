@@ -130,13 +130,15 @@ function channelAudio(button) {
 
 // ---------- screen ----------
 
-function renderShot(item, ch) {
+function renderShot(item, ch, stamp) {
   const area = el("div", "shot-area");
   const missing = () => {
     // Nothing fake: a missing screenshot is shown as missing, never replaced.
     const box = el("div", "shot-missing");
     box.appendChild(el("span", null, "Screenshot unavailable · see scan notes below"));
     box.appendChild(el("strong", null, item.knockoff_label));
+    area.classList.add("is-missing");
+    if (stamp) box.appendChild(stamp);
     area.replaceChildren(box, el("span", "ch-bug", "CH " + ch));
   };
   const uuid = scanUuid(item);
@@ -146,11 +148,11 @@ function renderShot(item, ch) {
   const link = externalLink(src, null);
   link.setAttribute("aria-label", `Open full screenshot of ${item.knockoff_label}`);
   const img = document.createElement("img");
-  img.src = src;
   img.alt = `Screenshot of ${item.knockoff_label}, captured by urlscan.io${item.scanned_at ? " on " + String(item.scanned_at).slice(0, 10) : ""}`;
   img.decoding = "async";
   img.referrerPolicy = "no-referrer";
   img.addEventListener("error", missing);
+  img.src = src;
   link.appendChild(img);
   area.appendChild(link);
   area.appendChild(el("span", "ch-bug", "CH " + ch));
@@ -159,14 +161,16 @@ function renderShot(item, ch) {
 
 function renderProgram(item, ch) {
   const frag = document.createDocumentFragment();
-  frag.appendChild(renderShot(item, ch));
+  const stamp = isRated(item) ? el("span", "stamp", `${item.verdict} · ${item.rating}`) : null;
+  const shot = renderShot(item, ch, stamp);
+  frag.appendChild(shot);
 
   const bug = el("span", "station-bug", "OFF-BRAND ");
   bug.appendChild(el("span", "rec", "●"));
   bug.setAttribute("aria-hidden", "true");
   frag.appendChild(bug);
 
-  if (isRated(item)) frag.appendChild(el("span", "stamp", `${item.verdict} · ${item.rating}`));
+  if (stamp && !shot.classList.contains("is-missing")) frag.appendChild(stamp);
 
   // Satire lives on the chyron, and only there.
   const chyron = el("div", "chyron");
@@ -955,8 +959,14 @@ async function init() {
   $("prev").addEventListener("click", () => step(-1));
   $("next").addEventListener("click", () => step(1));
   $("surf").addEventListener("click", surf);
+  screen.addEventListener("click", (e) => {
+    // Do not steal focus from a link, video or its controls, or interrupt selection.
+    if (!e.target.closest("a, button, input, select, textarea, video, audio, summary")
+        && !String(window.getSelection())) screen.focus({ preventScroll: true });
+  });
   screen.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && breakState) { e.preventDefault(); endBreak(); return; }
+    if (e.target !== screen) return;
     if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
   });
