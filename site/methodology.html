@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#140808" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';" />
+  <title>OFF-BRAND // Station Standards &amp; Corrections</title>
+  <meta name="description" content="How Off-Brand collects and reviews archived specimens, handles uncertainty, and corrects editorial errors." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css?v=__BUILD__" />
+  <link rel="stylesheet" href="methodology.css?v=__BUILD__" />
+</head>
+<body>
+  <a class="skip" href="#standards">Skip to station standards</a>
+  <header class="masthead">
+    <div class="masthead-top">
+      <span class="station-id">AFTER DARK BROADCAST</span>
+      <span>STATION DOCUMENTATION · EDITION 01</span>
+    </div>
+    <nav class="station-links" aria-label="Station navigation">
+      <a href="index.html">← Back to the broadcast</a>
+      <a href="#corrections">Corrections desk</a>
+    </nav>
+  </header>
+  <main id="standards" class="standards">
+    <header class="standards-hero">
+      <span class="standards-kicker">OFF-BRAND // TECHNICAL DIFFICULTIES, EXPLAINED</span>
+      <h1>Station standards</h1>
+      <p class="standards-lead">The jokes are satire. The evidence has to stand on its own.</p>
+      <p>Off-Brand is an editorial screenshot zine, not a phishing detection service. A reported address is a research lead, not a verdict. We examine archived material and explain what it can and cannot establish.</p>
+      <nav class="standards-nav" aria-label="On this page">
+        <a href="#process">01 · Process</a>
+        <a href="#confidence">02 · Evidence</a>
+        <a href="#limits">03 · Limits</a>
+        <a href="#corrections">04 · Corrections</a>
+      </nav>
+    </header>
+
+    <section id="process" class="standards-section" aria-labelledby="process-title">
+      <span class="standards-kicker">01 // FROM THE CONTROL ROOM</span>
+      <h2 id="process-title">How a review comes together</h2>
+      <ol class="standards-steps">
+        <li><h3>Collect</h3><p>Use saved public scan records and archived screenshots from permitted sources. An intake report is a lead; the collector does not visit the reported target.</p></li>
+        <li><h3>Assess</h3><p>Keep exact URL matches separate from related addresses, record source availability and avoid counting shared origins as independent evidence.</p></li>
+        <li><h3>Write</h3><p>Separate visible observations, source-attributed findings, plausible interpretations and unknowns. Add a practical reader lesson. Keep satire separate from factual claims.</p></li>
+        <li><h3>Review</h3><p>New publication requires authenticated collection evidence, an explicitly selected owner-approved review and a publishable evidence level. Provider reuse restrictions also apply.</p></li>
+      </ol>
+      <p class="standards-note">Collection authentication protects the recorded issue body against edits and cross-issue reuse. It does not prove the provider's claims are correct.</p>
+    </section>
+
+    <section id="confidence" class="standards-section" aria-labelledby="confidence-title">
+      <span class="standards-kicker">02 // THE EVIDENCE LOCKER</span>
+      <h2 id="confidence-title">What the ratings mean</h2>
+      <dl class="standards-levels">
+        <div><dt>Corroborated</dt><dd>Reserved for demonstrably independent supporting evidence. The current sources do not award this level.</dd></div>
+        <div><dt>Source-confirmed</dt><dd>A verifying source has confirmed the exact URL as phishing. This is an attributed finding, not a guarantee of current behavior or operator identity.</dd></div>
+        <div><dt>Suspected (not confirmed)</dt><dd>Supporting leads exist, but the exact URL has not been verified. A source tag, automated listing or related address is not confirmation.</dd></div>
+        <div><dt>Unverified</dt><dd>No supporting record was established in the available checks. This is not a finding that the page is safe. New publication is blocked.</dd></div>
+        <div><dt>Disputed</dt><dd>Records conflict with the classification. New publication is blocked until resolved.</dd></div>
+        <div><dt>Not yet rated</dt><dd>A historical review predates structured evidence ratings. It has not been independently confirmed under the current method simply because it is on the shelf.</dd></div>
+      </dl>
+      <p class="standards-note">An HTTP/HTTPS-only difference is related, not exact. A match on the same host is also not exact confirmation. An unavailable or skipped source is not a negative result; historical verification and current source health are separate.</p>
+    </section>
+
+    <section id="limits" class="standards-section" aria-labelledby="limits-title">
+      <span class="standards-kicker">03 // NO SIGNAL IS STILL NO SIGNAL</span>
+      <h2 id="limits-title">Sources and limitations</h2>
+      <div class="standards-sources">
+        <section><h3>urlscan.io</h3><p>Archived screenshots, discovery and recorded scan metadata. Submitter tags and automated verdicts are not independent proof. Full result records may be unavailable without authenticated access.</p></section>
+        <section><h3>PhishTank</h3><p>Verified, exact-page records can support source confirmation. The current online feed is incomplete for historical cases: an absent listing does not establish that a page was benign.</p></section>
+        <section><h3>Restricted sources</h3><p>OpenPhish is limited to authorized private research; its restricted records are not included in public evidence. Unknown upstream relationships are not treated as independence.</p></section>
+      </div>
+      <p>A screenshot shows one captured state. It cannot establish where a form sends information, whether a wallet transaction occurred, how a redirect is decided, or who operates a site. Domain age, hosting platforms, language and security badges are clues, not verdicts.</p>
+      <p>Public availability does not automatically permit redistribution. New public intake and publishing are gated on documented reuse authorization; historical material remains subject to rights review. Read the <a href="https://github.com/GnomeMan4201/Off-Brand/blob/main/docs/SOURCES.md">source notes and licensing limitations</a>.</p>
+    </section>
+
+    <section id="corrections" class="standards-section" aria-labelledby="corrections-title">
+      <span class="standards-kicker">04 // CORRECTIONS DESK</span>
+      <h2 id="corrections-title">When we get something wrong</h2>
+      <p>A correction is part of the record, not a reason to hide it. Our editorial standard is to distinguish a changed claim from a changed confidence rating, and to record what changed, why, when and what evidence supports the change.</p>
+      <div class="standards-correction">
+        <h3>Public correction log</h3>
+        <p>No individual review corrections are recorded on this page at launch. This is not a claim that every existing review has been verified or is error-free. Historical reviews still require source-level reassessment.</p>
+        <p>When an approved correction is published, this log should identify the review, previous claim, corrected claim, date and basis without disclosing restricted records or sensitive information.</p>
+      </div>
+      <h3>Report an error or rights concern</h3>
+      <p>Use the repository's <a href="https://github.com/GnomeMan4201/Off-Brand/issues/new">issue form</a> to identify the channel or review, describe the concern and explain the requested correction. Issues are public. Do not include credentials, private data, active suspicious links, restricted material or sensitive rights documentation. Request a private contact route if needed.</p>
+      <p>For a correction request, the useful details are the review name, the specific wording at issue, and a safe reference or description of the evidence. Do not interact with a suspicious page to prove a claim.</p>
+    </section>
+
+    <footer class="standards-foot">
+      <p>Methodology edition 01 · 27 November 2026. This page documents the current method and editorial standard, not a complete re-verification of the archive.</p>
+      <a href="index.html">← Return to the broadcast</a>
+    </footer>
+  </main>
+</body>
+</html>

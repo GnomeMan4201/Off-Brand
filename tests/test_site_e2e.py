@@ -951,3 +951,23 @@ def test_crawl_and_surf_text_contrast(browser, base_url):
             lo, hi = sorted(map(luminance, colors))
             assert (hi + .05) / (lo + .05) >= 4.5, (selector, colors)
     page.context.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 1440])
+def test_station_standards_navigation(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900})
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.goto(base_url)
+    page.get_by_role("link", name="Station standards & corrections").click()
+    page.wait_for_url("**/methodology.html")
+    assert page.get_by_role("heading", name="Station standards", exact=True).is_visible()
+    assert page.locator(".standards-levels dt").count() == 6
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    assert page.locator("script").count() == 0
+    page.get_by_role("navigation", name="On this page").get_by_role("link", name="04 · Corrections").click()
+    assert page.url.endswith("#corrections")
+    assert page.get_by_role("heading", name="Public correction log").is_visible()
+    page.get_by_role("link", name="Return to the broadcast").click()
+    page.wait_for_url("**/index.html")
+    ctx.close()
