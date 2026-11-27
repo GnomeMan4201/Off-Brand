@@ -123,8 +123,9 @@ def test_read_only_workflows_cannot_write_or_publish(name):
 
 # ---------------------------------------------------------------- historical audit
 
-def scan_json(source="phishtank", domain="login.bank-example.test"):
-    return {"task": {"source": source, "tags": [], "url": PAGE}, "page": {"domain": domain}}
+def scan_json(source="phishtank", domain="login.bank-example.test", uuid=UUID, url=PAGE):
+    return {"task": {"source": source, "tags": [], "url": url, "uuid": uuid, "visibility": "public"},
+            "page": {"domain": domain}}
 
 
 REVIEWS = {"items": [
@@ -144,7 +145,11 @@ def test_audit_buckets(monkeypatch):
 
     def fetch(uuid):
         fetched.append(uuid)
-        return (scan_json("openphish", "accounts.example.com") if uuid == UUID else scan_json(None)), "ok"
+        item = next(i for i in REVIEWS["items"] if i["id"] == "urlscan-" + uuid)
+        from normalize import refang
+        return scan_json("openphish" if uuid == UUID else None,
+                         "accounts.example.com" if uuid == UUID else "login.bank-example.test",
+                         uuid=uuid, url=refang(item["defanged_url"])), "ok"
 
     report = audit_reviews.run(REVIEWS, [pt_snapshot()], fetch)
     first, second, third = report["items"]
@@ -211,3 +216,56 @@ def test_audit_only_contacts_urlscan_for_scan_records():
     data, status = audit_reviews.scan_record(UUID, opener=op)
     assert status == "ok" and op.seen == [f"https://urlscan.io/api/v1/result/{UUID}/"]
     assert audit_reviews.scan_record(UUID, opener=opener_returning(b"<html>"))[1] == "malformed"
+
+
+def test_skipped_source_keeps_only_last_success(monkeypatch):
+    earlier = {"sources": [{"source": "PhishTank", "status": "ok", "last_success": "2026-11-26T09:00:00Z",
+                            "checked_at": "2026-11-26T09:00:00Z", "http_status": 200, "record_count": 20,
+                            "format_valid": True, "freshness": "fresh", "rate_limit": {"Retry-After": "2"}}]}
+    def prohibited():
+        pytest.fail("skipped source must not be contacted")
+    monkeypatch.setitem(source_health.CHECKS, "PhishTank", prohibited)
+    report = source_health.run([], earlier, NOW)
+    row = report["sources"][0]
+    assert row["last_success"] == earlier["sources"][0]["last_success"]
+    assert row["status"] == "not_checked"
+    assert row["checked_at"] is None and row["http_status"] is None
+    assert row["record_count"] is None and row["format_valid"] is False
+    assert row["freshness"] == "unknown" and not row["rate_limit"]
+
+
+@pytest.mark.parametrize("wrong", [{"uuid": "wrong"}, {"url": "https://different.test/"}, {"visibility": "unlisted"}])
+def test_audit_rejects_unrelated_scan_record(wrong):
+    data = scan_json()
+    data["task"].update(wrong)
+    report = audit_reviews.run({"items": REVIEWS["items"][:1]}, [], lambda _: (data, "ok"))
+    item = report["items"][0]
+    assert item["scan_status"] == "malformed"
+    assert item["level"] == "unverified"
+    assert report["sources"]["urlscan.io"] == "scan records re-read: 1 malformed"
+
+
+def test_audit_skip_phishtank_does_not_download(tmp_path, monkeypatch):
+    def prohibited():
+        pytest.fail("PhishTank must not be downloaded")
+    monkeypatch.setattr(feeds, "fetch_phishtank", prohibited)
+    assert audit_reviews.main(["--out-dir", str(tmp_path / "audit"), "--no-urlscan", "--skip-phishtank"]) == 0
+    report = json.loads((tmp_path / "audit" / "audit.json").read_text())
+    assert report["sources"]["PhishTank"] == "not_attempted"
+
+
+def test_manual_downloads_opt_in_and_share_concurrency():
+    for name in ("source-health.yml", "audit-reviews.yml", "archive.yml", "ingest.yml"):
+        code = workflow_code(name)
+        inputs = code.split("      check_phishtank:", 1)[1].split("        default:", 1)[1]
+        assert inputs.lstrip().startswith("false")
+        assert "group: offbrand-source-downloads" in code
+
+
+def test_future_timestamp_does_not_claim_freshness():
+    assert source_health.freshness("PhishTank", "2026-12-01T00:00:00Z", NOW) == "unknown"
+
+
+def test_audit_malformed_nested_provider_record_fails_closed():
+    item = audit_reviews.audit_item(REVIEWS["items"][0], [], {"task": "not a record"}, "ok", public=True)
+    assert item["scan_status"] == "malformed" and item["level"] == "unverified"

@@ -191,7 +191,7 @@ def _limitations(level, records, sources, redirected) -> list[str]:
     if level in ("suspected", "unverified") and any(s["status"] not in ("ok", "not_attempted") for s in sources.values()):
         out.append("A source could not be read in this run; the level may change when it is.")
     if any((s.get("detail") or "").endswith("(carried from an earlier check)") for s in sources.values()):
-        out.append("At least one source result was carried over from an earlier check because the source was unavailable.")
+        out.append("At least one source result was carried over from an earlier check because the source was unavailable or not checked.")
     if any(r.get("historical") for r in records):
         out.append("Historical records are retained with their original observation dates; they do not establish current page behavior.")
     out.append("Captures document a moment; a page may have changed or gone offline since.")

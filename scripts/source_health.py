@@ -46,6 +46,8 @@ def freshness(source: str, newest: str | None, now: datetime) -> str:
     dt = _parse(newest)
     if dt is None:
         return "unknown"
+    if dt > now + timedelta(minutes=5):
+        return "unknown"  # a future timestamp cannot establish freshness
     return "fresh" if now - dt <= FRESH_WITHIN[source] else "stale"
 
 
@@ -126,8 +128,11 @@ def run(selected: list[str], previous: dict, now: datetime | None = None) -> dic
     rows = [row(CHECKS[name](), prev, now) for name in selected]
     for name in CHECKS:
         if name not in selected and name in prev:
-            rows.append(dict(prev[name], status="not_checked", detail="not checked this run (by request)",
-                             rate_limited=False))
+            rows.append({"source": name, "status": "not_checked", "detail": "not checked this run (by request)",
+                         "last_success": prev[name].get("last_success"), "checked_at": None,
+                         "http_status": None, "format_valid": False, "record_count": None,
+                         "skipped_records": None, "newest_data": None, "freshness": "unknown",
+                         "rate_limited": False, "rate_limit": {}})
     return {"checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "sources": rows,
             "not_checked": [n for n in CHECKS if n not in selected]}
 
@@ -148,6 +153,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.previous and a.previous.exists():
         try:
             previous = json.loads(a.previous.read_text(encoding="utf-8"))
+            if not isinstance(previous, dict) or not isinstance(previous.get("sources"), list):
+                previous = {}
         except (OSError, json.JSONDecodeError):
             previous = {}
     report = run([n for n in CHECKS if n not in a.skip], previous)

@@ -2,10 +2,19 @@ name: Fetch Phishing Candidates for Phone Triage
 
 on:
   workflow_dispatch:
+    inputs:
+      check_phishtank:
+        description: "Download PhishTank (uses the shared daily allowance)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   issues: write
+
+concurrency:
+  group: offbrand-source-downloads
+  cancel-in-progress: false
 
 jobs:
   ingest:
@@ -24,6 +33,7 @@ jobs:
           # Optional: only pre-2020 PhishTank accounts have keys; without one the public
           # dump is used and allows a few downloads per day.
           PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
+          CHECK_PHISHTANK: ${{ inputs.check_phishtank }}
         run: python3 scripts/ingest.py
 
       - name: Open GitHub Issues for human review

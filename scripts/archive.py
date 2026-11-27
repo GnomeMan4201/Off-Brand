@@ -484,6 +484,7 @@ def main(argv: list[str] | None = None) -> int:
                     help="cap for screenshots + thumbnails (default 500)")
     ap.add_argument("--dry-run", action="store_true", help="fetch and report, write nothing")
     ap.add_argument("--restart", action="store_true", help="discard saved progress for this mode")
+    ap.add_argument("--skip-phishtank", action="store_true", help="conserve the shared feed download allowance")
     args = ap.parse_args(argv)
 
     shelf = Shelf(shelf_dir())
@@ -503,7 +504,8 @@ def main(argv: list[str] | None = None) -> int:
                       max_pages=max(1, args.max_pages), max_new=max(1, args.max_new),
                       max_seconds=args.max_seconds, dry_run=args.dry_run, restart=args.restart,
                       save=save)
-    snapshots = [feeds.fetch_phishtank(), feeds.fetch_openphish()]
+    snapshots = [feeds.Snapshot("PhishTank", "not_attempted", "download not requested")
+                 if args.skip_phishtank else feeds.fetch_phishtank(), feeds.fetch_openphish()]
     stats["evidence_sources"] = {s.source: s.status for s in snapshots}
     stats["evidence"] = assess_specimens(index, snapshots)
     if not args.dry_run:

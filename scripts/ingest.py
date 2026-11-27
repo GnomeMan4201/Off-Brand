@@ -203,7 +203,8 @@ def main() -> int:
     # Public intake must never consume the restricted OpenPhish feed.
     fresh = filter_fresh(eligible(fetch_urlscan_candidates(limit=25)), known_ids)
     if fresh:
-        snapshots = [feeds.fetch_phishtank()]
+        snapshots = [feeds.fetch_phishtank() if os.environ.get("CHECK_PHISHTANK") == "true"
+                     else feeds.Snapshot("PhishTank", "not_attempted", "download not requested")]
         for snap in snapshots:
             print(f"[evidence] {snap.source}: {snap.status} ({snap.detail})", file=sys.stderr)
         attach_evidence(fresh, snapshots)

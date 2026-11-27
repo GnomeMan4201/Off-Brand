@@ -24,7 +24,7 @@ from pathlib import Path
 
 import evidence
 import feeds
-from normalize import refang
+from normalize import normalize, refang
 
 ROOT = Path(__file__).resolve().parent.parent
 REVIEWS = ROOT / "data" / "reviews.json"
@@ -57,8 +57,17 @@ def scan_record(uuid: str, opener=None, api_key: str = "") -> tuple[dict | None,
 
 
 def audit_item(item: dict, snapshots: list, scan: dict | None, scan_status: str, public: bool) -> dict:
-    task, page = (scan or {}).get("task") or {}, (scan or {}).get("page") or {}
+    record = scan if isinstance(scan, dict) else {}
+    task = record.get("task") if isinstance(record.get("task"), dict) else {}
+    page = record.get("page") if isinstance(record.get("page"), dict) else {}
     url = refang(item.get("defanged_url") or "")
+    if scan_status == "ok":
+        expected_id = UUID_RE.match(item.get("public_record_url") or "")
+        expected, actual = normalize(url), normalize(task.get("url"))
+        if (not expected_id or task.get("uuid") != expected_id.group(1)
+                or task.get("visibility") != "public" or not expected or not actual
+                or expected["exact_key"] != actual["exact_key"]):
+            scan, task, page, scan_status = None, {}, {}, "malformed"
     lead = evidence.urlscan_record(item.get("public_record_url"), task.get("source"), task.get("tags"),
                                    item.get("scanned_at")) if scan else None
     ev = evidence.assess(url, lead=lead, snapshots=snapshots, final_host=page.get("domain"),
@@ -89,7 +98,7 @@ def audit_item(item: dict, snapshots: list, scan: dict | None, scan_status: str,
         "reason": ev["reason"], "exact_feed_matches": [f"{r['source']} ({r['strength']})" for r in exact],
         "scheme_only_matches": [r["source"] for r in scheme],
         "same_host_matches": [r["source"] for r in host], "unavailable_sources": unavailable,
-        "scan_source": task.get("source"), "redirected": ev["specimen"]["redirected"],
+        "scan_source": task.get("source"), "scan_status": scan_status, "redirected": ev["specimen"]["redirected"],
         "published_level": (item.get("evidence") or {}).get("level"), "buckets": buckets, "evidence": ev,
     }
 
@@ -127,8 +136,9 @@ def run(reviews: dict, snapshots: list, fetch_scan, public: bool = True, pause: 
             time.sleep(pause)
         elif scan_stopped:
             status = scan_stopped
-        scan_status[status] += 1
-        items.append(audit_item(item, snapshots, scan, status, public))
+        audited = audit_item(item, snapshots, scan, status, public)
+        scan_status[audited["scan_status"]] += 1
+        items.append(audited)
     counts = Counter()
     for it in items:
         for key, hit in it["buckets"].items():
@@ -146,6 +156,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out-dir", type=Path, required=True)
     ap.add_argument("--no-urlscan", action="store_true", help="do not re-read urlscan scan records")
+    ap.add_argument("--skip-phishtank", action="store_true", help="conserve the shared feed download allowance")
     ap.add_argument("--include-private-sources", action="store_true",
                     help="also use OpenPhish (private report; do not publish or share it)")
     ap.add_argument("--pause", type=float, default=1.0, help="seconds between urlscan record requests")
@@ -155,7 +166,8 @@ def main(argv: list[str] | None = None) -> int:
         print("Refusing to write the audit report into data/.", file=sys.stderr)
         return 2
     reviews = json.loads(REVIEWS.read_text(encoding="utf-8"))
-    snapshots = [feeds.fetch_phishtank()]
+    snapshots = [feeds.Snapshot("PhishTank", "not_attempted", "download not requested")
+                 if a.skip_phishtank else feeds.fetch_phishtank()]
     if a.include_private_sources:
         snapshots.append(feeds.fetch_openphish())
     key = os.environ.get("URLSCAN_API_KEY", "").strip()

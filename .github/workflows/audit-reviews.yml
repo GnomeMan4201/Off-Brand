@@ -7,6 +7,10 @@ name: Audit Published Evidence
 on:
   workflow_dispatch:
     inputs:
+      check_phishtank:
+        description: "Download PhishTank (uses the shared daily allowance)"
+        type: boolean
+        default: false
       reread_urlscan:
         description: "Re-read each review's urlscan.io scan record (one request per review)"
         type: boolean
@@ -16,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: audit-reviews
+  group: offbrand-source-downloads
   cancel-in-progress: false
 
 jobs:
@@ -36,10 +40,12 @@ jobs:
           URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
           PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
           REREAD: ${{ inputs.reread_urlscan }}
+          CHECK_PHISHTANK: ${{ inputs.check_phishtank }}
         run: |
           set -o pipefail
           ARGS=(--out-dir "$RUNNER_TEMP/audit")
           [ "$REREAD" = "true" ] || ARGS+=(--no-urlscan)
+          [ "$CHECK_PHISHTANK" = "true" ] || ARGS+=(--skip-phishtank)
           python3 scripts/audit_reviews.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
           git diff --exit-code -- data/
 

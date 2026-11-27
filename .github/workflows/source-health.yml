@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       check_phishtank:
-        description: "Download the PhishTank dump (unkeyed: only a few downloads per day)"
+        description: "Download the PhishTank dump (uses the shared daily allowance)"
         type: boolean
-        default: true
+        default: false
       check_openphish:
         description: "Download OpenPhish only in an authorized private repository"
         type: boolean
@@ -25,11 +25,12 @@ permissions:
   actions: read
 
 concurrency:
-  group: source-health
+  group: offbrand-source-downloads
   cancel-in-progress: false
 
 jobs:
   health:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -44,8 +45,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow source-health.yml --status success --limit 1 --json databaseId -q '.[0].databaseId')
-          if [ -n "$id" ]; then gh run download "$id" -R "$GITHUB_REPOSITORY" -n source-health -D "$RUNNER_TEMP/previous"; fi
+          set -euo pipefail
+          ids=$(gh run list -R "$GITHUB_REPOSITORY" --workflow source-health.yml --branch main --status success --limit 10 --json databaseId -q '.[].databaseId')
+          for id in $ids; do
+            if gh run download "$id" -R "$GITHUB_REPOSITORY" -n source-health -D "$RUNNER_TEMP/previous" >/dev/null 2>&1; then
+              [ -f "$RUNNER_TEMP/previous/source-health.json" ] && break
+            fi
+          done
 
       - name: Check sources (read-only)
         env:
