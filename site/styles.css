@@ -310,11 +310,13 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   position: absolute;
   right: 4%;
   top: 18%;
-  border: 4px solid var(--rec);
+  max-width: 84%;
+  border: 3px solid var(--rec);
   color: var(--rec);
   background: rgba(8, 4, 4, 0.82);
-  padding: 5px 12px;
-  font: clamp(13px, 1.7vw, 22px)/1.1 var(--display);
+  padding: 4px 10px;
+  font: clamp(12px, 1.5vw, 19px)/1.15 var(--display);
+  overflow-wrap: anywhere;
   text-transform: uppercase;
   transform: rotate(-7deg);
   animation: stamp 0.45s ease-out both;
@@ -733,11 +735,13 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
 .ad-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; text-align: center; background: rgba(5, 5, 5, 0.78); }
 .ad-overlay strong { font: 400 clamp(20px, 3vw, 34px)/1 var(--display); }
 .ad-overlay .bumper-actions button:first-child { background: var(--chroma); border-color: var(--chroma); color: #050505; }
-.ad-controls { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 6px; background: #120b09; border-top: 2px solid var(--bezel-edge); }
-.ad-controls button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--ink); font-weight: 800; font-size: 14px; }
+/* Keep 44px transport targets; on narrow sets move the return control to
+   a second row rather than squeezing its label or clipping the buttons. */
+.ad-controls { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 6px; background: #120b09; border-top: 2px solid var(--bezel-edge); }
+.ad-controls button { flex: 0 0 auto; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--ink); font-weight: 800; font-size: 14px; }
 .ad-controls button:hover { background: var(--night-2); }
 .ad-controls svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.ad-controls .skip-ad { margin-left: auto; padding: 0 12px; background: var(--yellow); color: #050505; }
+.ad-controls .skip-ad { margin-left: auto; padding: 0 12px; background: var(--yellow); color: #050505; white-space: nowrap; }
 .ad-controls .skip-ad:hover { background: #fff; }
 .ad-progress { flex: none; height: 4px; background: #2b1b14; }
 .ad-progress span { display: block; height: 100%; width: 0; background: var(--hot); transition: width 0.2s linear; }
@@ -767,11 +771,21 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
 }
 
 @media (max-width: 480px) {
+  /* Retain all station metadata while getting the set on screen sooner. */
+  .masthead { padding-top: 10px; gap: 6px; }
+  .masthead-top { gap: 3px 12px; padding-bottom: 5px; font-size: 17px; line-height: 1.1; }
+  .masthead-meta { gap: 3px 10px; }
+  .on-air-pill { padding: 1px 6px; }
+  .masthead-sub { margin-top: 2px; gap: 6px 16px; }
+  .stats { padding: 3px 8px; font-size: 18px; line-height: 1.15; }
+  .crawl-bar { margin-top: 10px; }
+  .tv-layout { padding-top: 18px; }
+  .ad-controls .skip-ad { flex: 1 0 auto; padding: 0 8px; font-size: 13px; }
   .deck-transport { display: grid; grid-template-columns: 1fr 1fr; }
   .surf-btn, .sound-toggle { grid-column: 1 / -1; }
   .bezel { border-radius: 20px; }
   .screen { border-radius: 12px; }
-  .stamp { top: 14%; right: 3%; border-width: 3px; padding: 4px 8px; }
+  .stamp { top: 14%; right: 4%; border-width: 2px; padding: 3px 7px; }
   .fact-file { box-shadow: 6px 6px 0 var(--yellow); }
 }
 
