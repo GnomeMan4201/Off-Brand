@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#050505" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';" />
+  <title>OB-TEXT // Off-Brand station information service</title>
+  <meta name="description" content="The station information service beneath Off-Brand's broadcast: research notes, withheld material, curated programming and archives." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="teletext.css?v=__BUILD__" />
+</head>
+<body>
+  <a class="txt-skip" href="#txt-content">Skip to page content</a>
+  <main class="txt-frame">
+    <header class="txt-top">
+      <a id="txt-return" href="index.html">← RETURN TO BROADCAST</a>
+      <span>OB-TEXT / INFORMATION SERVICE</span>
+    </header>
+    <div class="txt-carrier">
+      <span id="txt-page-code">P.100</span>
+      <span class="txt-signal" aria-hidden="true">▪ ▪ ▪</span>
+      <span id="txt-clock">LOCAL TIME --:--</span>
+    </div>
+    <div class="txt-banner"><strong>OFF-BRAND AFTER DARK</strong><span>TEXT SERVICE</span></div>
+    <nav class="txt-nav" aria-label="Teletext pages">
+      <a href="#100">100 INDEX</a>
+      <a href="#101">101 CONTINUITY</a>
+      <a href="#204">204 INVESTIGATION</a>
+      <a href="#310">310 CUTTING ROOM</a>
+      <a href="#412">412 PROGRAMMING</a>
+      <a href="#505">505 ARCHIVE</a>
+      <a href="#606">606 ORIGINALS</a>
+      <a href="#701">701 STANDARDS</a>
+      <a href="#888">888 SIGN-OFF</a>
+    </nav>
+    <div class="txt-tuner" role="group" aria-label="Page selector">
+      <label for="txt-number">PAGE NUMBER</label>
+      <input id="txt-number" inputmode="numeric" maxlength="3" pattern="[0-9]{3}" autocomplete="off" value="100" />
+      <button type="button" id="txt-go">GO</button>
+      <button type="button" id="txt-prev" aria-label="Previous text page">←</button>
+      <button type="button" id="txt-next" aria-label="Next text page">→</button>
+    </div>
+    <p id="txt-status" class="txt-status" role="status"></p>
+    <section id="txt-content" aria-labelledby="txt-title">
+      <h1 id="txt-title" tabindex="-1">Station index</h1>
+      <div id="txt-body"><p>Preparing the text service.</p></div>
+      <noscript><p>JavaScript is required for page navigation. The <a href="index.html">broadcast</a> and <a href="methodology.html">station standards</a> are separate destinations.</p></noscript>
+    </section>
+    <footer class="txt-foot"><span>THE ENTERTAINMENT CAN BE FICTIONAL. THE EVIDENCE CANNOT.</span><a href="#100">P.100 INDEX</a></footer>
+  </main>
+  <script src="teletext.js?v=__BUILD__" defer></script>
+</body>
+</html>

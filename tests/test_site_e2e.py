@@ -1020,3 +1020,55 @@ def test_craftsmanship_controls_and_loupe(browser, base_url, width):
     page.wait_for_selector(".ob-loupe")
     assert page.get_by_role("button", name="Scanlines: on").get_attribute("aria-pressed") == "true"
     ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 768, 1440])
+def test_teletext_public_navigation_and_return(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    problems = []
+    page.on("pageerror", lambda e: problems.append(str(e)))
+    page.goto(base_url)
+    page.wait_for_selector("#lineup li")
+    wait_until(page, "document.getElementById('teletext-link').href.includes('?channel=urlscan-')")
+    channel = page.evaluate("location.hash")
+    page.get_by_role("link", name="TXT · OB-TEXT").click()
+    page.wait_for_url(lambda url: "/teletext.html?channel=urlscan-" in url and url.endswith("#100"))
+    assert page.get_by_role("heading", name="Station index").is_visible()
+    page.get_by_role("link", name="310 CUTTING ROOM").click()
+    page.wait_for_selector(".txt-tape")
+    expected = json.loads((ROOT / "data" / "reviews.json").read_text())
+    assert page.locator(".txt-tape").count() == len(expected["rejected_log"])
+    tape = page.locator(".txt-tape summary").first
+    tape.focus()
+    page.keyboard.press("Enter")
+    assert tape.evaluate("e => e === document.activeElement && e.parentElement.open")
+    assert page.locator(".txt-tape p").first.inner_text() == expected["rejected_log"][0]["reason"]
+    assert page.locator(".txt-tape a").count() == 0
+    page.get_by_role("link", name="412 PROGRAMMING").click()
+    page.wait_for_selector(".txt-program")
+    assert page.locator(".txt-program").count() == len({x["aisle"] for x in expected["items"]})
+    page.get_by_role("link", name="204 INVESTIGATION").click()
+    select = page.locator("#txt-review-select")
+    select.wait_for()
+    select.select_option(expected["items"][1]["id"])
+    assert page.locator(".txt-record li").all_text_contents() == expected["items"][1]["tells"]
+    page.get_by_role("link", name="505 ARCHIVE").click()
+    page.wait_for_selector("#txt-body li")
+    assert page.locator("#txt-body li").count() == len(expected["items"])
+    page.get_by_role("link", name="606 ORIGINALS").click()
+    page.wait_for_selector("#txt-body li")
+    manifest = json.loads((ROOT / "site" / "commercials" / "manifest.json").read_text())
+    assert page.locator("#txt-body li").count() == len(manifest["commercials"])
+    page.locator("#txt-number").fill("999")
+    page.locator("#txt-number").press("Enter")
+    page.get_by_role("heading", name="Page not transmitted").wait_for()
+    page.get_by_role("link", name="Return to P.100").click()
+    page.get_by_role("heading", name="Station index").wait_for()
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    page.locator("#txt-return").click()
+    page.wait_for_selector("#lineup li")
+    assert page.evaluate("location.hash") == channel
+    assert not problems
+    ctx.close()

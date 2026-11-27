@@ -196,8 +196,17 @@
   close.addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", () => remote.focus());
 
+  const txtLink = byId("teletext-link");
+  function syncTextLink() {
+    if (!txtLink) return;
+    const id = location.hash.slice(1);
+    txtLink.href = /^urlscan-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id)
+      ? "teletext.html?channel=" + encodeURIComponent(id) + "#100" : "teletext.html#100";
+  }
+  syncTextLink();
   const program = byId("program");
   if (program) new MutationObserver(() => {
+    syncTextLink();
     index = (index + 1) % notes.length;
     note.textContent = notes[index];
   }).observe(program, { childList: true });
