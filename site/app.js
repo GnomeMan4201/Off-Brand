@@ -113,8 +113,10 @@ function renderCard(item) {
   return card;
 }
 
+const release = new URL(document.currentScript.src).searchParams.get("v");
+
 async function init() {
-  const res = await fetch("data/reviews.json", { cache: "no-cache" });
+  const res = await fetch(release ? `data/reviews.json?v=${encodeURIComponent(release)}` : "data/reviews.json", { cache: "no-cache" });
   const data = await res.json();
   const items = data.items || [];
   const rejected = data.rejected_log || [];
