@@ -1,0 +1,97 @@
+name: Collect Specimen Archive
+
+# Collects public urlscan.io scan records + saved screenshots into the PRIVATE shelf repo.
+# Never opens issues and never writes to this public repo. Manual runs default to a dry run.
+# The daily schedule only runs when the repository variable ARCHIVE_SCHEDULE_ENABLED is "true"
+# (off until you have tried it).
+# Needs: variable SHELF_REPO (owner/name) and secret SHELF_TOKEN (access to that repo only).
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "scheduled = newest captures; backfill = resumable catch-up over the last N days"
+        type: choice
+        options: [backfill, scheduled]
+        default: backfill
+      days:
+        description: "Backfill window in days (max 30)"
+        default: "7"
+      max_pages:
+        description: "Search pages per run (100 results each)"
+        default: "5"
+      max_mb:
+        description: "Storage cap in MB for screenshots + thumbnails"
+        default: "500"
+      dry_run:
+        description: "Dry run: fetch and report, write nothing"
+        type: boolean
+        default: true
+      restart:
+        description: "Discard saved progress for this mode and start over"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: archive
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ARCHIVE_SCHEDULE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SHELF_REPO: ${{ vars.SHELF_REPO }}
+      GH_TOKEN: ${{ secrets.SHELF_TOKEN }}
+      OFFBRAND_SHELF_DIR: ${{ github.workspace }}/shelf
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refuse unless the shelf repo is private
+        run: python3 scripts/shelf.py check-private
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.SHELF_REPO }}
+          token: ${{ secrets.SHELF_TOKEN }}
+          path: shelf
+
+      - run: pip install pillow==13.0.0
+
+      - name: Collect (urlscan.io only, no target contact)
+        env:
+          URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          MODE: ${{ inputs.mode || 'scheduled' }}
+          DAYS: ${{ inputs.days || '7' }}
+          MAX_PAGES: ${{ inputs.max_pages || '5' }}
+          MAX_MB: ${{ inputs.max_mb || '500' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          RESTART: ${{ inputs.restart }}
+        run: |
+          set -o pipefail
+          ARGS=(--mode "$MODE" --days "$DAYS" --max-pages "$MAX_PAGES" --max-mb "$MAX_MB")
+          [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
+          [ "$RESTART" = "true" ] && ARGS+=(--restart)
+          python3 scripts/archive.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Rebuild the shelf pages and commit to the private repo
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        run: |
+          python3 scripts/build_archive.py
+          cd shelf
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore: update specimen shelf"
+          git pull --rebase origin HEAD
+          git push

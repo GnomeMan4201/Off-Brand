@@ -35,7 +35,8 @@ Off-Brand stocks counterfeits. It doesn't sell them.
  urlscan.io public scans          (fallback: OpenPhish community feed)
           │
           ▼
-  🤖 ingest.yml     every day at 14:00 UTC, or run by hand
+  🤖 ingest.yml     run by hand only (the daily schedule is retired;
+          │         archive collection is the automatic intake)
           │         opens up to 3 GitHub issues labeled `triage`,
           │         each with a 🎭 writing assignment
           ▼
@@ -181,3 +182,39 @@ URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candi
 Scan records and screenshots come from [urlscan.io](https://urlscan.io) public scans, with the [OpenPhish](https://openphish.com) community feed as a fallback. Every scammer named on this site did the work of embarrassing themselves; we just wrote it down.
 
 Off-Brand is a [badBANANA Research Collective](https://badbananaresearch.com) project.
+
+---
+
+## Specimen archive (private shelf)
+
+Real, previously reported pages with saved screenshots and attributed facts. You write every joke and description. **Nothing unapproved is public:** screenshots, the catalog, progress state and draft notes live in a separate **private** repo (the "shelf"), never in this repo, its Git history or Pages.
+
+### One-time setup (you do this; nothing is created for you)
+1. Create an empty **private** repo, e.g. `YOU/off-brand-shelf`, with a `main` branch (tick "Add a README").
+2. Create a fine-grained token (Settings > Developer settings > Personal access tokens) limited to **only that repo**, with **Contents: read/write** and **Issues: read/write**. Add it to this repo as secret `SHELF_TOKEN`.
+3. Add repo variable `SHELF_REPO` = `YOU/off-brand-shelf`. Optionally add secret `URLSCAN_API_KEY` (higher limits).
+4. Add a `triage` and an `approved` label in the shelf repo.
+
+Every workflow refuses to run unless `gh api repos/$SHELF_REPO` reports `private: true`.
+
+### Open the shelf on your iPhone
+Install the GitHub app, sign in, open `off-brand-shelf` and tap `README.md` (or use github.com in Safari). It shows space used and links to **Unwritten**, Drafted, Published and All, newest first, 20 cards per page (2 per row: thumbnail, domain, date, status). Tapping a card opens the full screenshot, facts and source record.
+
+### Collect (scheduled intake is off)
+- `archive.yml` > Run workflow. Defaults are a **dry run** (nothing written). Untick `dry_run` for a real run. Runs resume where they stopped; `max_mb` defaults to 500.
+- The daily cron is gated by repo variable `ARCHIVE_SCHEDULE_ENABLED`. Leave it unset until you have tried it. The old `ingest.yml` daily schedule is removed (manual run still works).
+- If a capture will not fit under the cap, the run stops, reports it, shows space used, and keeps the resume point; free space or raise `max_mb` and run again.
+
+### From specimen to public release
+1. Shelf README > **Unwritten** > tap a card.
+2. Tap **Write this one** > Run workflow > paste the `urlscan-...` id. It opens one draft issue in the **shelf** repo (screenshot + bullets, blank writing fields). Running it again, or tapping the card again, shows **Open draft #N** for the same issue.
+3. In the shelf issue, comment your review (the `key: value` block in the issue), then add the `approved` label.
+4. In this repo run **Publish Approved Specimen** with the issue number. It checks the label, publishes through the existing `publish_from_issue.py`, closes the shelf draft and redeploys the zine. Only your validated fields and the urlscan.io record link become public.
+
+Existing public `triage` issues and `publish.yml` keep working unchanged.
+
+### Limits
+- GitHub Pages for private repos needs a paid plan, so the shelf is Markdown in the private repo. GitHub's Markdown cannot guarantee `loading="lazy"`; instead the grid uses ~320px JPEG thumbnails (about 15 KB), 20 cards per page, and the full PNG loads only when you open a specimen.
+- Storage is Git in the private repo: 500 MB soft cap for screenshots + thumbnails (GitHub recommends repos stay under 1 GB; single files under 100 MB).
+- Screenshot observations (password field, countdown, ...) appear only if you add them to `data/archive_inspections.json` in the shelf as `{"<id>": [{"observation": "...", "inspector": "...", "pointer": "where in the image"}]}`.
+- Source labels (e.g. "phishing") are shown as the source's label, never as a confirmed verdict.
