@@ -26,13 +26,13 @@
       <span class="station-id" id="station-id">AFTER DARK BROADCAST</span>
       <span class="masthead-meta">
         <span>A SCREENSHOT ZINE BY GNOMEMAN4201</span>
-        <span class="on-air-pill"><span class="rec" aria-hidden="true">●</span> ON AIR · <span id="last-updated">Updated --</span></span>
+        <span class="on-air-pill"><span class="rec" aria-hidden="true">●</span> <span id="last-updated">ARCHIVE / STANDBY</span></span>
       </span>
     </div>
     <h1 class="logo" aria-label="Off-Brand"><span aria-hidden="true">O</span><span aria-hidden="true">F</span><span aria-hidden="true">F</span><span aria-hidden="true">-</span><span aria-hidden="true">B</span><span aria-hidden="true">R</span><span aria-hidden="true">A</span><span aria-hidden="true">N</span><span aria-hidden="true">D</span></h1>
     <div class="masthead-sub">
       <p class="tagline">The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
-      <p class="stats" id="stats-bar" aria-live="polite"></p>
+      <p class="stats" id="stats-bar" aria-live="polite">Interactive broadcast loading</p>
     </div>
     <nav class="station-nav" aria-label="Station information"><a id="teletext-link" class="txt-entry" href="teletext.html#100">TXT · OB-TEXT</a><a href="methodology.html">Station standards &amp; corrections ↗</a></nav>
   </header>
@@ -40,7 +40,7 @@
   <div class="crawl-bar">
     <span class="crawl-label">THE BITS</span>
     <div class="crawl-window" aria-hidden="true"><div class="crawl" id="crawl"></div></div>
-    <button type="button" class="crawl-toggle" id="crawl-toggle" aria-label="Pause the crawl of satirical captions">Pause</button>
+    <button type="button" class="crawl-toggle" id="crawl-toggle" disabled aria-label="Pause the crawl of satirical captions">Pause</button>
   </div>
 
   <main class="tv-layout" id="tv">
@@ -51,16 +51,16 @@
           <span class="bezel-leds"><span class="led led-pwr" title="Power"></span><span class="led-label">PWR</span><span class="led led-sig" id="signal-led" title="Signal"></span><span class="led-label">SIG</span></span>
         </div>
         <div class="screen" id="screen" tabindex="0" aria-label="Broadcast screen. Use the left and right arrow keys to change channel.">
-          <div class="program" id="program"></div>
+          <div class="program" id="program"><div class="standby-card"><p class="standby-kicker">OFF-BRAND / STANDBY</p><strong>PLEASE STAND BY</strong><p>Connecting to the published review archive. If JavaScript is unavailable, use the reading edition.</p><a href="reading.html">Read the archive without JavaScript</a></div></div>
           <div class="interstitial" id="interstitial" hidden></div>
         </div>
       </div>
 
       <div class="deck">
         <div class="deck-transport" role="group" aria-label="Channel controls">
-          <button type="button" class="deck-btn" id="prev" aria-label="Previous channel">← CH</button>
-          <button type="button" class="deck-btn" id="next" aria-label="Next channel">CH →</button>
-          <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
+          <button type="button" class="deck-btn" id="prev" disabled aria-label="Previous channel">← CH</button>
+          <button type="button" class="deck-btn" id="next" disabled aria-label="Next channel">CH →</button>
+          <button type="button" class="surf-btn" id="surf" disabled>Surf a random channel</button>
           <button type="button" class="sound-toggle" id="channel-sound" aria-pressed="true" hidden>Channel sound: <span>On</span></button>
         </div>
         <div class="now-bar">
@@ -77,14 +77,14 @@
           <h2 id="wtn-title">WHAT TO NOTICE</h2>
           <span>FACT FILE · from the public scan record · no jokes on this page</span>
         </div>
-        <div id="fact-body"></div>
+        <div id="fact-body"><p>Review notes will appear when the archive is ready. <a href="reading.html">Open the reading edition.</a></p></div>
       </section>
     </section>
 
     <aside class="lineup" aria-label="Channel guide">
       <div class="lineup-head">
         <h2>Tonight’s lineup</h2>
-        <span class="lineup-count" id="lineup-count" aria-live="polite"></span>
+        <span class="lineup-count" id="lineup-count" aria-live="polite">Loading archive</span>
       </div>
       <div class="station-pref" id="station-pref" hidden>
         <button type="button" class="pref-btn" id="breaks-toggle" aria-pressed="true">Commercial breaks: <span>On</span></button>
@@ -93,7 +93,7 @@
       <div class="search-wrap" role="search">
         <label for="search-input">Search reviews</label>
         <div class="search-box">
-          <input type="search" id="search-input" placeholder="Search brand, domain, or tell..." autocomplete="off" />
+          <input type="search" id="search-input" disabled placeholder="Search brand, domain, or tell..." autocomplete="off" />
           <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" aria-controls="search-input" hidden><span aria-hidden="true">×</span></button>
         </div>
       </div>
@@ -138,7 +138,7 @@
     </div>
   </section>
 
-  <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="methodology.html#corrections">Corrections desk</a><a href="#tv">Back to reviews ↑</a></footer>
+  <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="reading.html">Reading edition</a><a href="methodology.html#corrections">Corrections desk</a><a href="#tv">Back to reviews ↑</a></footer>
 
   <script src="breaks.js?v=__BUILD__" defer></script>
   <script src="app.js?v=__BUILD__" defer></script>

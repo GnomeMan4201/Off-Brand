@@ -428,11 +428,17 @@ const release = new URL(document.currentScript.src).searchParams.get("v");
 
 async function init() {
   const res = await fetch(release ? `data/reviews.json?v=${encodeURIComponent(release)}` : "data/reviews.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error("Review archive unavailable");
   const data = await res.json();
-  const items = data.items || [];
-  const rejected = data.rejected_log || [];
+  if (!data || !Array.isArray(data.items) || !Array.isArray(data.rejected_log)
+      || data.items.some(item => !item || typeof item !== "object" || Array.isArray(item))
+      || data.rejected_log.some(item => !item || typeof item !== "object" || Array.isArray(item))) {
+    throw new Error("Review archive unreadable");
+  }
+  const items = data.items;
+  const rejected = data.rejected_log;
 
-  document.getElementById("last-updated").textContent = `Updated ${String(data.last_updated || "").slice(0, 10)}`;
+  document.getElementById("last-updated").textContent = data.last_updated ? `ON AIR · Updated ${String(data.last_updated).slice(0, 10)}` : "ON AIR · Update date not recorded";
   document.getElementById("stats-bar").textContent = `${items.length} specimens on air · ${rejected.length} held back at review`;
   // The station ID follows the shelf: CH 01–NN, where NN is the last channel.
   const stationId = document.getElementById("station-id");
@@ -467,9 +473,7 @@ async function init() {
   crawlBtn.addEventListener("click", () => setCrawl(!crawlBar.classList.contains("paused")));
 
   if (!items.length) {
-    const area = el("div", "shot-area");
-    area.appendChild(el("div", "shot-missing", "The shelf is empty."));
-    program.appendChild(area);
+    showStandby("NO PROGRAMS LISTED", "The published archive contains no reviews.", "0 channels");
     return;
   }
 
@@ -972,6 +976,9 @@ async function init() {
   window.addEventListener("hashchange", () => { const i = fromHash(); if (i >= 0) tune(i); });
 
   renderLineup();
+  $("search-input").disabled = false;
+  $("surf").disabled = false;
+  $("crawl-toggle").disabled = false;
   const start = fromHash();
   show(start >= 0 ? start : 0);
 
@@ -980,8 +987,22 @@ async function init() {
   loadCommercials().catch(() => { rotation = null; });
 }
 
-init().catch((err) => {
-  const area = el("div", "shot-area");
-  area.appendChild(el("div", "shot-missing", `Could not load reviews.json: ${err.message}`));
-  document.getElementById("program").replaceChildren(area);
+function showStandby(title, message, count) {
+  const $ = id => document.getElementById(id);
+  const card = el("div", "standby-card");
+  card.append(el("p", "standby-kicker", "OFF-BRAND / STANDBY"), el("strong", null, title), el("p", null, message));
+  const link = el("a", null, "Open the reading edition");
+  link.href = "reading.html";
+  card.appendChild(link);
+  $("program").replaceChildren(card);
+  $("last-updated").textContent = "ARCHIVE / STANDBY";
+  $("stats-bar").textContent = message;
+  $("lineup-count").textContent = count;
+  $("lineup-empty").hidden = true;
+  for (const id of ["prev", "next", "surf", "search-input", "crawl-toggle"]) $(id).disabled = true;
+  $("lineup").replaceChildren();
+  $("fact-body").replaceChildren(el("p", null, "Interactive review notes are unavailable."));
+}
+init().catch(() => {
+  showStandby("SIGNAL UNAVAILABLE", "The interactive archive could not load. Reload this page or use the reading edition.", "Archive unavailable");
 });

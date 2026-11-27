@@ -62,6 +62,8 @@ def _stage(tmp_path_factory, grow_to=None):
         data["items"] = [dict(real[k % len(real)], id=f"{real[k % len(real)]['id']}-copy{k}") if k >= len(real) else real[k]
                          for k in range(grow_to)]
         reviews_path.write_text(json.dumps(data), encoding="utf-8")
+    from build_reading_edition import build
+    (out / "reading.html").write_text(build(json.loads(reviews_path.read_text(encoding="utf-8"))).replace("__BUILD__", "e2e"), encoding="utf-8")
     count = len(json.loads(reviews_path.read_text(encoding="utf-8")).get("items") or [])
     if count < 2:
         pytest.skip("channel switching needs at least two published specimens")
@@ -1135,4 +1137,63 @@ def test_studio_does_not_substitute_changed_excerpt(browser, base_url):
     page.goto(base_url.replace("index.html","studio.html#props"))
     page.get_by_text("Excerpt unavailable:",exact=False).wait_for()
     assert page.locator("#source a").count() == 0
+    ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 1440])
+def test_standby_without_javascript_and_reading_edition(browser, base_url, width):
+    ctx = browser.new_context(java_script_enabled=False, viewport={"width":width,"height":900})
+    page = ctx.new_page()
+    page.goto(base_url)
+    assert page.get_by_text("PLEASE STAND BY", exact=True).is_visible()
+    assert page.get_by_text("If JavaScript is unavailable", exact=False).is_visible()
+    assert page.locator("#next").is_disabled()
+    assert page.locator("#lineup-empty").is_hidden()
+    page.get_by_role("link", name="Read the archive without JavaScript").click()
+    page.get_by_role("heading", name="Reading edition", exact=True).wait_for()
+    expected = json.loads((ROOT / "data/reviews.json").read_text())["items"]
+    assert page.locator("article").count() == len(expected)
+    assert page.locator("script").count() == 0
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    ctx.close()
+
+
+@pytest.mark.parametrize("failure", ["http", "malformed", "empty"])
+def test_archive_unavailable_or_empty_is_not_search_failure(browser, base_url, failure):
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    page.route("**/data/reviews.json*", lambda route: route.fulfill(
+        status=503 if failure=="http" else 200,
+        content_type="application/json",
+        body={"http":"{}","malformed":"{","empty":'{"items":[],"rejected_log":[]}'}[failure]))
+    page.goto(base_url)
+    page.get_by_text("NO PROGRAMS LISTED" if failure=="empty" else "SIGNAL UNAVAILABLE", exact=True).wait_for()
+    assert page.locator("#lineup-empty").is_hidden()
+    assert page.locator("#next").is_disabled()
+    assert page.locator("#search-input").is_disabled()
+    page.locator("#program").get_by_role("link", name="Open the reading edition").click()
+    page.get_by_role("heading", name="Reading edition", exact=True).wait_for()
+    assert page.locator("article").count() > 0
+    ctx.close()
+
+
+def test_pending_archive_disables_controls_until_ready(browser, base_url):
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    pending = []
+    page.route("https://urlscan.io/**",lambda route: route.abort())
+    page.route("**/data/reviews.json*",lambda route: pending.append(route))
+    page.goto(base_url)
+    page.get_by_text("PLEASE STAND BY",exact=True).wait_for()
+    assert page.locator("#next").is_disabled()
+    assert page.locator("#search-input").is_disabled()
+    assert page.locator("#lineup-empty").is_hidden()
+    assert pending
+    pending[0].continue_()
+    page.wait_for_selector("#lineup li")
+    assert page.locator("#next").is_enabled()
+    assert page.locator("#search-input").is_enabled()
+    assert page.locator(".standby-card").count() == 0
+    page.locator("#search-input").fill("no such specimen xqz987")
+    assert page.locator("#lineup-empty").is_visible()
     ctx.close()
