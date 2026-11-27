@@ -847,3 +847,6 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Public station standards link; keep the broadcast controls unchanged. */
+.station-nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; }

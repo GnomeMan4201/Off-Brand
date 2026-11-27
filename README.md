@@ -115,3 +115,7 @@ Public scan records and screenshots: [urlscan.io](https://urlscan.io). Private r
 [**RETURN TO THE BROADCAST ↗**](https://gnomeman4201.github.io/Off-Brand/)
 
 </div>
+
+### Station standards and corrections
+
+The [public methodology page](https://gnomeman4201.github.io/Off-Brand/methodology.html) explains evidence levels, source limitations, editorial review and correction reporting. It does not confer a new rating on historical reviews or authorize provider reuse.
