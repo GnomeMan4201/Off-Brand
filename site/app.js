@@ -86,8 +86,16 @@ function renderCard(item) {
     lesson.appendChild(el("p", null, tells[0]));
     if (tells.length > 1) {
       const more = el("details", "lesson-more");
-      more.appendChild(el("summary", null, "Take a closer look"));
+      more.appendChild(el("summary", null, "Evidence and assessment"));
       for (const tell of tells.slice(1)) more.appendChild(el("p", null, tell));
+      const uuid = scanUuid(item);
+      if (uuid) {
+        const source = el("a", "evidence-link", "Read the urlscan evidence ↗");
+        source.href = "https://urlscan.io/result/" + uuid + "/";
+        source.target = "_blank";
+        source.rel = "noopener noreferrer";
+        more.appendChild(source);
+      }
       lesson.appendChild(more);
     }
     card.appendChild(lesson);

@@ -400,3 +400,7 @@ body {
 
 .lesson-more summary { cursor: pointer; color: var(--teal); font-weight: 650; padding: .45rem 0; }
 .lesson-more[open] p { margin: .25rem 0 .8rem; }
+
+.lesson {
+  overflow-wrap: anywhere;
+}
