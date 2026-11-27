@@ -24,7 +24,7 @@ button { cursor: pointer; }
 .txt-nav a[aria-current="page"] { background: var(--blue); color: var(--yellow); border-color: var(--cyan); }
 .txt-tuner { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; border-block: 1px solid var(--line); padding: 10px 0; }
 .txt-tuner label { font: 20px var(--tty); color: var(--cyan); }
-.txt-tuner input { width: 5ch; font: 24px var(--tty); text-align: center; }
+.txt-tuner input { width: calc(3ch + 28px); font: 24px var(--tty); text-align: center; }
 .txt-tuner button { font: 22px var(--tty); min-width: 44px; }
 .txt-status { min-height: 1.5em; color: var(--dim); margin: 6px 0; font-size: 14px; }
 #txt-content { min-height: 260px; padding: 10px 0 20px; }
@@ -38,7 +38,7 @@ p { max-width: 72ch; }
 .txt-rows a { display: inline-flex; align-items: center; min-height: 44px; }
 .txt-index li { display: flex; justify-content: space-between; gap: 10px; }
 .txt-index span { color: var(--cyan); font: 24px var(--tty); align-self: center; }
-.txt-tapes { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(230px,100%),1fr)); gap: 12px; }
+.txt-tapes { display: grid; align-items: start; grid-template-columns: repeat(auto-fit,minmax(min(230px,100%),1fr)); gap: 12px; }
 .txt-tape { border: 1px solid #645044; background: #1b1210; padding: 12px; }
 .txt-tape summary { cursor: pointer; color: #160c0a; background: #e9e1ce; border-left: 5px solid #7d3028; padding: 10px; min-height: 44px; font: 21px/1.2 var(--tty); }
 .txt-tape p { margin-bottom: 0; }

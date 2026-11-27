@@ -55,8 +55,8 @@ def build(data):
             parts.append("<p>No editorial observations recorded.</p>")
         if scan and item["id"] not in ids:
             ids.add(item["id"])
-            parts.append(f'<p><a href="https://urlscan.io/result/{scan.group(1)}/" rel="noreferrer">Read public scan record</a> · <a href="index.html#{scan.group(0)}">Interactive channel and Evidence Locker</a></p>')
-        parts.append("</article>")
+            parts.append(f'<p class="reading-links"><a href="https://urlscan.io/result/{scan.group(1)}/" rel="noreferrer">Read public scan record</a><a href="index.html#{scan.group(0)}">Interactive channel and Evidence Locker</a></p>')
+        parts.append('<p class="reading-links"><a href="#channel-index">Back to channel index</a></p></article>')
         sections.append("\n".join(parts))
     return f'''<!doctype html>
 <html lang="en">
@@ -76,7 +76,7 @@ def build(data):
 <p>The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
 <p>{len(items)} published reviews · Archive updated: {esc(data.get("last_updated") or "Not recorded")}</p>
 <p>This script-free edition contains existing published review text, not new investigations. Recorded evidence levels reflect the archived assessment, not a current verification. Historical reviews without structured assessments remain not yet rated. Read the full Evidence Locker in the interactive edition for structured source details.</p>
-<nav aria-label="Published review index"><h2>Channel index</h2><ol>{"".join(links)}</ol></nav>
+<nav aria-label="Published review index"><h2 id="channel-index" tabindex="-1">Channel index</h2><ol>{"".join(links)}</ol></nav>
 {"".join(sections) if sections else "<p>No published reviews in this archive.</p>"}
 <footer><a href="index.html">Return to the broadcast</a></footer>
 </main>

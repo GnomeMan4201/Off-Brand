@@ -177,10 +177,10 @@
   dialog.setAttribute("aria-labelledby", title.id);
   const list = el("dl");
   for (const [key, meaning] of [
-    ["← / →", "Change channel while the broadcast screen has focus."],
+    ["← / →", "Tab to the broadcast screen, or click a blank part of the screen, then use the arrow keys."],
     ["Tab / Shift+Tab", "Move between available controls."],
     ["Enter / Space", "Activate focused buttons."],
-    ["Escape", "Close this guide; on the broadcast screen, dismiss an active break."],
+    ["Escape", "Close this guide; with focus on the broadcast screen or its commercial controls, dismiss an active break."],
     ["Scanlines / Degauss", "Optional appearance controls. No effect on evidence ratings."],
     ["Station ID", "Reveal the fictional calibration card below the controls."]
   ]) list.append(el("dt", null, key), el("dd", null, meaning));
@@ -200,8 +200,12 @@
   function syncTextLink() {
     if (!txtLink) return;
     const id = location.hash.slice(1);
-    txtLink.href = /^urlscan-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id)
-      ? "teletext.html?channel=" + encodeURIComponent(id) + "#100" : "teletext.html#100";
+    const query = /^urlscan-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id)
+      ? "?channel=" + encodeURIComponent(id) : "";
+    txtLink.href = "teletext.html" + query + "#100";
+    const studio = byId("studio-guide-link"), originals = byId("originals-guide-link");
+    if (studio) studio.href = "studio.html" + query + "#continuity";
+    if (originals) originals.href = "teletext.html" + query + "#606";
   }
   syncTextLink();
   const program = byId("program");

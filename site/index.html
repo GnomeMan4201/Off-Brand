@@ -34,7 +34,8 @@
       <p class="tagline">The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201</p>
       <p class="stats" id="stats-bar" aria-live="polite">Interactive broadcast loading</p>
     </div>
-    <nav class="station-nav" aria-label="Station information"><a id="teletext-link" class="txt-entry" href="teletext.html#100">TXT · OB-TEXT</a><a href="methodology.html">Station standards &amp; corrections ↗</a></nav>
+    <nav class="station-nav" aria-label="Station information"><a id="teletext-link" class="txt-entry" href="teletext.html#100">TXT · OB-TEXT</a><a href="methodology.html">Station standards &amp; corrections</a></nav>
+    <details class="station-sections"><summary>Station guide · jump to section</summary><nav aria-label="Broadcast sections"><a href="#wtn-title">Review notes</a><a href="#channel-guide">Channel lineup</a><a id="originals-guide-link" href="teletext.html#606">Commercials</a><a id="studio-guide-link" href="studio.html#continuity">Studio B</a><a href="#held-title">Held back at review</a><a href="#safety-title">Phishing field guide</a><a href="reading.html">Reading edition</a></nav></details>
   </header>
 
   <div class="crawl-bar">
@@ -43,7 +44,7 @@
     <button type="button" class="crawl-toggle" id="crawl-toggle" disabled aria-label="Pause the crawl of satirical captions">Pause</button>
   </div>
 
-  <main class="tv-layout" id="tv">
+  <main class="tv-layout" id="tv" tabindex="-1">
     <section class="broadcast" aria-label="Now showing">
       <div class="bezel">
         <div class="bezel-plate" aria-hidden="true">
@@ -74,14 +75,14 @@
 
       <section class="fact-file" aria-labelledby="wtn-title">
         <div class="fact-head">
-          <h2 id="wtn-title">WHAT TO NOTICE</h2>
+          <h2 id="wtn-title" tabindex="-1">WHAT TO NOTICE</h2>
           <span>FACT FILE · from the public scan record · no jokes on this page</span>
         </div>
         <div id="fact-body"><p>Review notes will appear when the archive is ready. <a href="reading.html">Open the reading edition.</a></p></div>
       </section>
     </section>
 
-    <aside class="lineup" aria-label="Channel guide">
+    <aside class="lineup" id="channel-guide" tabindex="-1" aria-label="Channel guide">
       <div class="lineup-head">
         <h2>Tonight’s lineup</h2>
         <span class="lineup-count" id="lineup-count" aria-live="polite">Loading archive</span>
@@ -118,7 +119,7 @@
     <div class="held-inner">
       <div class="held-intro">
         <span class="held-kicker">WE ARE EXPERIENCING TECHNICAL DIFFICULTIES</span>
-        <h2 id="held-title">Held back at review</h2>
+        <h2 id="held-title" tabindex="-1">Held back at review</h2>
         <p>A report is a lead. Sometimes the most useful thing in the record is the reason to leave a page off the shelf.</p>
       </div>
       <ul id="rejected-list" class="rejected-list"></ul>
@@ -128,7 +129,7 @@
   <section class="safety" aria-labelledby="safety-title">
     <div class="safety-head">
       <span class="safety-kicker">STATION FIELD MANUAL</span>
-      <h2 id="safety-title">Phishing field guide</h2>
+      <h2 id="safety-title" tabindex="-1">Phishing field guide</h2>
     </div>
     <div class="guide-grid">
       <section><span class="guide-num" aria-hidden="true">01</span><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>

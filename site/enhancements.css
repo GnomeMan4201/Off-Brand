@@ -68,3 +68,15 @@
 
 .station-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px; }
 .station-nav .txt-entry { font: 21px/1 var(--tty); color: var(--chroma); }
+
+/* Missing captures are text slates, not overlay targets. Keep the verdict and
+   satire in flow, even for long labels and narrow viewports. */
+.shot-area.is-missing { display: flex; flex-direction: column; aspect-ratio: auto; min-height: 220px; }
+.shot-area.is-missing .shot-missing { position: relative; inset: auto; flex: 1; min-height: clamp(220px, 32vw, 520px); padding: 62px 16px 22px; }
+.shot-area.is-missing .stamp { position: static; align-self: center; max-width: 100%; transform: none; animation: none; margin-top: 8px; }
+.program:has(.shot-area.is-missing) .chyron { position: relative; inset: auto; }
+.station-sections { color: var(--ink); font-size: 14px; }
+.station-sections summary { color: var(--yellow); cursor: pointer; min-height: 44px; align-content: center; font-weight: 600; }
+.station-sections nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.station-sections nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--yellow); }
+.rejected-list a { min-height: 44px; }

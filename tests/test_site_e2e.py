@@ -1197,3 +1197,77 @@ def test_pending_archive_disables_controls_until_ready(browser, base_url):
     page.locator("#search-input").fill("no such specimen xqz987")
     assert page.locator("#lineup-empty").is_visible()
     ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 768, 1440])
+def test_missing_capture_slate_never_overlaps_title_or_satire(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.add_init_script("localStorage.setItem('offbrand.breaks.enabled','off')")
+    page.goto(base_url)
+    page.wait_for_selector(".shot-area.is-missing")
+    items = json.loads((ROOT / "data/reviews.json").read_text())["items"]
+    # Exercise every published title and caption, not just the default channel.
+    for item in items:
+        page.evaluate("(id) => location.hash=id", arg=item["id"])
+        wait_until(page, "document.querySelector('.shot-missing strong')?.textContent === " + json.dumps(item["knockoff_label"]))
+        assert page.locator(".shot-missing").evaluate("""e => {
+          const title=e.querySelector('strong').getBoundingClientRect();
+          const label=e.querySelector('span').getBoundingClientRect();
+          const stamp=e.querySelector('.stamp')?.getBoundingClientRect();
+          const chyron=document.querySelector('.chyron').getBoundingClientRect();
+          return label.bottom <= title.top && (!stamp || title.bottom <= stamp.top)
+            && e.getBoundingClientRect().bottom <= chyron.top+1;
+        }"""), (width, item["id"])
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    ctx.close()
+
+
+def test_station_guide_reaches_sections_and_preserves_keyboard_focus(browser, base_url):
+    page = open_page(browser, base_url, mobile=True, reduce=True)
+    guide = page.locator(".station-sections summary")
+    wait_until(page, "document.getElementById('studio-guide-link').href.includes('?channel=urlscan-')")
+    channel = page.evaluate("location.hash.slice(1)")
+    assert page.locator("#studio-guide-link").get_attribute("href") == "studio.html?channel="+channel+"#continuity"
+    assert page.locator("#originals-guide-link").get_attribute("href") == "teletext.html?channel="+channel+"#606"
+    guide.focus()
+    page.keyboard.press("Enter")
+    page.get_by_role("navigation", name="Broadcast sections").get_by_role("link", name="Phishing field guide").click()
+    assert page.evaluate("document.activeElement.id") == "safety-title"
+    assert page.locator(".station-sections").evaluate("e=>e.open")
+    page.locator(".shot-missing").click()
+    assert page.evaluate("document.activeElement.id") == "screen"
+    previous = page.locator("#now").inner_text()
+    page.keyboard.press("ArrowRight")
+    wait_until(page, "document.querySelector('#now').textContent !== " + json.dumps(previous))
+    page.context.close()
+
+
+def test_teletext_number_and_tape_layout(browser, base_url):
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+    page = ctx.new_page()
+    page.goto(base_url.replace("index.html", "teletext.html#310"))
+    page.wait_for_selector(".txt-tape")
+    page.evaluate("document.fonts.ready")
+    assert page.locator("#txt-number").evaluate("""e => {
+      const s=getComputedStyle(e), c=document.createElement('canvas').getContext('2d');
+      c.font=s.font;
+      return e.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)>=c.measureText('310').width;
+    }""")
+    first, second = page.locator(".txt-tape").nth(0), page.locator(".txt-tape").nth(1)
+    h = second.bounding_box()["height"]
+    first.locator("summary").click()
+    assert abs(second.bounding_box()["height"]-h)<1
+    ctx.close()
+
+
+def test_reading_edition_has_large_record_links_and_return_navigation(browser, base_url):
+    ctx = browser.new_context(java_script_enabled=False, viewport={"width":390,"height":900})
+    page = ctx.new_page()
+    page.goto(base_url.replace("index.html","reading.html"))
+    assert page.locator("article .reading-links a").evaluate_all("links=>links.length>0&&links.every(e=>e.getBoundingClientRect().height>=44)")
+    page.locator("article").first.get_by_role("link", name="Back to channel index").click()
+    assert page.evaluate("document.activeElement.id") == "channel-index"
+    assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+    ctx.close()
