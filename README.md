@@ -100,7 +100,7 @@ Off-Brand is a static GitHub Pages site. GitHub Actions handles collection, revi
 
 See [maintenance documentation](docs/MAINTAINING.md) for setup, publication, commercial management and local checks.
 
-Public scan records and screenshots: [urlscan.io](https://urlscan.io). Candidate-feed fallback: [OpenPhish](https://openphish.com). Published reviews currently use public urlscan records.
+Public scan records and screenshots: [urlscan.io](https://urlscan.io). Private research cross-check: [OpenPhish](https://openphish.com); public fallback disabled. Published reviews currently use public urlscan records.
 
 [Sound credits](site/sounds/SOURCES.md) · [Font licenses](site/fonts/) · [badBANANA Research Collective](https://badbananaresearch.com)
 

@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   audit:
+    if: vars.URLSCAN_PUBLIC_REUSE_AUTHORIZED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

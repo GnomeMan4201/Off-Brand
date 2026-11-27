@@ -153,7 +153,7 @@ def test_audit_buckets(monkeypatch):
     assert second["level"] == "suspected" and second["buckets"]["domain_only"]
     assert third["level"] == "unverified" and third["buckets"]["missing_evidence"]
     assert report["counts"] == {"exact_corroboration": 0, "source_confirmed": 1, "suspected": 1,
-                                "domain_only": 1, "missing_evidence": 1, "conflicting": 0,
+                                "domain_only": 1, "scheme_only": 0, "missing_evidence": 1, "conflicting": 0,
                                 "unavailable_sources": 0}
     assert len(fetched) == 3 and report["sources"]["urlscan.io"] == "scan records re-read: 3 ok"
     md = audit_reviews.report_markdown(report)

@@ -80,11 +80,11 @@ def down(source, status="unavailable"):
 def test_normalize_only_applies_changes_a_server_cannot_see():
     a = normalize("hxxps://LOGIN.Bank-Example[.]test:443/secure/verify.php?id=7")
     b = normalize("https://login.bank-example.test/secure/verify.php?id=7")
-    assert a["exact_key"] == b["exact_key"] == "//login.bank-example.test/secure/verify.php?id=7"
+    assert a["exact_key"] == b["exact_key"] == "https://login.bank-example.test/secure/verify.php?id=7"
     assert a["host_key"] == "login.bank-example.test"
-    assert normalize("https://x.test")["exact_key"] == "//x.test/"
-    assert normalize("https://x.test./a")["host_key"] == "x.test"
-    assert normalize("https://x.test:8443/")["exact_key"] == "//x.test:8443/"
+    assert normalize("https://x.test")["exact_key"] == "https://x.test/"
+    assert normalize("https://x.test./a")["exact_key"] != normalize("https://x.test/a")["exact_key"]
+    assert normalize("https://x.test:8443/")["exact_key"] == "https://x.test:8443/"
 
 
 @pytest.mark.parametrize("a,b", [
@@ -211,12 +211,12 @@ def test_exact_and_same_host_matches_are_distinguished():
     assert [r["phish_id"] for r in host] == ["9002"]
     exact, host = pt_snapshot().lookup("https://login.bank-example.test/never-reported")
     assert exact == [] and [r["phish_id"] for r in host] == ["9001", "9002"]
-    # A scheme-only difference is the same page, and the record says so.
-    exact, _ = pt_snapshot().lookup("http://login.bank-example.test/secure/verify.php?id=7")
-    assert [r["phish_id"] for r in exact] == ["9001"]
+    # Scheme-only matches are related, never verification.
+    exact, related = pt_snapshot().lookup("http://login.bank-example.test/secure/verify.php?id=7")
+    assert exact == [] and related[0]["phish_id"] == "9001"
     ev = evidence.assess("http://login.bank-example.test/secure/verify.php?id=7", snapshots=[pt_snapshot()])
-    assert ev["level"] == "source-confirmed"
-    assert "recorded as https://, scanned as http://" in ev["records"][0]["detail"]
+    assert ev["level"] == "suspected"
+    assert ev["records"][0]["match"] == "scheme_only"
 
 
 def test_live_observed_phishtank_shapes_match():
@@ -231,8 +231,8 @@ def test_live_observed_phishtank_shapes_match():
     snap = pt_snapshot(rows)
     exact, _ = snap.lookup("hxxps://shop[.]example[.]test/")
     assert sorted(r["phish_id"] for r in exact) == ["1", "2"]
-    exact, _ = snap.lookup("hxxps://deep[.]example[.]test/logowanie/48819")
-    assert [r["phish_id"] for r in exact] == ["3"]
+    exact, related = snap.lookup("hxxps://deep[.]example[.]test/logowanie/48819")
+    assert exact == [] and [r["phish_id"] for r in related] == ["3"]
     assert snap.lookup("hxxps://deep[.]example[.]test/logowanie/48818")[0] == []
 
 
@@ -254,10 +254,10 @@ def test_same_upstream_is_not_independent_corroboration():
     assert {r["upstream"] for r in ev["records"] if r["match"] == "exact"} == {"phishtank"}
 
 
-def test_independent_credible_sources_corroborate_but_the_public_view_drops_openphish():
+def test_distinct_provider_names_do_not_establish_independence():
     ev = evidence.assess(PAGE, lead=lead("phishtank"), snapshots=[pt_snapshot(), op_snapshot([PAGE])])
-    assert ev["level"] == "corroborated"
-    assert "OpenPhish" in ev["reason"] and "PhishTank" in ev["reason"]
+    assert ev["level"] == "source-confirmed"
+    assert "PhishTank" in ev["reason"]
     pub = evidence.public_view(ev)
     assert pub["level"] == "source-confirmed"
     assert not any(r["source"] == "OpenPhish" for r in pub["records"]) and "OpenPhish" not in pub["sources"]
@@ -392,7 +392,7 @@ def test_public_issues_never_contain_openphish_data():
     public = "\n".join(evidence.issue_lines(ev, private=False))
     assert "OpenPhish" not in public and "openphish.com" not in public
     private = "\n".join(evidence.issue_lines(ev, private=True))
-    assert "OpenPhish" in private and "Publishable level" in private
+    assert "OpenPhish" in private
 
 
 def test_issue_text_is_markdown_escaped():
@@ -451,7 +451,7 @@ def run_publish(tmp_path, monkeypatch, issue_body, review):
 
 def issue_body(ev=None, private=False):
     lines = [f"id: urlscan-{UUID}", "source: urlscan.io (source: phishtank)",
-             f"public_record_url: {SCAN}", "defanged_url: hxxps://login.bank-example[.]test/secure/verify.php?id=7"]
+             f"public_record_url: {SCAN}", "defanged_url: " + (ev["specimen"]["defanged_url"] if ev else "hxxps://login.bank-example[.]test/secure/verify.php?id=7")]
     return "\n".join(lines + (evidence.issue_lines(ev, private=private) if ev else []))
 
 
@@ -523,7 +523,7 @@ def test_shelf_assessment_never_replaces_findings_during_an_outage():
     first = archive.assess_specimens(index, [down("PhishTank", "rate_limited"), op_snapshot(OTHER)])
     assert first["assessed"] == 1 and spec["evidence"]["level"] == "suspected"
     outage = archive.assess_specimens(index, [down("PhishTank"), down("OpenPhish")])
-    assert outage == {"assessed": 0, "kept": 1} and spec["evidence"]["level"] == "suspected"
+    assert outage == {"assessed": 1, "kept": 0} and spec["evidence"]["level"] == "suspected"
     later = archive.assess_specimens(index, [pt_snapshot(), op_snapshot(OTHER)])
     assert later["assessed"] == 1 and spec["evidence"]["level"] == "source-confirmed"
     assert archive.assess_specimens(index, [pt_snapshot(), op_snapshot(OTHER)])["assessed"] == 0
@@ -537,7 +537,8 @@ def test_a_partial_outage_carries_earlier_findings_forward_and_says_so():
     assert spec["evidence"]["level"] == "suspected"
     archive.assess_specimens(index, [pt_snapshot(), down("OpenPhish", "rate_limited")])
     ev = spec["evidence"]
-    assert ev["level"] == "corroborated"  # OpenPhish's earlier listing is kept, not lost to the outage
+    assert ev["level"] == "source-confirmed"  # prior listing is retained, not independent proof
+    assert ev["sources"]["OpenPhish"]["status"] == "rate_limited"
     assert ev["sources"]["OpenPhish"]["detail"].endswith("(carried from an earlier check)")
     assert any("carried over" in x for x in ev["limitations"])
     assert archive.needs_assessment(spec)  # carried results are re-checked next run
@@ -562,3 +563,57 @@ def test_existing_published_reviews_are_untouched_and_still_valid():
     for item in data["items"]:
         if "evidence" in item:
             assert evidence.sanitize_evidence(item["evidence"]) is not None, item["id"]
+
+def test_scheme_related_on_shared_host_is_not_confirmation():
+    rows = [dict(PT_ROWS[0], url="http://sites.google.com/view/sample")]
+    ev = evidence.assess("https://sites.google.com/view/sample", snapshots=[pt_snapshot(rows)])
+    assert ev["level"] == "suspected"
+    assert ev["records"][0]["match"] == "scheme_only"
+
+
+def test_lossy_idna_and_out_of_range_ports_refused():
+    assert normalize("https://faß.test/") is None
+    assert normalize("https://x.test:65536/") is None
+
+
+def test_evidence_copied_from_another_specimen_is_rejected():
+    meta = dict(meta_with(published_block()), defanged_url="hxxps://unrelated[.]test/")
+    _, err = publish_from_issue.evidence_for(meta)
+    assert "does not match" in err
+
+
+def test_two_outages_keep_verification_but_not_current_ok():
+    first = evidence.assess(PAGE, snapshots=[pt_snapshot()])
+    second = evidence.assess(PAGE, snapshots=[down("PhishTank")], previous=first)
+    third = evidence.assess(PAGE, snapshots=[down("PhishTank", "rate_limited")], previous=second)
+    assert third["level"] == "source-confirmed"
+    assert third["sources"]["PhishTank"]["status"] == "rate_limited"
+    assert third["sources"]["PhishTank"]["last_success"] == first["sources"]["PhishTank"]["checked_at"]
+    assert third["records"][0]["historical"] is True
+    recovered = evidence.assess(PAGE, snapshots=[pt_snapshot([dict(PT_ROWS[0], url="https://other.test/")])], previous=third)
+    assert recovered["level"] == "source-confirmed"
+    assert recovered["sources"]["PhishTank"]["status"] == "ok"
+    assert recovered["records"][0]["historical"] is True
+
+
+def test_private_conflict_cannot_be_filtered_into_publishable_level():
+    conflict = dict(evidence.openphish_listing(), stance="contradicts")
+    ev = evidence.assess(PAGE, snapshots=[pt_snapshot()], extra_records=[conflict])
+    assert ev["level"] == "disputed"
+    assert evidence.public_view(ev)["level"] == "disputed"
+    _, err = publish_from_issue.evidence_for(meta_with(ev))
+    assert err
+
+
+def test_public_intake_does_not_fall_back_to_openphish(tmp_path, monkeypatch):
+    import ingest
+    monkeypatch.setattr(ingest, "ROOT", tmp_path)
+    (tmp_path / "data").mkdir()
+    monkeypatch.setattr(ingest, "REVIEWS_PATH", tmp_path / "data/reviews.json")
+    monkeypatch.setattr(ingest, "SEEN_PATH", tmp_path / "data/seen.json")
+    monkeypatch.setattr(ingest, "fetch_urlscan_candidates", lambda **kw: [])
+    def prohibited(*args, **kwargs):
+        pytest.fail("public intake contacted OpenPhish")
+    monkeypatch.setattr(feeds, "fetch_openphish", prohibited)
+    assert ingest.main() == 0
+    assert json.loads((tmp_path / "data/pending_candidates.json").read_text()) == []

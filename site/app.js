@@ -240,7 +240,7 @@ function renderEvidence(item) {
 
   if (!level) {
     box.appendChild(el("p", "locker-reason",
-      "Aired before evidence levels existed. The scan record linked below is the evidence on file; nothing was added afterward."));
+      "Aired before evidence levels existed. This review has not been rated under the current methodology; its phishing classification is not independently confirmed here. The original scan record remains on file."));
     return box;
   }
   box.appendChild(el("p", "locker-reason", ev.reason || EVIDENCE_LEVELS[level].blurb));
@@ -254,7 +254,7 @@ function renderEvidence(item) {
   const list = el("div", "evidence-list");
   for (const r of records) {
     const p = el("p", "locker-record");
-    p.appendChild(el("span", "locker-tag", r.match === "exact" ? "EXACT PAGE" : "SAME HOST"));
+    p.appendChild(el("span", "locker-tag", r.match === "exact" ? "EXACT PAGE" : r.match === "scheme_only" ? "DIFFERENT SCHEME" : "SAME HOST"));
     p.appendChild(document.createTextNode(` ${r.source || "Source"}: ${r.detail || "record"}`));
     if (r.stance === "contradicts") p.classList.add("locker-against");
     if (isEvidenceLink(r.record_url)) {

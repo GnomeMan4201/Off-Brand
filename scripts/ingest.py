@@ -2,10 +2,10 @@
 
 Sources:
 1. urlscan.io Public Search API (free-tier searchable fields only; uses URLSCAN_API_KEY if set)
-2. OpenPhish Community Feed (https://openphish.com/feed.txt) as fallback
+Public intake does not use the restricted OpenPhish feed.
 
-Every staged candidate is then correlated with the PhishTank dump and the OpenPhish
-feed (each downloaded once per run, looked up locally) and carries an evidence block
+Every staged candidate is then correlated with the PhishTank dump
+(downloaded once per run, looked up locally) and carries an evidence block
 with its confidence level. See scripts/evidence.py.
 """
 
@@ -69,7 +69,7 @@ def infer_tells(raw_url: str, domain: str | None) -> list[str]:
 
 def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
     api_key = os.environ.get("URLSCAN_API_KEY", "").strip()
-    params = urlencode({"q": URLSCAN_FREE_QUERY, "size": limit})
+    params = urlencode({"q": URLSCAN_FREE_QUERY + " AND NOT task.source:openphish", "size": limit})
     url = f"https://urlscan.io/api/v1/search/?{params}"
     headers = {"User-Agent": "OffBrand-Triage/0.1"}
     if api_key:
@@ -91,6 +91,8 @@ def fetch_urlscan_candidates(limit: int = 25) -> list[dict]:
     for item in payload.get("results", []):
         task = item.get("task", {})
         page = item.get("page", {})
+        if str(task.get("source") or "").lower() == "openphish":
+            continue
         raw_url = task.get("url") or page.get("url")
         scan_id = item.get("_id")
         if not raw_url or not scan_id:
@@ -198,12 +200,10 @@ def main() -> int:
     def eligible(candidates):
         return [c for c in candidates if not is_excluded(reviews_data, c["id"])]
 
-    openphish = feeds.fetch_openphish()
+    # Public intake must never consume the restricted OpenPhish feed.
     fresh = filter_fresh(eligible(fetch_urlscan_candidates(limit=25)), known_ids)
-    if not fresh:
-        fresh = filter_fresh(eligible(fetch_openphish_candidates(limit=25, snapshot=openphish)), known_ids)
     if fresh:
-        snapshots = [feeds.fetch_phishtank(), openphish]
+        snapshots = [feeds.fetch_phishtank()]
         for snap in snapshots:
             print(f"[evidence] {snap.source}: {snap.status} ({snap.detail})", file=sys.stderr)
         attach_evidence(fresh, snapshots)

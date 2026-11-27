@@ -6,8 +6,8 @@ printed to the public site or requested.
 
 The rule is: never merge two addresses that could be different pages. Only changes
 that cannot alter what a server receives are applied:
-- scheme and hostname are lowercased (both are case-insensitive), a trailing dot on
-  the hostname is dropped, an internationalized hostname is converted to punycode;
+- scheme and hostname are lowercased (both are case-insensitive), and an internationalized
+  hostname is converted to punycode only if it round-trips without loss;
 - an explicit default port (:443 for https, :80 for http) is dropped;
 - an empty path becomes "/".
 Everything else is kept byte for byte: path case, query parameters and their order,
@@ -15,11 +15,9 @@ percent-escapes (never decoded, never re-cased), userinfo and the fragment. No U
 compatibility folding is applied to the path or query.
 
 Two match keys:
-- exact key: the full address after the steps above, except the scheme. Feeds record
-  whichever scheme the reporter pasted (observed: PhishTank holds http:// for a page urlscan
-  scanned over https://), and http/https on the same host and path name the same resource,
-  so a scheme-only difference still counts as the same page. The scheme is kept in
-  "scheme" and correlators disclose the difference; nothing else is relaxed.
+- exact key: the full address including scheme after the steps above.
+- scheme key: the same normalized address without its scheme, for related matches
+  only. HTTP and HTTPS may serve different content and never confirm each other.
 - host key: the hostname alone. A host match says "same site", not "same page".
 """
 
@@ -79,14 +77,19 @@ def _host(hostport: str) -> tuple[str, str | None] | None:
         host, port = hostport.rsplit(":", 1)
         if not port.isdigit():
             return None
-    host = host.rstrip(".").lower()
+    host = host.lower()
     if not host or re.search(r"[\s/\\?#@]", host):
         return None
     if not host.isascii():
         try:
-            host = host.encode("idna").decode("ascii")
+            ascii_host = host.encode("idna").decode("ascii")
+            if ascii_host.encode("ascii").decode("idna") != host:
+                return None
+            host = ascii_host
         except UnicodeError:
             return None  # not a valid IDN; refuse rather than guess
+    if port is not None and (not port.isascii() or len(port) > 5 or int(port) > 65535):
+        return None
     return host, port
 
 
@@ -118,7 +121,8 @@ def normalize(url: str | None) -> dict | None:
     exact = ("//" + (f"{userinfo}@" if userinfo is not None else "") + netloc
              + (path or "/") + (f"?{query}" if query is not None else "")
              + (f"#{frag}" if frag is not None else ""))
-    return {"scheme": scheme, "host": netloc, "exact_key": exact, "host_key": host}
+    return {"scheme": scheme, "host": netloc, "exact_key": scheme + ":" + exact,
+            "scheme_key": exact, "host_key": host}
 
 
 def is_shared_host(host_key: str | None) -> bool:

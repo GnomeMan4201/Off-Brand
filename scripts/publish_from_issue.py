@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from evidence import LABELS, PUBLISHABLE, sanitize_evidence
+from normalize import normalize
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 from voices import load_roster, validate as validate_voice
 
@@ -70,11 +71,17 @@ def evidence_for(meta: dict) -> tuple[dict | None, str | None]:
         return None, ("No evidence block on this issue. Re-run intake or the shelf collector so the "
                       "specimen is assessed before publishing.")
     try:
-        ev = sanitize_evidence(json.loads(raw))
+        original = json.loads(raw)
+        ev = sanitize_evidence(original)
     except (json.JSONDecodeError, TypeError, AttributeError, KeyError, ValueError):
         ev = None
     if ev is None:
         return None, "The issue's evidence block is malformed or inconsistent; refusing to publish."
+    if "defanged_url" in meta:
+        expected = normalize(meta["defanged_url"])
+        actual = normalize(ev["specimen"]["defanged_url"])
+        if not expected or not actual or expected["exact_key"] != actual["exact_key"]:
+            return None, "Evidence URL does not match the specimen; refusing to publish."
     if ev["level"] not in PUBLISHABLE:
         return None, (f"Evidence level is {LABELS[ev['level']]}; it cannot be published. "
                       "Unverified and Disputed specimens stay off the air.")

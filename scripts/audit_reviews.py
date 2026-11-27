@@ -34,6 +34,7 @@ BUCKETS = (
     ("source_confirmed", "Source-confirmed"),
     ("suspected", "Suspected (not confirmed)"),
     ("domain_only", "Domain-only matches (other pages on the same host, nothing for this page)"),
+    ("scheme_only", "Scheme-only related matches (not exact confirmation)"),
     ("missing_evidence", "Missing evidence (Unverified)"),
     ("conflicting", "Conflicting evidence (Disputed)"),
     ("unavailable_sources", "At least one source unavailable"),
@@ -71,12 +72,14 @@ def audit_item(item: dict, snapshots: list, scan: dict | None, scan_status: str,
     feed_records = [r for r in ev["records"] if r["source"] != "urlscan.io"]
     exact = [r for r in feed_records if r["match"] == "exact"]
     host = [r for r in feed_records if r["match"] == "same_host"]
+    scheme = [r for r in feed_records if r["match"] == "scheme_only"]
     unavailable = sorted(n for n, s in ev["sources"].items() if s["status"] not in ("ok", "not_attempted"))
     buckets = {
         "exact_corroboration": ev["level"] == "corroborated",
         "source_confirmed": ev["level"] == "source-confirmed",
         "suspected": ev["level"] == "suspected",
-        "domain_only": bool(host) and not exact,
+        "domain_only": bool(host) and not exact and not scheme,
+        "scheme_only": bool(scheme) and not exact,
         "missing_evidence": ev["level"] == "unverified",
         "conflicting": ev["level"] == "disputed",
         "unavailable_sources": bool(unavailable),
@@ -84,6 +87,7 @@ def audit_item(item: dict, snapshots: list, scan: dict | None, scan_status: str,
     return {
         "id": item.get("id"), "brand": item.get("impersonated_brand"), "level": ev["level"],
         "reason": ev["reason"], "exact_feed_matches": [f"{r['source']} ({r['strength']})" for r in exact],
+        "scheme_only_matches": [r["source"] for r in scheme],
         "same_host_matches": [r["source"] for r in host], "unavailable_sources": unavailable,
         "scan_source": task.get("source"), "redirected": ev["specimen"]["redirected"],
         "published_level": (item.get("evidence") or {}).get("level"), "buckets": buckets, "evidence": ev,
@@ -98,12 +102,12 @@ def report_markdown(report: dict) -> str:
              "", "| Bucket | Reviews |", "|---|---|"]
     for key, label in BUCKETS:
         lines.append(f"| {label} | {report['counts'][key]} |")
-    lines += ["", "| Review | Brand | Level | Exact feed matches | Same-host only | Unavailable | Redirected |",
-              "|---|---|---|---|---|---|---|"]
+    lines += ["", "| Review | Brand | Level | Exact feed matches | Different scheme | Same-host only | Unavailable | Redirected |",
+              "|---|---|---|---|---|---|---|---|"]
     for r in report["items"]:
-        lines.append("| `{id}` | {brand} | {level} | {exact} | {host} | {unav} | {redir} |".format(
+        lines.append("| `{id}` | {brand} | {level} | {exact} | {scheme} | {host} | {unav} | {redir} |".format(
             id=r["id"], brand=(r["brand"] or "").replace("|", "/"), level=evidence.LABELS[r["level"]],
-            exact=", ".join(r["exact_feed_matches"]) or "—", host=", ".join(r["same_host_matches"]) or "—",
+            exact=", ".join(r["exact_feed_matches"]) or "—", scheme=", ".join(r["scheme_only_matches"]) or "—", host=", ".join(r["same_host_matches"]) or "—",
             unav=", ".join(r["unavailable_sources"]) or "—",
             redir={True: "yes", False: "no", None: "unknown"}[r["redirected"]]))
     lines += ["", "PhishTank's dump lists only verified phishes that are still online, so older specimens are "

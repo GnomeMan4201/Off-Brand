@@ -12,9 +12,9 @@ on:
         type: boolean
         default: true
       check_openphish:
-        description: "Download the OpenPhish community feed"
+        description: "Download OpenPhish only in an authorized private repository"
         type: boolean
-        default: true
+        default: false
       check_urlscan:
         description: "Run one urlscan.io search request"
         type: boolean
@@ -52,7 +52,7 @@ jobs:
           URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
           PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
           CHECK_PHISHTANK: ${{ inputs.check_phishtank }}
-          CHECK_OPENPHISH: ${{ inputs.check_openphish }}
+          CHECK_OPENPHISH: ${{ inputs.check_openphish && github.event.repository.private }}
           CHECK_URLSCAN: ${{ inputs.check_urlscan }}
         run: |
           set -o pipefail

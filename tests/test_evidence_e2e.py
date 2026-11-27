@@ -97,7 +97,7 @@ def test_reviews_without_evidence_say_not_yet_rated(browser, staged):
     url, items = staged
     ctx, page = tune(browser, url, items[1])
     assert page.locator(".locker-stamp").inner_text() == "NOT YET RATED"
-    assert "nothing was added afterward" in page.locator(".locker").inner_text()
+    assert "not independently confirmed" in page.locator(".locker").inner_text()
     assert page.locator(".fact-links a").count() >= 1  # the original record link is still there
     ctx.close()
 

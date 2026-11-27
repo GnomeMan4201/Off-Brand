@@ -110,6 +110,7 @@ class Snapshot:
     meta: dict = field(default_factory=dict)  # http_status, last_modified, bytes, newest_record_at
     _exact: dict = field(default_factory=dict, repr=False)
     _host: dict = field(default_factory=dict, repr=False)
+    _scheme: dict = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         for rec in self.records:
@@ -117,6 +118,7 @@ class Snapshot:
             if not key:
                 continue
             self._exact.setdefault(key["exact_key"], []).append(rec)
+            self._scheme.setdefault(key["scheme_key"], []).append(rec)
             if not is_shared_host(key["host_key"]):
                 self._host.setdefault(key["host_key"], []).append(rec)
 
@@ -132,14 +134,16 @@ class Snapshot:
         return self.source in PUBLIC_SOURCES
 
     def lookup(self, url: str | None) -> tuple[list[dict], list[dict]]:
-        """(exact matches, same-host-but-different-page matches). Empty if not ok."""
+        """(exact matches, related matches with scheme-only first). Empty if not ok."""
         norm = normalize(url)
         if not self.ok or not norm:
             return [], []
         exact = list(self._exact.get(norm["exact_key"], []))
         seen = {id(r) for r in exact}
+        scheme_only = [r for r in self._scheme.get(norm["scheme_key"], []) if id(r) not in seen]
+        seen.update(id(r) for r in scheme_only)
         host = [r for r in self._host.get(norm["host_key"], []) if id(r) not in seen]
-        return exact, host
+        return exact, scheme_only + host
 
 
 RATE_HEADERS = ("X-Rate-Limit-Limit", "X-Rate-Limit-Remaining", "X-Rate-Limit-Window",
@@ -225,7 +229,12 @@ def fetch_phishtank(opener=None, app_key: str | None = None) -> Snapshot:
         return snap
     try:
         with gzip.GzipFile(fileobj=io.BytesIO(raw)) as gz:
-            expanded = gz.read(MAX_EXPANDED + 1)
+            expanded = bytearray()
+            while len(expanded) <= MAX_EXPANDED:
+                chunk = gz.read(min(1024 * 1024, MAX_EXPANDED + 1 - len(expanded)))
+                if not chunk:
+                    break
+                expanded.extend(chunk)
         if len(expanded) > MAX_EXPANDED:
             return Snapshot("PhishTank", "too_large", "expanded dump exceeds size cap", now_iso(), meta=meta)
         records, skipped = parse_phishtank(json.loads(expanded.decode("utf-8")))

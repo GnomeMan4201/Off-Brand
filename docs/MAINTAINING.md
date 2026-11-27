@@ -9,7 +9,7 @@
 
 ## Review and publication
 
-Manual ingestion (`ingest.yml`) searches up to 25 candidates per source and stages at most three fresh candidates per run. If urlscan yields no fresh candidates, it uses the OpenPhish community feed. Feed-only records may lack a screenshot or scan details. Source labels are leads rather than verified verdicts.
+Manual ingestion (`ingest.yml`) searches up to 25 candidates per source and stages at most three fresh candidates per run. If urlscan yields no fresh candidates, public intake stages nothing. OpenPhish is private research only. Source labels are leads rather than verified verdicts.
 
 ## Evidence sources
 
@@ -17,7 +17,7 @@ Manual ingestion (`ingest.yml`) searches up to 25 candidates per source and stag
 |---|---|---|
 | urlscan.io | Discovery, screenshots, scan records | Free search fields only |
 | PhishTank | Verification of exact pages (hourly dump, looked up locally) | Unkeyed downloads: a few per day |
-| OpenPhish community feed | Fallback discovery and private cross-check | Never shown publicly (terms) |
+| OpenPhish community feed | Private cross-check only | Never shown publicly (terms) |
 
 Limits and licensing for each source are in [SOURCES.md](SOURCES.md). Two manual, read-only workflows support this:
 

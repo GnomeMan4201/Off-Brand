@@ -451,16 +451,11 @@ def needs_assessment(spec: dict) -> bool:
 def assess_specimens(index: dict, snapshots: list, limit: int = 500, now: str | None = None) -> dict:
     """Attach or refresh evidence on the newest specimens that lack a complete check.
 
-    A specimen keeps a previous assessment if this run could read none of the feeds,
-    so an outage never replaces real findings with an emptier result.
+    Current retrieval failures are recorded separately from retained historical findings.
     """
     counts = {"assessed": 0, "kept": 0}
-    any_ok = any(s.ok for s in snapshots)
     for spec in index.get("specimens", [])[:limit]:
         if not needs_assessment(spec):
-            continue
-        if spec.get("evidence") and not any_ok:
-            counts["kept"] += 1
             continue
         cls = spec.get("classification") or {}
         lead = evidence.urlscan_record(spec.get("source_record_url"), cls.get("source"),

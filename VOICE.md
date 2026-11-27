@@ -31,7 +31,7 @@ Each triage issue carries an **Evidence level**, worked out by `scripts/evidence
 
 | Level | Meaning |
 |---|---|
-| Corroborated | A verifying source verified this exact page and at least one other independent, credible source lists it. |
+| Corroborated | Reserved until independent corroboration can be demonstrated; not awarded by the current sources. |
 | Source-confirmed | A source that verifies submissions (PhishTank) verified this exact page. |
 | Suspected (not confirmed) | A feed label, an automated listing or a record for another page on the same host, but nothing verified this page. Always shown on air as not confirmed. |
 | Unverified | No supporting record in the sources that could be checked. |

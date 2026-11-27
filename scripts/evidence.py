@@ -5,8 +5,7 @@ that was (or could not be) checked. The confidence level is derived from those r
 by fixed rules (classify), and every level carries the reason it was given.
 
 Levels (strongest first):
-- corroborated:     a verifying source verified this exact page AND at least one other
-                    independent, credible source lists it.
+- corroborated:     reserved for demonstrably independent evidence; not awarded by current sources.
 - source-confirmed: a source that verifies submissions (PhishTank) verified this exact page.
 - suspected:        indicators exist (a feed label, an automated listing, or a record for
                     another page on the same host) but nothing verified this page.
@@ -18,8 +17,8 @@ Rules that never bend:
   "not found" and never as support.
 - Same-host records never confirm a page; they can only raise it to "suspected".
 - Records that come from the same upstream feed count once. A urlscan scan submitted
-  from the PhishTank feed is PhishTank's lead, not a second opinion. Independence is
-  judged from declared origin only; feeds do not publish their own upstreams.
+  from the PhishTank feed is PhishTank's lead, not a second opinion. Declared origin
+  alone cannot establish independence.
 - The level is always recomputed from the records. Nothing an editor writes changes it.
 - Only Corroborated, Source-confirmed and Suspected may be published, and Suspected is
   always shown as "not confirmed".
@@ -38,7 +37,7 @@ from feeds import OPENPHISH_FEED, PUBLIC_SOURCES, Snapshot, phishtank_detail_url
 from normalize import normalize, refang
 from sanitize import defang_domain, defang_url, sanitize_text
 
-VERSION = 2
+VERSION = 3
 LEVELS = ("corroborated", "source-confirmed", "suspected", "unverified", "disputed")
 LABELS = {
     "corroborated": "Corroborated",
@@ -95,15 +94,16 @@ def openphish_listing(observed_at=None) -> dict:
 
 def _phishtank_records(snap: Snapshot, url: str) -> list[dict]:
     exact, host = snap.lookup(url)
-    scheme = (normalize(url) or {}).get("scheme")
+    norm = normalize(url) or {}
     out = []
     for rec, match in [(r, "exact") for r in exact] + [(r, "same_host") for r in host[:3]]:
         verified = rec["verified"]
         detail = ("Verified as phishing by PhishTank" if verified else "Submitted to PhishTank, not yet verified")
-        if match == "same_host":
+        if match == "same_host" and rec["_norm"]["scheme_key"] == norm.get("scheme_key"):
+            match = "scheme_only"
+            detail = "PhishTank lists a related URL with a different scheme; this URL is not verified"
+        elif match == "same_host":
             detail = "PhishTank lists a different page on the same host" + ("" if verified else " (unverified)")
-        elif rec["_norm"]["scheme"] != scheme:
-            detail += f" (recorded as {rec['_norm']['scheme']}://, scanned as {scheme}://)"
         if rec.get("target"):
             detail += f"; target: {rec['target']}"
         out.append({"source": "PhishTank", "match": match, "stance": "supports",
@@ -119,7 +119,11 @@ def _openphish_records(snap: Snapshot, url: str) -> list[dict]:
     out = [openphish_listing(snap.fetched_at) for _ in exact[:1]]
     if host and not exact:
         rec = openphish_listing(snap.fetched_at)
-        rec.update(match="same_host", detail="OpenPhish lists a different page on the same host")
+        norm = normalize(url) or {}
+        scheme_only = any(r["_norm"]["scheme_key"] == norm.get("scheme_key") for r in host)
+        rec.update(match="scheme_only" if scheme_only else "same_host",
+                   detail="OpenPhish lists a related URL with a different scheme" if scheme_only
+                   else "OpenPhish lists a different page on the same host")
         out.append(rec)
     return out
 
@@ -143,15 +147,15 @@ def classify(records: list[dict], sources: dict) -> tuple[str, str]:
         return "disputed", reason + tail
 
     verified = [r for r in exact if r["strength"] == "verified"]
-    credible_upstreams = {r["upstream"] for r in exact if STRENGTH_RANK[r["strength"]] >= 2}
-    if verified and len(credible_upstreams) >= 2:
-        names = sorted({r["source"] for r in exact if r["upstream"] in credible_upstreams})
-        return "corroborated", (f"Independent sources list this exact page ({', '.join(names)}), "
-                                f"and {verified[0]['source']} verified it." + tail)
+    # Current providers do not establish independence. Distinct source names and
+    # submitter labels are insufficient. Corroborated is reserved for future evidence.
 
     if verified:
         shared = [r for r in exact if r["upstream"] == verified[0]["upstream"] and r is not verified[0]]
-        reason = f"{verified[0]['source']} verified this exact page as phishing."
+        if verified[0].get("historical"):
+            reason = f"{verified[0]['source']} previously verified this exact page as phishing; this is historical evidence."
+        else:
+            reason = f"{verified[0]['source']} verified this exact page as phishing."
         if shared:
             reason += f" The {shared[0]['source']} record came from the same feed, so it is not counted separately."
         return "source-confirmed", reason + tail
@@ -159,6 +163,8 @@ def classify(records: list[dict], sources: dict) -> tuple[str, str]:
     if exact:
         best = max(exact, key=lambda r: STRENGTH_RANK[r["strength"]])
         return "suspected", f"{best['source']}: {best['detail']}; no source verified this page." + tail
+    if any(r["match"] == "scheme_only" for r in supports):
+        return "suspected", "A related URL uses a different scheme; this exact URL is not verified." + tail
     if supports:
         return "suspected", ("Only records for other pages on the same host were found; "
                              "this exact page has no record." + tail)
@@ -173,6 +179,8 @@ def _limitations(level, records, sources, redirected) -> list[str]:
     if redirected:
         out.append("The scan ended on a different host than the reported address; "
                    "check whether the final page is a copy or the genuine site.")
+    if any(r["match"] == "scheme_only" for r in records):
+        out.append("HTTP and HTTPS may serve different content; scheme-only matches do not confirm this page.")
     if any(r["match"] == "same_host" for r in records):
         out.append("Some records describe other pages on the same host, not this page.")
     if sources.get("PhishTank", {}).get("status") == "ok" and not any(r["source"] == "PhishTank" for r in records):
@@ -184,6 +192,8 @@ def _limitations(level, records, sources, redirected) -> list[str]:
         out.append("A source could not be read in this run; the level may change when it is.")
     if any((s.get("detail") or "").endswith("(carried from an earlier check)") for s in sources.values()):
         out.append("At least one source result was carried over from an earlier check because the source was unavailable.")
+    if any(r.get("historical") for r in records):
+        out.append("Historical records are retained with their original observation dates; they do not establish current page behavior.")
     out.append("Captures document a moment; a page may have changed or gone offline since.")
     return out
 
@@ -199,6 +209,10 @@ def assess(url: str | None, *, lead: dict | None = None, snapshots: list[Snapsho
     """
     records: list[dict] = [r for r in [lead, *extra_records] if r]
     sources: dict[str, dict] = {}
+    norm = normalize(url)
+    prev_norm = normalize((previous or {}).get("specimen", {}).get("defanged_url"))
+    if not norm or not prev_norm or norm["exact_key"] != prev_norm["exact_key"]:
+        previous = None
     prev_sources = (previous or {}).get("sources") or {}
 
     def add(rec):
@@ -208,19 +222,27 @@ def assess(url: str | None, *, lead: dict | None = None, snapshots: list[Snapsho
 
     for snap in snapshots:
         if snap.ok:
-            sources[snap.source] = snap.check()
+            sources[snap.source] = dict(snap.check(), last_success=snap.fetched_at)
             if url:
                 for rec in CORRELATORS[snap.source](snap, url):
                     add(rec)
-        elif prev_sources.get(snap.source, {}).get("status") == "ok":
-            old = dict(prev_sources[snap.source])
-            old["detail"] = f"{old.get('detail') or 'checked'} (carried from an earlier check)"
-            sources[snap.source] = old
+        elif (prev_sources.get(snap.source, {}).get("status") == "ok"
+              or prev_sources.get(snap.source, {}).get("last_success")):
+            old = prev_sources[snap.source]
+            current = snap.check()
+            current["last_success"] = old.get("last_success") or old.get("checked_at")
+            current["detail"] = f"{current.get('detail') or 'unavailable'} (carried from an earlier check)"
+            sources[snap.source] = current
             for rec in (previous or {}).get("records") or []:
                 if rec.get("source") == snap.source:
-                    add(dict(rec))
+                    add(dict(rec, historical=True))
         else:
             sources[snap.source] = snap.check()
+        if snap.source == "PhishTank":
+            for rec in (previous or {}).get("records") or []:
+                if (rec.get("source") == "PhishTank" and rec.get("match") == "exact"
+                        and rec.get("strength") == "verified" and rec.get("stance") == "supports"):
+                    add(dict(rec, historical=True))
     if lead and lead["source"] == "urlscan.io":
         sources.setdefault("urlscan.io", {"status": "ok", "detail": "scan record", "checked_at": lead.get("observed_at")})
 
@@ -244,8 +266,12 @@ def public_view(ev: dict) -> dict:
     """The assessment as it may be shown publicly: republishable sources only, level recomputed."""
     records = [r for r in ev["records"] if r.get("source") in PUBLIC_SOURCES]
     sources = {n: s for n, s in ev["sources"].items() if n in PUBLIC_SOURCES}
+    # A private conflict must block publication, not disappear through filtering.
+    private_conflict = any(r.get("stance") == "contradicts" for r in ev["records"] if r.get("source") not in PUBLIC_SOURCES)
     hidden = len(records) != len(ev["records"]) or len(sources) != len(ev["sources"])
     level, reason = classify(records, sources)
+    if private_conflict:
+        level, reason = "disputed", "A restricted record conflicts with the classification; publication is blocked."
     limits = _limitations(level, records, sources, ev.get("specimen", {}).get("redirected"))
     if hidden:
         limits.insert(0, PRIVATE_NOTE)
@@ -258,7 +284,7 @@ def public_view(ev: dict) -> dict:
 
 def _clean_record(r) -> dict | None:
     if not isinstance(r, dict) or r.get("stance") not in ("supports", "contradicts") \
-            or r.get("match") not in ("exact", "same_host") or r.get("strength") not in STRENGTH_RANK:
+            or r.get("match") not in ("exact", "same_host", "scheme_only") or r.get("strength") not in STRENGTH_RANK:
         return None
     source = sanitize_text(r.get("source"), max_len=40)
     if r["stance"] == "supports" and source not in STRENGTH_SOURCES[r["strength"]]:
@@ -271,6 +297,7 @@ def _clean_record(r) -> dict | None:
         "upstream": sanitize_text(r.get("upstream"), max_len=40),
         "detail": sanitize_text(r.get("detail"), max_len=200),
         "record_url": url, "observed_at": sanitize_text(r.get("observed_at"), max_len=40),
+        "historical": r.get("historical") is True,
     }
 
 
@@ -295,7 +322,8 @@ def sanitize_evidence(ev) -> dict | None:
             return None
         sources[sanitize_text(name, max_len=40)] = {
             "status": s["status"], "detail": sanitize_text(s.get("detail"), max_len=160),
-            "checked_at": sanitize_text(s.get("checked_at"), max_len=40)}
+            "checked_at": sanitize_text(s.get("checked_at"), max_len=40),
+            "last_success": sanitize_text(s.get("last_success"), max_len=40)}
     if classify(records, sources)[0] != ev["level"]:
         return None
     spec = ev.get("specimen") or {}
