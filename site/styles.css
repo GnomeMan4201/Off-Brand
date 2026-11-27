@@ -55,7 +55,7 @@ button { font: inherit; cursor: pointer; }
 .masthead-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font: 21px/1.1 var(--tty); color: var(--dim); }
 .rec { color: var(--rec); animation: blink 1.1s steps(1) infinite; }
 .logo {
-  font: 400 clamp(60px, 15.5vw, 232px)/0.8 var(--display);
+  font: 400 clamp(44px, 15.5vw, 232px)/0.8 var(--display);
   letter-spacing: -0.045em;
   white-space: nowrap;
   text-shadow: 0.025em 0 0 var(--hot), -0.025em 0 0 var(--chroma);
@@ -262,6 +262,11 @@ button { font: inherit; cursor: pointer; }
   .listing time { grid-column: 1 / -1; }
   .listing .watch-btn { grid-column: 1 / -1; justify-self: start; }
 }
+
+/* Long defanged addresses (hxxps://brand[.]long-host[.]top/path) are single
+   unbreakable tokens. Let review text wrap anywhere so no specimen can push the
+   page wider than a phone screen. */
+.lead-tell, .evidence p, .chyron p, .rejected-list p, .rejected-list strong, .ch-text strong { overflow-wrap: anywhere; }
 
 /* ---------- motion ---------- */
 @keyframes jitter { 0%, 100% { transform: none; } 25% { transform: translate(-3px, 2px) skewX(-6deg); } 50% { transform: translate(2px, -2px); } 75% { transform: translate(0, 3px) skewX(4deg); } }
