@@ -42,7 +42,6 @@
         <div class="screen" id="screen" tabindex="0" aria-label="Broadcast screen. Use the left and right arrow keys to change channel.">
           <div class="program" id="program"></div>
           <div class="interstitial" id="interstitial" hidden></div>
-          <div class="scanlines" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -50,6 +49,7 @@
         <button type="button" class="deck-btn" id="prev" aria-label="Previous channel">← CH</button>
         <button type="button" class="deck-btn" id="next" aria-label="Next channel">CH →</button>
         <button type="button" class="surf-btn" id="surf">Surf a random channel</button>
+        <button type="button" class="sound-toggle" id="channel-sound" aria-pressed="true" hidden>Channel sound: <span>On</span></button>
         <span class="now" id="now" role="status"></span>
       </div>
       <p class="sr-only" id="break-status" role="status" aria-live="polite"></p>

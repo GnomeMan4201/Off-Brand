@@ -54,6 +54,66 @@ const reducedMotion = (() => {
 const pad2 = (n) => String(n).padStart(2, "0");
 const isRated = (item) => Boolean(item.rating && item.rating !== "Unrated");
 
+// ---------- channel audio ----------
+
+// A short, low-volume analog tuning burst. No asset, network request or
+// autoplay: create/resume the audio context only inside a viewer's gesture.
+function channelAudio(button) {
+  const Audio = window.AudioContext || window.webkitAudioContext;
+  const key = "offbrand.channelSound";
+  let enabled = true, ctx = null, buffer = null, active = null, generation = 0;
+  try { enabled = localStorage.getItem(key) !== "off"; } catch (e) { /* optional storage */ }
+  function render() {
+    button.setAttribute("aria-pressed", String(enabled));
+    button.querySelector("span").textContent = enabled ? "On" : "Off";
+  }
+  function stop() {
+    if (active) { try { active.stop(); } catch (e) { /* already ended */ } active = null; }
+  }
+  if (Audio) {
+    render();
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      enabled = !enabled;
+      generation++;
+      stop();
+      try { localStorage.setItem(key, enabled ? "on" : "off"); } catch (e) { /* optional storage */ }
+      render();
+    });
+  }
+  function play() {
+    if (!Audio || !enabled || document.hidden) return;
+    const request = ++generation;
+    stop();
+    try {
+      if (!ctx || ctx.state === "closed") { ctx = new Audio(); buffer = null; }
+      const ready = ctx.state === "running" ? Promise.resolve() : ctx.resume();
+      Promise.resolve(ready).then(() => {
+        if (!enabled || request !== generation || document.hidden || ctx.state !== "running") return;
+        if (!buffer) {
+          const length = Math.round(ctx.sampleRate * 0.14);
+          buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          let smooth = 0;
+          for (let i = 0; i < length; i++) {
+            const t = i / ctx.sampleRate;
+            smooth = 0.65 * smooth + 0.35 * (Math.random() * 2 - 1);
+            const envelope = Math.min(1, t / 0.005) * Math.pow(1 - i / length, 2);
+            data[i] = envelope * (0.16 * smooth + 0.025 * Math.sin(2 * Math.PI * 180 * t));
+          }
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        active = source;
+        source.onended = () => { if (active === source) active = null; source.disconnect(); };
+        source.start();
+      }).catch(() => { /* sound must never block tuning */ });
+    } catch (e) { /* unsupported or blocked audio */ }
+  }
+  return { play };
+}
+
 // ---------- screen ----------
 
 function renderShot(item, ch) {
@@ -294,6 +354,7 @@ async function init() {
 
   let current = 0, hops = 0, timer = null, pending = null;
   let activeAisle = "All", query = "";
+  const channelSound = channelAudio($("channel-sound"));
 
   function visible() {
     return items.map((item, i) => ({ item, i })).filter(({ item }) => {
@@ -323,7 +384,10 @@ async function init() {
     if (pending !== null) { const p = pending; pending = null; show(p); }
   }
 
-  function tune(i) {
+  function tune(i, userInitiated = false) {
+    // Only genuine viewer-requested channel changes produce a tuning sound.
+    const from = breakState ? breakState.target : (pending ?? current);
+    if (userInitiated && i !== from) channelSound.play();
     // Changing channel during a break skips it and goes where the viewer asked.
     if (breakState) { endBreak(i); return; }
     if (i === current && pending === null) return;
@@ -346,7 +410,7 @@ async function init() {
     const from = breakState ? breakState.target : (pending ?? current);
     let p = list.findIndex(({ i }) => i === from);
     p = p < 0 ? 0 : (p + delta + list.length) % list.length;
-    tune(list[p].i);
+    tune(list[p].i, true);
   }
 
   function surf() {
@@ -355,7 +419,7 @@ async function init() {
     if (pool.length < 2) return;
     let r;
     do { r = pool[Math.floor(Math.random() * pool.length)].i; } while (r === current);
-    tune(r);
+    tune(r, true);
   }
 
   // ---------- commercial breaks ----------
@@ -686,7 +750,7 @@ async function init() {
       text.appendChild(el("span", null, item.aisle || "Uncategorized"));
       b.appendChild(text);
       b.addEventListener("click", () => {
-        tune(i);
+        tune(i, true);
         if (window.matchMedia("(max-width: 900px)").matches) screen.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "start" });
       });
       li.appendChild(b);

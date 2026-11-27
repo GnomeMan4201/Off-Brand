@@ -456,3 +456,59 @@ def test_lineup_matches_the_staged_review_count(browser, any_url):
     interstitial_closed(page, 6000)
     assert ch(page) == last
     page.context.close()
+
+
+# ---------- clear chyron and optional channel audio ----------
+@pytest.mark.parametrize("mobile", [False, True])
+def test_crt_texture_is_scoped_to_the_picture(browser, base_url, mobile):
+    page = open_page(browser, base_url, mobile=mobile, reduce=True)
+    assert page.locator("#screen > .scanlines").count() == 0
+    assert page.locator(".shot-area").evaluate(
+        "e => getComputedStyle(e, '::after').backgroundImage.includes('repeating-linear-gradient')"
+    )
+    assert page.locator(".chyron").evaluate("e => getComputedStyle(e).zIndex") == "1"
+    assert page.locator(".chyron-tag").is_visible()
+    assert page.locator(".chyron p").is_visible()
+    page.context.close()
+
+
+# Spy on real Web Audio source starts; the tests do not require speakers.
+AUDIO_SPY = """
+window.tuningStarts = 0;
+const Audio = window.AudioContext || window.webkitAudioContext;
+const original = Audio.prototype.createBufferSource;
+Audio.prototype.createBufferSource = function () {
+    const source = original.call(this);
+    const start = source.start.bind(source);
+    source.start = (...args) => { window.tuningStarts++; return start(...args); };
+    return source;
+};
+"""
+
+
+def test_channel_sound_is_gesture_only_and_preference_persists(browser, base_url):
+    page = open_page(browser, base_url, reduce=True, init=AUDIO_SPY)
+    toggle = page.locator("#channel-sound")
+    assert toggle.get_attribute("aria-pressed") == "true"
+    assert page.evaluate("window.tuningStarts") == 0
+    page.click("#next")
+    page.wait_for_function("window.tuningStarts === 1", timeout=5000)
+    page.locator("#lineup button[aria-current='true']").click()
+    assert page.evaluate("window.tuningStarts") == 1
+    toggle.click()
+    assert toggle.get_attribute("aria-pressed") == "false"
+    page.click("#prev")
+    page.wait_for_timeout(250)
+    assert page.evaluate("window.tuningStarts") == 1
+    page.reload()
+    page.wait_for_selector("#lineup button")
+    assert toggle.get_attribute("aria-pressed") == "false"
+    page.click("#next")
+    page.wait_for_timeout(250)
+    assert page.evaluate("window.tuningStarts") == 0
+    toggle.click()
+    page.focus("#screen")
+    page.keyboard.press("ArrowLeft")
+    page.wait_for_function("window.tuningStarts === 1", timeout=5000)
+    assert not page.problems, page.problems
+    page.context.close()
