@@ -1,21 +1,21 @@
 {
   "site_name": "Off-Brand",
-  "last_updated": "2026-11-27T06:01:11Z",
+  "last_updated": "2026-11-27T06:17:21Z",
   "items": [
     {
       "id": "urlscan-01a1a8fa-5fc2-7178-b770-c8f6a8d461e3",
       "aisle": "Cloud & SaaS",
       "impersonated_brand": "Google",
       "knockoff_label": "Google Sign-In (Home-Delivered)",
-      "verdict": "Inside Job",
-      "rating": "2/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxps://hastana[.]org/auth/google/index.html",
       "defanged_domain": "hastana[.]org",
       "ip": "172.67.151.250",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Sign in - Google Accounts",
       "scanned_at": "2026-11-04T23:52:31.518Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1a8fa-5fc2-7178-b770-c8f6a8d461e3/",
       "tells": [
@@ -35,15 +35,15 @@
       "aisle": "Banking",
       "impersonated_brand": "Afirme",
       "knockoff_label": "Afirme (Extra N Edition)",
-      "verdict": "Grade: D",
-      "rating": "2/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxps://afirmennet[.]info/",
       "defanged_domain": "afirmennet[.]info",
       "ip": "188.114.96.3",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Afirme, el banco de hoy",
       "scanned_at": "2026-11-20T22:59:41.062Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1fb2f-b1c7-77ee-811e-bad4da3cb181/",
       "tells": [
@@ -71,7 +71,7 @@
       "asn_name": "ULTAHOST-AS Ultahost, Inc., US",
       "page_title": "Add Wallet - Phantom",
       "scanned_at": "2026-11-08T23:56:47.741Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1bd97-b2dd-726b-95ee-4d27ad279be3/",
       "tells": [
@@ -99,7 +99,7 @@
       "asn_name": "DDOS-GUARD DDOS-GUARD LTD, RU",
       "page_title": "Pagos por Cuenta Contrato de la EAAB ESP",
       "scanned_at": "2026-11-16T23:36:33.789Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1e6b8-0737-76ad-93b1-8b7d443a234d/",
       "tells": [
@@ -127,7 +127,7 @@
       "asn_name": "WEEBLY - Weebly, Inc., US",
       "page_title": "Home | BT-INTERNET MAIL",
       "scanned_at": "2026-11-22T23:50:17.780Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a205aa-cd37-73eb-ae9d-4136f89a1175/",
       "tells": [
@@ -155,7 +155,7 @@
       "asn_name": "NEWDHAKAHARDWARE-AS-AP - NEW DHAKA HARDWARE, BD",
       "page_title": "Ocean Bank | The Power of Ocean",
       "scanned_at": "2026-11-27T04:00:42.476Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a21b29-39f1-77fc-b6ce-a677342e3b45/",
       "tells": [
@@ -183,7 +183,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Telegram Web",
       "scanned_at": "2026-11-25T23:05:34.637Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a214f4-f860-733f-abc2-320ff91dbb9c/",
       "tells": [
@@ -211,7 +211,7 @@
       "asn_name": "CHINANET-SCIDC-AS-AP - CHINANET SiChuan Telecom Internet Data Center, CN",
       "page_title": "Ledger | Secure Hardware Wallet for Crypto & NFT Assets",
       "scanned_at": "2026-11-23T23:50:20.855Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a20ad1-1189-7124-8842-1a2ebb11b4de/",
       "tells": [
@@ -239,7 +239,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Navy Federal Credit Union - Our Members are the Mission®",
       "scanned_at": "2026-11-17T23:31:21.337Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1ebd9-af4e-70e6-9f00-50eea6ce12df/",
       "tells": [
@@ -259,15 +259,15 @@
       "aisle": "Banking",
       "impersonated_brand": "Grupo Aval",
       "knockoff_label": "Aval Pay Center (Azure Rental)",
-      "verdict": "Refund Denied",
-      "rating": "1/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxps://realizatustratosavalpay[.]azurewebsites[.]net/",
       "defanged_domain": "realizatustratosavalpay[.]azurewebsites[.]net",
       "ip": "20.40.202.6",
       "asn_name": "MICROSOFT-CORP-MSN-AS-BLOCK - Microsoft Corporation, US",
       "page_title": "Aval Pay Center",
       "scanned_at": "2026-11-13T23:09:31.393Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1d72c-4161-754a-b11e-ee19a4fb24f3/",
       "tells": [
@@ -295,7 +295,7 @@
       "asn_name": "BEGET-AS Beget LLC, RU",
       "page_title": "Биржа Coinbase — Вход на официальный сайт",
       "scanned_at": "2026-11-11T23:40:32.325Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1ccfb-f02c-72bb-954b-711a2be90b2f/",
       "tells": [
@@ -323,7 +323,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Trezor Wallet App (Official) | Desktop & Web Crypto Management",
       "scanned_at": "2026-11-11T23:53:57.512Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1cd08-3167-776d-a9ad-370c09da52d9/",
       "tells": [
@@ -351,7 +351,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Trezor® - Login | US | - Log_in",
       "scanned_at": "2026-11-09T23:50:48.608Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1c2b8-7ed1-728b-ac22-a4c2dffc5d24/",
       "tells": [
@@ -379,7 +379,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Set Up Your Ledger Device | Ledger.com/start Official Guide",
       "scanned_at": "2026-11-09T23:48:45.530Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1c2b6-b667-7633-aea6-d9302905a0d8/",
       "tells": [
@@ -399,15 +399,15 @@
       "aisle": "Crypto & Wallets",
       "impersonated_brand": "D'CENT",
       "knockoff_label": "D'CENT (Shipped in a Trezor Box)",
-      "verdict": "Return to Sender",
-      "rating": "1/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxps://trezorcloud[.]io/getstarted.php",
       "defanged_domain": "trezorcloud[.]io",
       "ip": "192.142.1.69",
       "asn_name": "ULTAHOST-AS Ultahost, Inc., US",
       "page_title": "D'CENT - Crypto Security Made Easy",
       "scanned_at": "2026-11-07T23:52:48.525Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1b86d-c02d-7429-bf95-c0e4f07c19a3/",
       "tells": [
@@ -435,7 +435,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Security check...",
       "scanned_at": "2026-11-07T23:49:18.514Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1b86a-6225-72e9-8477-6c935dc92712/",
       "tells": [
@@ -455,15 +455,15 @@
       "aisle": "Cloud & SaaS",
       "impersonated_brand": "Adobe Document Cloud",
       "knockoff_label": "Adobe Document Cloud (Copy-Paste Edition)",
-      "verdict": "Grade: F",
-      "rating": "2/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxp://pattwhitney[.]com/",
       "defanged_domain": "pattwhitney[.]com",
       "ip": "172.67.133.188",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Adobe Document Cloud — Verify",
       "scanned_at": "2026-11-07T23:49:15.034Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1b86a-7d68-71ad-90aa-b97ae6dc9203/",
       "tells": [
@@ -491,7 +491,7 @@
       "asn_name": "AMAZON-02 - Amazon.com, Inc., US",
       "page_title": "Iniciar",
       "scanned_at": "2026-11-05T23:40:51.458Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1abcf-133b-72cc-a01e-5117f052cf9a/",
       "tells": [
@@ -519,7 +519,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "iCloud",
       "scanned_at": "2026-11-05T23:39:49.344Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1abd0-9842-72bd-9f06-b8c42f3e531a/",
       "tells": [
@@ -539,15 +539,15 @@
       "aisle": "Crypto & Wallets",
       "impersonated_brand": "Axelar",
       "knockoff_label": "Axelar (Lowercase i Edition)",
-      "verdict": "Forged Plaque",
-      "rating": "2/10",
+      "verdict": "Suspected phishing",
+      "rating": "Unconfirmed",
       "defanged_url": "hxxps://app[.]axeiar-vote[.]xyz/",
       "defanged_domain": "app[.]axeiar-vote[.]xyz",
       "ip": "172.67.184.189",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Axelar | The Gateway To Cross-Chain Rewards",
       "scanned_at": "2026-11-03T23:47:46.884Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1a3cf-a277-703e-b60d-2d3e1c50b059/",
       "tells": [
@@ -575,7 +575,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Telcel es la Red - Sitio Oficial",
       "scanned_at": "2026-11-03T23:46:47.928Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1a3ce-c1c4-7434-a009-89fb985abac0/",
       "tells": [
@@ -603,7 +603,7 @@
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
       "page_title": "Xaman Airdrop | XRP Qualify",
       "scanned_at": "2026-11-03T23:24:09.973Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1a3ba-0c90-754b-9ac2-f2289a74d004/",
       "tells": [
@@ -631,7 +631,7 @@
       "asn_name": "AMAZON-02 - Amazon.com, Inc., US",
       "page_title": "Vote to List — Powered by Moonshot",
       "scanned_at": "2026-11-03T23:16:28.497Z",
-      "reviewed_at": "2026-11-27T06:01:11Z",
+      "reviewed_at": "2026-11-27T06:17:21Z",
       "source": "urlscan.io (Public Scan)",
       "public_record_url": "https://urlscan.io/result/01a1a3b2-fbf1-70fb-9b75-c386c8dbc9af/",
       "tells": [
@@ -670,29 +670,6 @@
       "critic_note": "Give me ten minutes in The Sims and I can build their entire Executive Suite. Give me eleven and I’ll move the bed away from the fireplace."
     },
     {
-      "id": "urlscan-01a21a57-5a41-756b-9f15-96d8586e39e9",
-      "aisle": "School & Events",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "15 Anos invitation",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxps://15anos-dpagldqdhu55[.]edgeone[.]dev/",
-      "defanged_domain": "15anos-dpagldqdhu55[.]edgeone[.]dev",
-      "ip": "43.174.247.17",
-      "asn_name": "ACE-AS-AP - ACE, SG",
-      "page_title": "CodePen Demo",
-      "scanned_at": "2026-11-27T00:11:08Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a57-5a41-756b-9f15-96d8586e39e9/report/",
-      "tells": [
-        "The browser title says “CodePen Demo,” and the scan lists assets from CodePen. The single recorded external link goes to Google Maps. Those details fit an invitation built from a template, down to the directions guests would need.",
-        "The interesting question is what happens at “Confirmar.” A picture of an RSVP button can’t tell us which fields open or who receives a reply. The scan provides no example of a guest being asked for credentials.",
-        "urlscan gave this visit no classification. If the invitation arrived unexpectedly, the host can confirm it through a contact you already have. The template title alone is thin grounds for accusing anyone."
-      ],
-      "critic_note": "Breaking: the giant metallic 15 eclipses Maria Clara on her own invitation."
-    },
-    {
       "id": "urlscan-01a21a56-2d00-73ea-9ef0-fa90aeaa1543",
       "aisle": "Social Media",
       "impersonated_brand": "Not established",
@@ -714,29 +691,6 @@
         "urlscan gave this visit no classification. If the link came with a story about your account, open Facebook yourself and check whether the same request appears there."
       ],
       "critic_note": "All these people showed up to watch me forget my password."
-    },
-    {
-      "id": "urlscan-01a21a57-1369-760c-ac7f-874703c1270b",
-      "aisle": "Home Services",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "The demolition quote",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxp://gonedrivning[.]pages[.]dev/",
-      "defanged_domain": "gonedrivning[.]pages[.]dev",
-      "ip": "2606:4700:310c::ac42:2f02",
-      "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
-      "page_title": "Nedrivning København & Sjælland | Nedrivningsfirma med fast pris",
-      "scanned_at": "2026-11-27T00:10:55Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a57-1369-760c-ac7f-874703c1270b/report/",
-      "tells": [
-        "The free-quote button invites you to share details about your property. The scan followed gonedrivning[.]pages[.]dev from HTTP to HTTPS on the same host. That establishes where the offer appeared while leaving the contractor’s identity open.",
-        "The scan lists a Google Maps link labeled as a 5.0 review and links to four social platforms. Anyone can link to an existing business profile. A stronger check runs in the other direction: does an independently located business listing send customers to this quote page?",
-        "urlscan gave this visit no classification. The record shows the offer and the links. It doesn’t show who received a quote request or took a deposit. Before sending a home address, call the contractor using a number found independently."
-      ],
-      "critic_note": "I clicked ‘free quote.’ Can you ask him to put the kitchen back?"
     },
     {
       "id": "urlscan-01a21a56-0ce6-76fc-a0b2-e3905cfb52fa",
@@ -882,6 +836,16 @@
       "defanged_domain": "3333gmail[.]com",
       "reason": "A typo-style domain that forwarded the scanner to Google's genuine consent page. No fake page was captured, so there is nothing to review.",
       "public_record_url": "https://urlscan.io/result/01a21a04-4191-7256-ba94-4af729bde595/"
+    },
+    {
+      "id": "urlscan-01a21a57-5a41-756b-9f15-96d8586e39e9",
+      "defanged_domain": "15anos-dpagldqdhu55[.]edgeone[.]dev",
+      "reason": "Removed from the shelf. A personal event page, not a phishing page. Its details are not shown here to protect the privacy of the people involved."
+    },
+    {
+      "id": "urlscan-01a21a57-1369-760c-ac7f-874703c1270b",
+      "defanged_domain": "gonedrivning[.]pages[.]dev",
+      "reason": "Removed from the shelf. A contractor's quote page with no phishing classification or impersonation in the record, and its screenshot showed direct business contact details."
     }
   ]
 }

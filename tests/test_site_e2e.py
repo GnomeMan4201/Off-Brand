@@ -578,3 +578,15 @@ def test_no_specimen_widens_the_page_on_a_phone(browser, base_url):
             wide.append(f"CH {n:02d} {item['knockoff_label']}: {width}px")
     assert not wide, wide
     page.context.close()
+
+
+@pytest.mark.parametrize("width", [320, 360, 390])
+def test_page_chrome_fits_small_phones(browser, base_url, width):
+    """Masthead, deck and guide must fit narrow phones (the logo cannot wrap)."""
+    ctx = browser.new_context(viewport={"width": width, "height": 800}, reduced_motion="reduce", is_mobile=True)
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    page.goto(base_url)
+    page.wait_for_selector("#lineup li")
+    assert page.evaluate("document.documentElement.scrollWidth") <= width
+    ctx.close()
