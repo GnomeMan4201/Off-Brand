@@ -665,7 +665,12 @@ def remove_rule(page, index):
 
 
 def _shot_with_and_without_glass(page, selector, rotated=False):
-    box = page.locator(selector).first.bounding_box()
+    target = page.locator(selector).first
+    page.evaluate("document.fonts.ready")
+    # The station guide increased the height above the TV. Capture the real
+    # region, not a viewport-relative rectangle that might be off screen.
+    target.evaluate("e => e.scrollIntoView({block:'center', inline:'center', behavior:'instant'})")
+    box = target.bounding_box()
     if rotated:
         # A tilted stamp's bounding box includes screenshot corners. Compare a
         # band through its middle that stays inside the tilted rectangle.
@@ -674,6 +679,10 @@ def _shot_with_and_without_glass(page, selector, rotated=False):
         bh = max(2.0, (h - 2 * (bw / 2) * 0.141) * 0.8)  # tan(8 deg) ~ 0.141
         cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
         box = {"x": cx - bw / 2, "y": cy - bh / 2, "width": bw, "height": bh}
+    viewport = page.viewport_size
+    assert box["x"] >= 0 and box["y"] >= 0, (selector, box, viewport)
+    assert box["x"] + box["width"] <= viewport["width"] + 1, (selector, box, viewport)
+    assert box["y"] + box["height"] <= viewport["height"] + 1, (selector, box, viewport)
     with_glass = page.screenshot(clip=box, animations="disabled")
     index = add_rule(page, NO_GLASS)
     without = page.screenshot(clip=box, animations="disabled")
@@ -1235,16 +1244,20 @@ def test_station_guide_reaches_sections_and_preserves_keyboard_focus(browser, ba
     page.context.close()
 
 
-def test_teletext_number_and_tape_layout(browser, base_url):
-    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+@pytest.mark.parametrize("width", [320, 390, 1440])
+@pytest.mark.parametrize("fallback_font", [False, True])
+def test_teletext_number_and_tape_layout(browser, base_url, width, fallback_font):
+    ctx = browser.new_context(viewport={"width": width, "height": 900})
     page = ctx.new_page()
+    if fallback_font:
+        page.route("**/fonts/*.woff2", lambda route: route.abort())
     page.goto(base_url.replace("index.html", "teletext.html#310"))
     page.wait_for_selector(".txt-tape")
     page.evaluate("document.fonts.ready")
     assert page.locator("#txt-number").evaluate("""e => {
       const s=getComputedStyle(e), c=document.createElement('canvas').getContext('2d');
-      c.font=s.font;
-      return e.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)>=c.measureText('310').width;
+      c.font = s.fontSize + ' ' + s.fontFamily;
+      return e.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)>=c.measureText('310').width + 4;
     }""")
     first, second = page.locator(".txt-tape").nth(0), page.locator(".txt-tape").nth(1)
     h = second.bounding_box()["height"]

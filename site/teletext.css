@@ -24,7 +24,7 @@ button { cursor: pointer; }
 .txt-nav a[aria-current="page"] { background: var(--blue); color: var(--yellow); border-color: var(--cyan); }
 .txt-tuner { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; border-block: 1px solid var(--line); padding: 10px 0; }
 .txt-tuner label { font: 20px var(--tty); color: var(--cyan); }
-.txt-tuner input { width: calc(3ch + 28px); font: 24px var(--tty); text-align: center; }
+.txt-tuner input { width: max(96px, calc(4ch + 28px)); flex: 0 0 auto; font: 24px var(--tty); text-align: center; }
 .txt-tuner button { font: 22px var(--tty); min-width: 44px; }
 .txt-status { min-height: 1.5em; color: var(--dim); margin: 6px 0; font-size: 14px; }
 #txt-content { min-height: 260px; padding: 10px 0 20px; }
