@@ -152,7 +152,7 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   display: flex;
   align-items: center;
   background: var(--hot);
-  color: #fff;
+  color: var(--night);
   font: 14px/1 var(--display);
   letter-spacing: 0.04em;
   padding: 0 14px;
@@ -430,7 +430,7 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap
   min-height: 46px;
   border: 2px solid var(--hot);
   background: var(--hot);
-  color: #fff;
+  color: var(--night);
   font: 16px/1 var(--display);
   padding: 0 18px;
   box-shadow: 0 3px 0 #5b092c;

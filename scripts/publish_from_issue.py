@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -25,6 +26,37 @@ def parse_kv_block(text: str) -> dict[str, str]:
     return fields
 
 
+REVIEW_FIELDS = {"brand", "aisle", "knockoff_label", "verdict", "rating",
+                 "sketchy_segment", "tells", "critic_note", "voice", "edge"}
+
+
+def parse_review_block(text: str) -> dict[str, str]:
+    """Accept a single key/value block; reject prose, duplicates and continuations."""
+    lines = text.strip().splitlines()
+    if lines and lines[0].strip() in ("```", "```text"):
+        if len(lines) < 2 or lines[-1].strip() != "```":
+            raise ValueError("Unclosed review code fence.")
+        lines = lines[1:-1]
+    fields = {}
+    for line in lines:
+        if not line.strip():
+            continue
+        match = re.fullmatch(r"([a-zA-Z_]+)\s*:\s*(.+)", line.strip())
+        if not match:
+            raise ValueError("Each review field must occupy exactly one line.")
+        key, value = match[1].lower(), match[2].strip()
+        if key not in REVIEW_FIELDS or key in fields or not value:
+            raise ValueError("Unknown, duplicate or empty review field: " + key)
+        fields[key] = value
+    return fields
+
+
+def is_excluded(data: dict, specimen_id: str) -> bool:
+    redacted = "withheld-" + hashlib.sha256(specimen_id.encode()).hexdigest()
+    return any(row.get("id") in (specimen_id, redacted)
+               for row in data.get("rejected_log", []))
+
+
 def main() -> int:
     issue_body = os.environ.get("ISSUE_BODY", "")
     review_comment = os.environ.get("REVIEW_COMMENT", "")
@@ -33,7 +65,11 @@ def main() -> int:
         return 1
 
     meta = parse_kv_block(issue_body)
-    review = parse_kv_block(review_comment)
+    try:
+        review = parse_review_block(review_comment)
+    except ValueError as exc:
+        print(f"Invalid review: {exc}", file=sys.stderr)
+        return 1
 
     required_meta = ("id", "source", "public_record_url", "defanged_url")
     required_review = ("brand", "aisle", "verdict", "rating", "critic_note")
@@ -90,6 +126,9 @@ def main() -> int:
         entry["edge_name"] = edge_names[str(voice[2])]["name"]
 
     data = json.loads(REVIEWS_PATH.read_text(encoding="utf-8"))
+    if is_excluded(data, entry["id"]):
+        print("Excluded specimen; nothing published.", file=sys.stderr)
+        return 1
     if any(item["id"] == entry["id"] for item in data["items"]):
         print(f"Entry {entry['id']} already published.")
         return 0

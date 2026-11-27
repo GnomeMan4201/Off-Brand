@@ -170,10 +170,15 @@ def main() -> int:
     seen_ids = set(load_json(SEEN_PATH, []))
     published_ids = {item["id"] for item in reviews_data.get("items", [])}
 
+    from publish_from_issue import is_excluded
     known_ids = seen_ids | published_ids
-    fresh = filter_fresh(fetch_urlscan_candidates(limit=25), known_ids)
+    known_ids.update(r["id"] for r in reviews_data.get("rejected_log", []))
+    def eligible(candidates):
+        return [c for c in candidates if not is_excluded(reviews_data, c["id"])]
+
+    fresh = filter_fresh(eligible(fetch_urlscan_candidates(limit=25)), known_ids)
     if not fresh:
-        fresh = filter_fresh(fetch_openphish_candidates(limit=25), known_ids)
+        fresh = filter_fresh(eligible(fetch_openphish_candidates(limit=25)), known_ids)
 
     out_path = ROOT / "data" / "pending_candidates.json"
     out_path.write_text(json.dumps(fresh, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")

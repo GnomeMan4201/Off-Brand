@@ -930,3 +930,24 @@ def test_mobile_masthead_is_compact_and_stamp_is_contained(browser, base_url, wi
     }""")
     assert bounds["inside"] and bounds["fit"] and bounds["size"] >= 12, (width, bounds)
     ctx.close()
+
+
+def test_crawl_and_surf_text_contrast(browser, base_url):
+    page = open_page(browser, base_url)
+    for selector in (".crawl-label", ".surf-btn"):
+        target = page.locator(selector)
+        for hover in (False, True):
+            if hover:
+                target.hover()
+                page.wait_for_timeout(200)
+            colors = target.evaluate("""e => {
+              const c = getComputedStyle(e);
+              return [c.color, c.backgroundColor];
+            }""")
+            def luminance(color):
+                rgb = [int(v) / 255 for v in re.findall(r"\d+", color)[:3]]
+                return sum(w * (v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4)
+                           for w, v in zip((.2126, .7152, .0722), rgb))
+            lo, hi = sorted(map(luminance, colors))
+            assert (hi + .05) / (lo + .05) >= 4.5, (selector, colors)
+    page.context.close()

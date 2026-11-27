@@ -57,7 +57,7 @@ jobs:
                   *assignment_markdown(a),
                   "",
                   "### How to publish from your phone",
-                  "Reply with a comment using these `key: value` lines, then add the `approved` label:",
+                  "Reply with a comment using these `key: value` lines, then add the `approved` label. Copy the comment link and use its numeric comment ID with the publication workflow:",
                   "```",
                   "brand: <Target Brand>",
                   "aisle: <Banking | Crypto & Wallets | Marketplace & Retail | Cloud & SaaS>",

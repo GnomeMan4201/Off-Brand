@@ -25,7 +25,7 @@ voice: critic
 edge: 2
 ```
 
-The [editorial guide](../VOICE.md) and [voice roster](../data/voices.json) define the available voices and edge levels. Adding the `approved` label triggers validation and publication through `publish.yml`. Records that do not meet the editorial standard should not be approved; the published exclusion log is stored in `data/reviews.json` under `rejected_log`.
+The [editorial guide](../VOICE.md) and [voice roster](../data/voices.json) define the available voices and edge levels. The `approved` label alone never publishes. Use the comment menu to copy the review link, then run **Publish Approved Review** on main with the issue number and the numeric ID after `#issuecomment-`. Only the repository owner can dispatch publication, and the selected comment must be authored by that owner on the same open, labeled triage issue. Keep each field on one line; malformed or duplicate fields are rejected. Records that do not meet the editorial standard should not be approved; the published exclusion log is stored in `data/reviews.json` under `rejected_log`.
 
 ## Private specimen archive
 
@@ -33,10 +33,10 @@ Create a separate private repository with a default `main` branch and the `triag
 
 - `archive.yml`: collects existing urlscan records and screenshots. Manual runs default to dry-run; scheduled collection requires `ARCHIVE_SCHEDULE_ENABLED=true`. The default archive storage cap is 500 MB. Collection retains resume state.
 - `write-specimen.yml`: creates or reuses a private draft issue for a selected specimen.
-- `publish-shelf.yml`: publishes an approved private specimen using the same validation pipeline.
+- `publish-shelf.yml`: publishes an approved private specimen using the same validation pipeline and an explicit review comment ID.
 - The archive's Markdown index provides Unwritten, Drafted, Published and All views, with thumbnails and links to individual records. Screenshot observations are recorded in the private shelf's `data/archive_inspections.json` as attributed observations with image pointers.
 
-The private archive, unapproved screenshots, draft notes and collection state must not be committed to the public repository.
+The private archive, unapproved screenshots, draft notes and collection state must not be committed to the public repository. For privacy withdrawals, the public exclusion log retains the reason and a hashed specimen identifier rather than a domain or record link. Publication and intake reject excluded identifiers. Removing an asset from main does not erase older Git objects or external caches.
 
 ## Commercials
 
@@ -57,4 +57,4 @@ python3 -m http.server -d _site 8000
 python3 -m pytest -q tests
 ```
 
-The suite includes Node.js checks when Node is installed, codec/runtime checks when ffprobe is installed, and browser checks when Playwright and a supported browser are available.
+Local checks may skip unavailable dependencies. Pull requests and deployments run the full suite with Node.js, ffprobe, Pillow, Playwright and Chrome; any skipped check blocks deployment. Review commercial frames and captions before adding media. Withdrawn material must not appear in commercials, posters or other public assets.
