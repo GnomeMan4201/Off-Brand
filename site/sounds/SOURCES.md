@@ -7,4 +7,4 @@ Both recordings are offered under [CC0 1.0](https://creativecommons.org/publicdo
 
 Both excerpts were downmixed to mono, resampled to 44.1 kHz, peak-scaled, faded at the edges and encoded as 96 kb/s MP3. No Mixkit assets are included.
 
-- `broadcast-snow.wav`: original synthesized Broadcast Snow sample approved by the project owner (option 1). 0.58 s, mono PCM, 44.1 kHz; SHA-256 `624e6dd9708ca1d1ac9d6246e333c0894135a5183a46b7e6daece36e9155e9f7`. Used unchanged. The earlier CRT cue is retired from playback; the VHS cue remains.
+- `broadcast-snow.wav`: original synthesized broadcast-static cue. 0.58 s, mono PCM, 44.1 kHz; SHA-256 `624e6dd9708ca1d1ac9d6246e333c0894135a5183a46b7e6daece36e9155e9f7`. The CRT recording is retained as an archived sound asset; the VHS recording remains in use.

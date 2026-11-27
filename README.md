@@ -1,240 +1,56 @@
 # OFF-BRAND
-### The internet's knockoff aisle.
 
-Somewhere out there, a guy registered `allegrolokalnie.aukcja758487593.top` and thought, *nailed it.*
+**The internet’s knockoff aisle. Real phishing sites reviewed by me GnomeMan4201**
 
-Off-Brand is where his work gets the review it deserves. Every page in the aisle is a **real phishing page**, pulled from a public scan record, screenshotted, and reviewed by hand by me, GnomeMan4201. Then it's mocked, thoroughly and accurately, in a rotating cast of comedic voices, until you can spot the next one from across the room.
+A late-night television station for the internet's questionable merchandise. Off-Brand is a screenshot comedy zine about phishing, impersonation and the warning signs hiding in plain sight.
 
-It's a gallery, a zine and a free lesson in not getting robbed. Mostly it's a roast.
+**[Watch Off-Brand After Dark](https://gnomeman4201.github.io/Off-Brand/)**
 
-**👉 [Browse the aisle](https://gnomeman4201.github.io/Off-Brand/)**
+## The broadcast
 
----
+- **Tonight's lineup:** browse reviews by channel, brand, domain or aisle.
+- **What to notice:** a fact file and practical observations tied to each public scan record.
+- **CH 00 — Off-Brand Originals:** fictional commercials, available on demand and during optional commercial breaks.
+- **Held back at review:** records excluded from publication and the reasons for those decisions.
+- **Phishing field guide:** practical advice for recognizing, verifying and reporting suspicious requests.
 
-## The one rule: nothing fake
+## Editorial standards
 
-Every listing traces back to a public record you can check yourself. No invented examples, no made-up stats, no "artist's impression" of a scam. If a scan didn't record something, the page says **"Not recorded in public scan"**. That's an honest blank, not a guess.
+The specimens are real captured pages, not reconstructed scam websites. Each published review links to its public record. Source classifications are attributed to the source; a suspicious or reported page is not automatically confirmed phishing. A screenshot documents one moment and cannot establish everything that happened before or after capture.
 
-The jokes follow the same rule: **every punchline has to be true.**
+The ratings and verdicts are satirical editorial judgments, not measured risk scores. The comedy targets deceptive design, not victims, nationalities or the brands being impersonated. Missing evidence is identified as missing rather than filled in with guesses.
 
-## House safety rules
+Reviews are subject to editorial approval. Creative production may be AI-assisted; fictional commercials and their imagery are separate from the public scan evidence. See the [editorial guide](VOICE.md) for review standards.
 
-Off-Brand stocks counterfeits. It doesn't sell them.
+## Safety and privacy
 
-- **Zero live links.** Every suspect address is defanged: `hxxps://`, with dots written as `[.]`. You can't click into a phish from here.
-- **We never touch the scam sites.** The robots read existing public scan records and nothing else.
-- **Scanned text is treated as hostile.** Page titles, URLs and anything else that came off a phishing page is shown as plain text and never rendered as HTML.
-- **Screenshots come from urlscan.io only,** with no referrer sent and a strict content security policy.
-- **A human approves every listing.** Robots mislabel things. A real person reads each one before it goes on the shelf, and the ones that get pulled show up in the **Pulled from the shelf** log on the site.
+- Suspect addresses are defanged and are not clickable.
+- Collection reads public scan records and feeds rather than visiting suspect sites.
+- Captured text is treated as untrusted data and displayed as plain text.
+- The site uses a restrictive content security policy. Screenshots are served from urlscan.io; commercial media, fonts and sounds are served locally.
+- A source may remove a public screenshot or record at any time. Its scan date is not proof that the suspect site is still active.
+- Unapproved archived specimens and draft reviews are maintained separately in a private repository.
 
----
+## Repository
 
-## How a knockoff gets on the shelf
+Off-Brand is a static site published using GitHub Pages. The collection, review, approval and publication workflows run through GitHub Actions.
 
-```
- urlscan.io public scans          (fallback: OpenPhish community feed)
-          │
-          ▼
-  🤖 ingest.yml     run by hand only (the daily schedule is retired;
-          │         archive collection is the automatic intake)
-          │         opens up to 3 GitHub issues labeled `triage`,
-          │         each with a 🎭 writing assignment
-          ▼
-  🧑 you            check the record, write the review as an issue comment,
-          │         add the `approved` label
-          ▼
-  🤖 publish.yml    validates your review, adds it to data/reviews.json,
-          │         closes the issue
-          ▼
-  🤖 deploy.yml     republishes the site to GitHub Pages
-```
+| Path | Purpose |
+| --- | --- |
+| `site/` | Broadcast interface, player, commercial assets and local resources |
+| `data/reviews.json` | Published reviews and excluded-record log |
+| `data/voices.json` | Editorial voice and tone definitions |
+| `data/seen.json` | Candidate deduplication |
+| `scripts/` | Collection, sanitization, archive and publication tooling |
+| `.github/workflows/` | Collection, approval and deployment workflows |
+| `tests/` | Automated regression tests |
 
-The whole thing runs on GitHub with free tiers only: no server, no database, no babysitting. You can run the entire operation from a phone.
-
----
-
-## Setup
-
-You'll need a GitHub account and a free urlscan.io account. Allow about ten minutes.
-
-1. **Get the repo.** Fork or clone it into your account.
-2. **Get a urlscan API key.** Sign up free at [urlscan.io](https://urlscan.io), then go to your profile → API keys → create one.
-3. **Store the key as a secret.** In the repo, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it `URLSCAN_API_KEY` and paste the key.
-4. **Turn on Pages.** Go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-5. **Create the two labels.** In **Issues → Labels**, make sure `triage` and `approved` both exist. The robots look for those exact names.
-6. **Let the bots work.** Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions**.
-7. **Stock the shelf.** Go to **Actions → Fetch Phishing Candidates for Phone Triage → Run workflow**. A few `triage` issues should appear within a minute.
-
-After that, it restocks itself every morning.
-
----
-
-## Writing a review
-
-Open a `triage` issue. Each one contains:
-
-- **The record:** scan ID, defanged URL, IP, scan time and a link to the public scan. Open that link and look at the screenshot before you judge anything.
-- **Auto-detected tells:** hints from the robots, like a cheap TLD, free hosting or a brand name stuffed into a subdomain. They're hints, not verdicts.
-- **🎭 Your writing assignment:** the comedic voice and edge level this review should be written in (see below).
-
-Reply with a comment in this format. Each field goes on its own line, and tells are separated by `|`:
-
-```
-brand: Ledger Live
-aisle: Crypto & Wallets
-knockoff_label: Ledger Live (Free Hosting Edition)
-verdict: Basement Bootleg
-rating: 1/10
-sketchy_segment: walletsupport-ledger-live-login-ch[.]vercel[.]app
-tells: First tell | Second tell | Third tell
-critic_note: One to three sentences. This is the main joke.
-voice: critic
-edge: 2
-```
-
-Then add the **`approved`** label. The publish workflow checks the review, puts it on the shelf, closes the issue and redeploys the site.
-
-- **Aisles in use:** `Banking`, `Crypto & Wallets`, `Marketplace & Retail`, `Cloud & SaaS`. A new aisle name creates a new filter button automatically.
-- **Not a phish?** Some "phishing" pages are really corporate phishing-simulation training sites, or something mislabeled. Close the issue without approving it. To show it publicly in the **Pulled from the shelf** log, add an entry to `rejected_log` in `data/reviews.json` with the reason.
-
----
-
-## The voice rotation 🎭
-
-If every review sounded the same, the site would go stale by the tenth one. So each triage issue arrives with an assigned **voice** and **edge level**, and each voice changes the format of the tells as well as the tone.
-
-| Voice | `voice:` | The bit |
-|---|---|---|
-| The Critic | `critic` | A snob reviewing a cheap knockoff |
-| Nature Documentary | `nature_doc` | A hushed narrator watching a predator in its habitat |
-| Product Recall Notice | `recall` | AFFECTED PRODUCT / HAZARD / REMEDY |
-| One-Star Customer Review | `one_star` | Ordered a bank, received a lottery number |
-| Late-Night Infomercial | `infomercial` | Every flaw sold as a feature. *But wait…* |
-| Play-by-Play | `sports` | Calling the scam live, like a game |
-| Tasting Notes | `sommelier` | NOSE / PALATE / FINISH |
-| Health Inspector | `inspector` | VIOLATION #1, #2… and a letter grade |
-| True Crime Podcast | `true_crime` | Clues, revealed with dramatic pauses |
-| Dating Profile Red Flags | `dating` | Swipe left |
-| Museum Placard | `museum` | *Credential Lure, mixed media, circa Tuesday* |
-| Horoscope | `horoscope` | Every prediction is a warning |
-
-| Edge | `edge:` | Means |
-|---|---|---|
-| Dry | `1` | Deadpan. The joke is how calmly it's said. |
-| Spicy | `2` | Sarcastic. The scammer gets mocked openly. |
-| Roast | `3` | Full roast of the scammer's craftsmanship. |
-
-**Rotation rules:** no voice repeats within 4 reviews, voices that have been used less come up more often, there are never two Roasts in a row, and some voices don't roast at all (you can't really roast someone in a recall notice). You're the editor: change the `voice:` / `edge:` lines in your reply if the assignment doesn't fit.
-
-**Adding a voice:** add an entry to [`data/voices.json`](data/voices.json) with an `id`, `name`, `brief`, `tells_shape`, `sample` and the `edges` it allows.
-
-### The comedy code
-
-The full guide is in [VOICE.md](VOICE.md). The short version:
-
-1. **Every tell is a joke plus a lesson.** Take the joke out and it should still teach something. Take the lesson out and the tell gets cut.
-2. **Punch at the scammer, never the victim.** These pages are built to fool people, and getting fooled is normal. Don't mock the brand being impersonated either.
-3. **Every joke has to be true.** If you can't verify it from the record, it doesn't go in.
-4. **No jokes about nationality, language or culture.** "Login in Polish" is a fact. Mocking Polish isn't.
-5. **Safety advice is never the punchline.** "No real support agent will ever ask for your recovery phrase" is stated plainly.
-
----
-
-## Commercial breaks (Off-Brand Originals)
-
-After Dark cuts to a commercial every 4–7 channel changes. A station bumper plays, then one of the Off-Brand Originals plays inside the TV, muted, and the viewer lands on the channel they were heading to. Every original is also listed on **CH 00**, where visitors can watch any of them with sound.
-
-- **Muted by default.** Breaks never play sound until the viewer asks. With reduced motion turned on, a break waits for the viewer to press play.
-- **Optional.** The *Commercial breaks: On/Off* button is saved on the device.
-- **Fails safe.** If a video is missing or never starts, the station skips it and goes back to the program.
-
-**To add, swap or pull a commercial, edit only [`site/commercials/manifest.json`](site/commercials/manifest.json):**
-
-1. Export the video as H.264/AAC MP4 (720p is plenty) and prepare it with fast-start, with metadata stripped:
-   `ffmpeg -i in.mov -c copy -map_metadata -1 -movflags +faststart site/commercials/my-ad.mp4`
-   (re-encode with `-c:v libx264 -c:a aac` if the source isn't H.264/AAC).
-2. Add a poster frame: `ffmpeg -ss 1 -i site/commercials/my-ad.mp4 -frames:v 1 -vf scale=640:-2 -q:v 5 site/commercials/my-ad.jpg`
-3. Add an entry with `id`, `title`, `runtime_seconds`, `src`, `poster` and an optional `description`. Use `"captions": "burned-in"` if the captions are part of the picture, or `"captions_vtt": "commercials/my-ad.vtt"` for a caption file.
-4. Set `"enabled": false` to pull one without deleting it. Rotating bumper lines live in the same file under `bumpers`.
-
-File names must be lowercase letters, digits and hyphens inside `site/commercials/`; anything else is ignored. `pytest` checks that every listed file exists, stays under 25 MB, is H.264/AAC and matches its runtime.
-
-## What's in the box
-
-```
-site/                 the zine: index.html, app.js, styles.css (no build step)
-data/reviews.json     the shelf: every published review, plus the rejected log
-data/voices.json      the comedy roster
-data/seen.json        candidates already sent to triage, so they aren't repeated
-scripts/ingest.py     fetches candidates from public records (never the sites)
-scripts/voices.py     picks each review's voice and edge
-scripts/publish_from_issue.py   turns an approved issue into a review
-scripts/sanitize.py   defangs URLs and cleans hostile text
-tests/                pytest suite
-.github/workflows/    ingest, publish and deploy
-```
-
-## Running it locally
-
-```sh
-# the site
-mkdir -p _site/data && cp -r site/* _site/ && cp data/reviews.json _site/data/
-python3 -m http.server -d _site 8000      # then open localhost:8000
-
-# the tests (also runs the Node unit tests in tests/js/ when node is installed;
-# browser tests run when Playwright + Chrome are present, else they skip)
-python3 -m pytest -q tests
-
-# fetch candidates yourself
-URLSCAN_API_KEY=your-key python3 scripts/ingest.py   # writes data/pending_candidates.json
-```
-
-## Known limits (honest ones)
-
-- **Free urlscan keys can't search urlscan's own phishing verdicts.** Those fields are for paid plans, so the robots rely on community tags and scans that came from phishing feeds. That's noisier, which is one reason a human approves everything.
-- **At most 3 new candidates per day.** It's a zine, not a firehose. Change the limit in `filter_fresh()` in `scripts/ingest.py`.
-- **OpenPhish fallback items have no screenshot or scan record,** just the feed. The card says so honestly.
-- **Screenshots load from urlscan.** If urlscan removes a scan, its picture goes too, and the card says "No screenshot recorded in public scan."
-- **"Scanned" is when urlscan saw the page,** not proof that it's still live. Phishing pages tend to be short-lived.
+See [maintenance documentation](docs/MAINTAINING.md) for configuration, review publication, commercial management and local testing.
 
 ## Credits
 
-Scan records and screenshots come from [urlscan.io](https://urlscan.io) public scans, with the [OpenPhish](https://openphish.com) community feed as a fallback. Every scammer named on this site did the work of embarrassing themselves; we just wrote it down.
+Public scan records and screenshots: [urlscan.io](https://urlscan.io). Candidate-feed fallback: [OpenPhish](https://openphish.com). The currently published review collection uses public urlscan records.
+
+[Broadcast sound sources](site/sounds/SOURCES.md) · [Font licenses](site/fonts/)
 
 Off-Brand is a [badBANANA Research Collective](https://badbananaresearch.com) project.
-
----
-
-## Specimen archive (private shelf)
-
-Real, previously reported pages with saved screenshots and attributed facts. You write every joke and description. **Nothing unapproved is public:** screenshots, the catalog, progress state and draft notes live in a separate **private** repo (the "shelf"), never in this repo, its Git history or Pages.
-
-### One-time setup (you do this; nothing is created for you)
-1. Create an empty **private** repo, e.g. `YOU/off-brand-shelf`, with a `main` branch (tick "Add a README").
-2. Create a fine-grained token (Settings > Developer settings > Personal access tokens) limited to **only that repo**, with **Contents: read/write** and **Issues: read/write**. Add it to this repo as secret `SHELF_TOKEN`.
-3. Add repo variable `SHELF_REPO` = `YOU/off-brand-shelf`. Optionally add secret `URLSCAN_API_KEY` (higher limits).
-4. Add a `triage` and an `approved` label in the shelf repo.
-
-Every workflow refuses to run unless `gh api repos/$SHELF_REPO` reports `private: true`.
-
-### Open the shelf on your iPhone
-Install the GitHub app, sign in, open `off-brand-shelf` and tap `README.md` (or use github.com in Safari). It shows space used and links to **Unwritten**, Drafted, Published and All, newest first, 20 cards per page (2 per row: thumbnail, domain, date, status). Tapping a card opens the full screenshot, facts and source record.
-
-### Collect (scheduled intake is off)
-- `archive.yml` > Run workflow. Defaults are a **dry run** (nothing written). Untick `dry_run` for a real run. Runs resume where they stopped; `max_mb` defaults to 500.
-- The daily cron is gated by repo variable `ARCHIVE_SCHEDULE_ENABLED`. Leave it unset until you have tried it. The old `ingest.yml` daily schedule is removed (manual run still works).
-- If a capture will not fit under the cap, the run stops, reports it, shows space used, and keeps the resume point; free space or raise `max_mb` and run again.
-
-### From specimen to public release
-1. Shelf README > **Unwritten** > tap a card.
-2. Tap **Write this one** > Run workflow > paste the `urlscan-...` id. It opens one draft issue in the **shelf** repo (screenshot + bullets, blank writing fields). Running it again, or tapping the card again, shows **Open draft #N** for the same issue.
-3. In the shelf issue, comment your review (the `key: value` block in the issue), then add the `approved` label.
-4. In this repo run **Publish Approved Specimen** with the issue number. It checks the label, publishes through the existing `publish_from_issue.py`, closes the shelf draft and redeploys the zine. Only your validated fields and the urlscan.io record link become public.
-
-Existing public `triage` issues and `publish.yml` keep working unchanged.
-
-### Limits
-- GitHub Pages for private repos needs a paid plan, so the shelf is Markdown in the private repo. GitHub's Markdown cannot guarantee `loading="lazy"`; instead the grid uses ~320px JPEG thumbnails (about 15 KB), 20 cards per page, and the full PNG loads only when you open a specimen.
-- Storage is Git in the private repo: 500 MB soft cap for screenshots + thumbnails (GitHub recommends repos stay under 1 GB; single files under 100 MB).
-- Screenshot observations (password field, countdown, ...) appear only if you add them to `data/archive_inspections.json` in the shelf as `{"<id>": [{"observation": "...", "inspector": "...", "pointer": "where in the image"}]}`.
-- Source labels (e.g. "phishing") are shown as the source's label, never as a confirmed verdict.

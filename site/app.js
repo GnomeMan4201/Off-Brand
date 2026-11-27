@@ -1,7 +1,7 @@
 "use strict";
 
 // OFF-BRAND // After Dark
-// Every value from reviews.json is scanned or hand-written text: it is only ever
+// Every value from reviews.json is untrusted scan or editorial text: it is only ever
 // set with textContent, never parsed as HTML.
 
 const ALLOWED_RECORD_PREFIXES = [

@@ -3,7 +3,6 @@ name: Collect Specimen Archive
 # Collects public urlscan.io scan records + saved screenshots into the PRIVATE shelf repo.
 # Never opens issues and never writes to this public repo. Manual runs default to a dry run.
 # The daily schedule only runs when the repository variable ARCHIVE_SCHEDULE_ENABLED is "true"
-# (off until you have tried it).
 # Needs: variable SHELF_REPO (owner/name) and secret SHELF_TOKEN (access to that repo only).
 on:
   schedule:
