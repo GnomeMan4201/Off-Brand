@@ -22,6 +22,7 @@ from pathlib import Path
 from build_archive import build, evidence_bullets, load, render_shelf, write_shelf
 from archive import used_bytes
 from evidence import issue_lines
+from provenance import create_attested_issue
 from shelf import Shelf, assert_private, assert_separate_checkout, shelf_dir
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -81,10 +82,7 @@ def gh_issues(shelf_repo: str) -> list[dict]:
 
 
 def gh_create(shelf_repo: str, title: str, body: str) -> dict:
-    url = subprocess.run(
-        ["gh", "issue", "create", "-R", shelf_repo, "--title", title, "--body", body,
-         "--label", "triage"], check=True, capture_output=True, text=True).stdout.strip()
-    return {"number": int(url.rstrip("/").rsplit("/", 1)[1]), "url": url}
+    return create_attested_issue(shelf_repo, title, body)
 
 
 def write_specimen(specimen_id: str, index: dict, drafts: dict, inspections: dict, repo: str,

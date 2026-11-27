@@ -12,6 +12,7 @@ from pathlib import Path
 
 from evidence import LABELS, PUBLISHABLE, sanitize_evidence
 from normalize import normalize
+from provenance import signing_key, verify
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 from voices import load_roster, validate as validate_voice
 
@@ -88,13 +89,18 @@ def evidence_for(meta: dict) -> tuple[dict | None, str | None]:
     return ev, None
 
 
-def main() -> int:
+def main(*, repo: str = "", issue_number: int = 0) -> int:
     issue_body = os.environ.get("ISSUE_BODY", "")
     review_comment = os.environ.get("REVIEW_COMMENT", "")
     if not issue_body or not review_comment:
         print("Missing ISSUE_BODY or REVIEW_COMMENT", file=sys.stderr)
         return 1
 
+    try:
+        issue_body = verify(issue_body, repo, issue_number, signing_key())
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
     meta = parse_kv_block(issue_body)
     try:
         review = parse_review_block(review_comment)

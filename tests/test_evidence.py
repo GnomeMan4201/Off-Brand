@@ -443,9 +443,12 @@ def run_publish(tmp_path, monkeypatch, issue_body, review):
     reviews = tmp_path / "reviews.json"
     reviews.write_text(json.dumps({"items": [], "rejected_log": []}))
     monkeypatch.setattr(publish_from_issue, "REVIEWS_PATH", reviews)
-    monkeypatch.setenv("ISSUE_BODY", issue_body)
+    from provenance import attest
+    key = bytes.fromhex("a1" * 32)
+    monkeypatch.setenv("OFFBRAND_PROVENANCE_KEY", key.hex())
+    monkeypatch.setenv("ISSUE_BODY", attest(issue_body, "o/project", 41, key))
     monkeypatch.setenv("REVIEW_COMMENT", review)
-    code = publish_from_issue.main()
+    code = publish_from_issue.main(repo="o/project", issue_number=41)
     return code, json.loads(reviews.read_text())["items"]
 
 

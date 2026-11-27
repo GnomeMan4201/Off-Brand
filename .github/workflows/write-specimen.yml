@@ -23,6 +23,7 @@ concurrency:
 
 jobs:
   write:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
     env:
       SHELF_REPO: ${{ vars.SHELF_REPO }}
@@ -48,9 +49,11 @@ jobs:
 
       - name: Open or find the draft issue
         env:
+          OFFBRAND_PROVENANCE_KEY: ${{ secrets.OFFBRAND_PROVENANCE_KEY }}
           SPECIMEN_ID: ${{ inputs.specimen_id }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
+          set -o pipefail
           ARGS=(--id "$SPECIMEN_ID")
           [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
           python3 scripts/write_specimen.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

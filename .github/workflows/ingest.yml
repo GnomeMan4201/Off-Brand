@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   ingest:
-    if: vars.URLSCAN_PUBLIC_REUSE_AUTHORIZED == 'true'
+    if: vars.URLSCAN_PUBLIC_REUSE_AUTHORIZED == 'true' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,13 +29,17 @@ jobs:
       - name: Open GitHub Issues for human review
         env:
           GH_TOKEN: ${{ github.token }}
+          OFFBRAND_PROVENANCE_KEY: ${{ secrets.OFFBRAND_PROVENANCE_KEY }}
         run: |
           python3 - << 'EOF'
-          import json, subprocess, sys
+          import json, os, sys
           from pathlib import Path
           sys.path.insert(0, "scripts")
           from voices import assign_batch, assignment_markdown
           from evidence import issue_lines
+          from provenance import create_attested_issue, signing_key
+
+          signing_key()  # fail before creating any issues if no key
 
           p = Path("data/pending_candidates.json")
           if not p.exists():
@@ -79,10 +83,7 @@ jobs:
                   "```",
               ])
               title = f"[Triage] {c.get('defanged_domain') or c['id']}"
-              subprocess.run(
-                  ["gh", "issue", "create", "--title", title, "--body", body, "--label", "triage"],
-                  check=True,
-              )
+              create_attested_issue(os.environ["GITHUB_REPOSITORY"], title, body)
           EOF
 
       - name: Commit updated seen.json

@@ -41,6 +41,7 @@ jobs:
 
       - name: Publish the approved draft
         env:
+          OFFBRAND_PROVENANCE_KEY: ${{ secrets.OFFBRAND_PROVENANCE_KEY }}
           GH_TOKEN: ${{ secrets.SHELF_TOKEN }}
           ISSUE: ${{ inputs.issue_number }}
           COMMENT_ID: ${{ inputs.comment_id }}
