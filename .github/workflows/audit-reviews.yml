@@ -1,0 +1,56 @@
+name: Audit Published Evidence
+
+# Read-only audit of every published review: re-reads each urlscan.io scan record and
+# looks the address up in the PhishTank dump. It never changes reviews.json, never opens
+# issues and never publishes. The report uses only republishable sources (no OpenPhish)
+# and is attached to the run as an artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      check_phishtank:
+        description: "Download PhishTank (uses the shared daily allowance)"
+        type: boolean
+        default: false
+      reread_urlscan:
+        description: "Re-read each review's urlscan.io scan record (one request per review)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: offbrand-source-downloads
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: vars.URLSCAN_PUBLIC_REUSE_AUTHORIZED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Audit (read-only)
+        env:
+          URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
+          REREAD: ${{ inputs.reread_urlscan }}
+          CHECK_PHISHTANK: ${{ inputs.check_phishtank }}
+        run: |
+          set -o pipefail
+          ARGS=(--out-dir "$RUNNER_TEMP/audit")
+          [ "$REREAD" = "true" ] || ARGS+=(--no-urlscan)
+          [ "$CHECK_PHISHTANK" = "true" ] || ARGS+=(--skip-phishtank)
+          python3 scripts/audit_reviews.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          git diff --exit-code -- data/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidence-audit
+          path: ${{ runner.temp }}/audit/
+          retention-days: 90

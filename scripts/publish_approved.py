@@ -21,7 +21,7 @@ def main() -> int:
         os.environ.get("EDITOR_LOGIN", ""), os.environ.get("GITHUB_ACTOR", ""))
     os.environ["ISSUE_BODY"] = body
     os.environ["REVIEW_COMMENT"] = review
-    return publish_from_issue.main()
+    return publish_from_issue.main(repo=args.repo, issue_number=args.issue)
 
 
 if __name__ == "__main__":

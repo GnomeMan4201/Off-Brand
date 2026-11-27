@@ -45,31 +45,31 @@ def defang_domain(domain: str | None) -> str | None:
 
 
 def defang_url(url: str | None) -> str | None:
-    """Defang a URL (hxxps://host[.]tld/path) and reject non-http(s) schemes."""
-    cleaned = sanitize_text(url, max_len=512)
-    if not cleaned:
-        return None
-    lower = cleaned.lower()
-    if lower.startswith("https://"):
-        rest = cleaned[8:]
-        scheme = "hxxps://"
-    elif lower.startswith("http://"):
-        rest = cleaned[7:]
-        scheme = "hxxp://"
-    elif lower.startswith("hxxps://") or lower.startswith("hxxp://"):
-        scheme, rest = cleaned.split("://", 1)
-        scheme = scheme.lower() + "://"
-    else:
-        return None
+    """Defang without changing identity; reject rather than truncate or fold.
 
-    if "/" in rest:
-        host, path = rest.split("/", 1)
-        path = "/" + path
-    else:
-        host, path = rest, ""
-
-    host = host.replace("[.]", ".").replace(".", "[.]")
-    return f"{scheme}{host}{path}"
+    The text sanitizer is intentionally not used for specimen addresses.
+    """
+    if not isinstance(url, str) or not url or len(url) > 512:
+        return None
+    if CONTROL_AND_ZERO_WIDTH_RE.search(url) or any(c.isspace() for c in url):
+        return None
+    match = re.fullmatch(r"(https?|hxxps?)://([^/?#]+)(.*)", url, re.I)
+    if not match:
+        return None
+    scheme, authority, suffix = match.groups()
+    # Do not publish embedded credentials or ambiguous bracket syntax.
+    if "@" in authority or (scheme.lower().startswith("http") and "[.]" in authority):
+        return None
+    if "[" in authority.replace("[.]", "") or "]" in authority.replace("[.]", ""):
+        return None
+    scheme = "hxxps" if scheme.lower().endswith("s") else "hxxp"
+    result = scheme + "://" + authority.replace("[.]", ".").replace(".", "[.]") + suffix
+    # Compare the actual keys as a guard against transformations.
+    from normalize import normalize
+    before, after = normalize(url), normalize(result)
+    if not before or not after or before["exact_key"] != after["exact_key"] or len(result) > 512:
+        return None
+    return result
 
 
 def validate_public_record_url(url: str | None) -> str | None:

@@ -1,7 +1,8 @@
 """Collect public urlscan.io scan records and their archived screenshots into archive/.
 
-Nothing here contacts a suspicious site: only urlscan.io is fetched (search API and
-its stored screenshots). Collecting never opens an issue.
+Nothing here contacts a suspicious site: urlscan.io is fetched for its search API and
+stored screenshots, and the PhishTank dump and OpenPhish feed are each downloaded once
+per run for local evidence lookups (scripts/feeds.py). Collecting never opens an issue.
 
 Two sweeps share one engine and are tracked in data/archive_state.json:
 - "scheduled": newest captures down to the last completed sweep's watermark.
@@ -27,6 +28,8 @@ from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID
 
+import evidence
+import feeds
 from ingest import URLSCAN_FREE_QUERY, load_json
 from shelf import Shelf, assert_separate_checkout, shelf_dir
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
@@ -437,6 +440,35 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: She
     return stats
 
 
+def needs_assessment(spec: dict) -> bool:
+    ev = spec.get("evidence")
+    if not ev or ev.get("version") != evidence.VERSION:
+        return True
+    return any(s.get("status") != "ok" or (s.get("detail") or "").endswith("(carried from an earlier check)")
+               for s in (ev.get("sources") or {}).values())
+
+
+def assess_specimens(index: dict, snapshots: list, limit: int = 500, now: str | None = None) -> dict:
+    """Attach or refresh evidence on the newest specimens that lack a complete check.
+
+    Current retrieval failures are recorded separately from retained historical findings.
+    """
+    counts = {"assessed": 0, "kept": 0}
+    for spec in index.get("specimens", [])[:limit]:
+        if not needs_assessment(spec):
+            continue
+        cls = spec.get("classification") or {}
+        lead = evidence.urlscan_record(spec.get("source_record_url"), cls.get("source"),
+                                       cls.get("tags"), spec.get("captured_at"))
+        final = (spec.get("defanged_domain") or "").replace("[.]", ".") or None
+        previous = spec.get("evidence") if (spec.get("evidence") or {}).get("version") == evidence.VERSION else None
+        spec["evidence"] = evidence.assess(spec["defanged_url"], lead=lead, snapshots=snapshots,
+                                           final_host=final, captured_at=spec.get("captured_at"),
+                                           previous=previous, now=now)
+        counts["assessed"] += 1
+    return counts
+
+
 def format_mb(n: int) -> str:
     return f"{n / (1024 * 1024):.1f} MB"
 
@@ -452,6 +484,7 @@ def main(argv: list[str] | None = None) -> int:
                     help="cap for screenshots + thumbnails (default 500)")
     ap.add_argument("--dry-run", action="store_true", help="fetch and report, write nothing")
     ap.add_argument("--restart", action="store_true", help="discard saved progress for this mode")
+    ap.add_argument("--skip-phishtank", action="store_true", help="conserve the shared feed download allowance")
     args = ap.parse_args(argv)
 
     shelf = Shelf(shelf_dir())
@@ -471,6 +504,12 @@ def main(argv: list[str] | None = None) -> int:
                       max_pages=max(1, args.max_pages), max_new=max(1, args.max_new),
                       max_seconds=args.max_seconds, dry_run=args.dry_run, restart=args.restart,
                       save=save)
+    snapshots = [feeds.Snapshot("PhishTank", "not_attempted", "download not requested")
+                 if args.skip_phishtank else feeds.fetch_phishtank(), feeds.fetch_openphish()]
+    stats["evidence_sources"] = {s.source: s.status for s in snapshots}
+    stats["evidence"] = assess_specimens(index, snapshots)
+    if not args.dry_run:
+        save()
     print(json.dumps(stats, indent=2))
     label = "DRY RUN: would add" if args.dry_run else "Added"
     print(f"{label} {stats['added']} specimen(s); {stats['repeat']} repeat, "

@@ -1,0 +1,75 @@
+name: Source Health Check
+
+# Read-only. Checks urlscan.io, the OpenPhish feed and the PhishTank dump and reports
+# status, format, record counts, freshness, rate limiting and last successful retrieval.
+# It cannot open issues, push commits or publish: the token only has read access, and the
+# script refuses to write into data/. Only the providers' own hosts are contacted.
+on:
+  workflow_dispatch:
+    inputs:
+      check_phishtank:
+        description: "Download the PhishTank dump (uses the shared daily allowance)"
+        type: boolean
+        default: false
+      check_openphish:
+        description: "Download OpenPhish only in an authorized private repository"
+        type: boolean
+        default: false
+      check_urlscan:
+        description: "Run one urlscan.io search request"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: offbrand-source-downloads
+  cancel-in-progress: false
+
+jobs:
+  health:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch the previous report (for last successful retrieval)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ids=$(gh run list -R "$GITHUB_REPOSITORY" --workflow source-health.yml --branch main --status success --limit 10 --json databaseId -q '.[].databaseId')
+          for id in $ids; do
+            if gh run download "$id" -R "$GITHUB_REPOSITORY" -n source-health -D "$RUNNER_TEMP/previous" >/dev/null 2>&1; then
+              [ -f "$RUNNER_TEMP/previous/source-health.json" ] && break
+            fi
+          done
+
+      - name: Check sources (read-only)
+        env:
+          URLSCAN_API_KEY: ${{ secrets.URLSCAN_API_KEY }}
+          PHISHTANK_APP_KEY: ${{ secrets.PHISHTANK_APP_KEY }}
+          CHECK_PHISHTANK: ${{ inputs.check_phishtank }}
+          CHECK_OPENPHISH: ${{ inputs.check_openphish && github.event.repository.private }}
+          CHECK_URLSCAN: ${{ inputs.check_urlscan }}
+        run: |
+          set -o pipefail
+          ARGS=(--out "$RUNNER_TEMP/report/source-health.json" --previous "$RUNNER_TEMP/previous/source-health.json")
+          [ "$CHECK_PHISHTANK" = "true" ] || ARGS+=(--skip PhishTank)
+          [ "$CHECK_OPENPHISH" = "true" ] || ARGS+=(--skip OpenPhish)
+          [ "$CHECK_URLSCAN" = "true" ] || ARGS+=(--skip urlscan.io)
+          python3 scripts/source_health.py "${ARGS[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-health
+          path: ${{ runner.temp }}/report/source-health.json
+          retention-days: 90

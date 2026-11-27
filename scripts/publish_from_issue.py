@@ -10,6 +10,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from evidence import LABELS, PUBLISHABLE, sanitize_evidence
+from normalize import normalize
+from provenance import signing_key, verify
 from sanitize import defang_domain, defang_url, sanitize_text, validate_public_record_url
 from voices import load_roster, validate as validate_voice
 
@@ -57,13 +60,47 @@ def is_excluded(data: dict, specimen_id: str) -> bool:
                for row in data.get("rejected_log", []))
 
 
-def main() -> int:
+def evidence_for(meta: dict) -> tuple[dict | None, str | None]:
+    """(public evidence to publish, error).
+
+    Publication requires an evidence block whose level, recomputed from its own records
+    with private-triage sources removed, is Corroborated, Source-confirmed or Suspected.
+    Nothing in the review comment can raise or override it.
+    """
+    raw = meta.get("evidence_json")
+    if raw is None:
+        return None, ("No evidence block on this issue. Re-run intake or the shelf collector so the "
+                      "specimen is assessed before publishing.")
+    try:
+        original = json.loads(raw)
+        ev = sanitize_evidence(original)
+    except (json.JSONDecodeError, TypeError, AttributeError, KeyError, ValueError):
+        ev = None
+    if ev is None:
+        return None, "The issue's evidence block is malformed or inconsistent; refusing to publish."
+    if "defanged_url" in meta:
+        expected = normalize(meta["defanged_url"])
+        actual = normalize(ev["specimen"]["defanged_url"])
+        if not expected or not actual or expected["exact_key"] != actual["exact_key"]:
+            return None, "Evidence URL does not match the specimen; refusing to publish."
+    if ev["level"] not in PUBLISHABLE:
+        return None, (f"Evidence level is {LABELS[ev['level']]}; it cannot be published. "
+                      "Unverified and Disputed specimens stay off the air.")
+    return ev, None
+
+
+def main(*, repo: str = "", issue_number: int = 0) -> int:
     issue_body = os.environ.get("ISSUE_BODY", "")
     review_comment = os.environ.get("REVIEW_COMMENT", "")
     if not issue_body or not review_comment:
         print("Missing ISSUE_BODY or REVIEW_COMMENT", file=sys.stderr)
         return 1
 
+    try:
+        issue_body = verify(issue_body, repo, issue_number, signing_key())
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
     meta = parse_kv_block(issue_body)
     try:
         review = parse_review_block(review_comment)
@@ -94,6 +131,11 @@ def main() -> int:
         if sanitize_text(t, max_len=280)
     ]
 
+    ev, ev_error = evidence_for(meta)
+    if ev_error:
+        print(ev_error, file=sys.stderr)
+        return 1
+
     voice = validate_voice(review.get("voice"), review.get("edge"))
     if review.get("voice") and not voice:
         print(f"Unknown voice or edge not allowed for it: {review.get('voice')} / {review.get('edge')}", file=sys.stderr)
@@ -121,6 +163,7 @@ def main() -> int:
     }
     if review.get("sketchy_segment"):
         entry["sketchy_segment"] = sanitize_text(review["sketchy_segment"], max_len=120)
+    entry["evidence"] = ev
     if voice:
         entry["voice"], entry["voice_name"], entry["edge"] = voice
         entry["edge_name"] = edge_names[str(voice[2])]["name"]

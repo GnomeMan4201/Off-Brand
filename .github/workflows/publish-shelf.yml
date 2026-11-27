@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
+    if: vars.URLSCAN_PUBLIC_REUSE_AUTHORIZED == 'true' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
     env:
       SHELF_REPO: ${{ vars.SHELF_REPO }}
@@ -41,6 +41,7 @@ jobs:
 
       - name: Publish the approved draft
         env:
+          OFFBRAND_PROVENANCE_KEY: ${{ secrets.OFFBRAND_PROVENANCE_KEY }}
           GH_TOKEN: ${{ secrets.SHELF_TOKEN }}
           ISSUE: ${{ inputs.issue_number }}
           COMMENT_ID: ${{ inputs.comment_id }}
