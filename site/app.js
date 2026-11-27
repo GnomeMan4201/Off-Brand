@@ -56,14 +56,14 @@ const isRated = (item) => Boolean(item.rating && item.rating !== "Unrated");
 
 // ---------- channel audio ----------
 
-// Short, locally hosted CC0 recordings. Fetching is silent; AudioContext
+// Short, locally hosted sound effects. Fetching is silent; AudioContext
 // creation and resume occur only as a result of a viewer's gesture.
 function channelAudio(button) {
   const Audio = window.AudioContext || window.webkitAudioContext;
   const key = "offbrand.channelSound";
   let enabled = true, ctx = null, active = null, generation = 0;
   const bytes = new Map(), decoded = new Map();
-  const paths = { channel: "sounds/crt-switch.mp3", commercial: "sounds/vhs-rewind.mp3" };
+  const paths = { channel: "sounds/broadcast-snow.wav", commercial: "sounds/vhs-rewind.mp3" };
   try { enabled = localStorage.getItem(key) !== "off"; } catch (e) { /* optional storage */ }
   function render() {
     button.setAttribute("aria-pressed", String(enabled));
@@ -97,7 +97,7 @@ function channelAudio(button) {
     });
     document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
   }
-  function play(kind = "channel") {
+  function play(kind = "channel", loop = false) {
     if (!Audio || !enabled || document.hidden) return;
     stop();
     const request = generation, requestedAt = performance.now();
@@ -114,9 +114,10 @@ function channelAudio(button) {
       }
       Promise.all([ready, decoded.get(kind)]).then(([, buffer]) => {
         if (!buffer || !enabled || request !== generation || document.hidden ||
-            audio.state !== "running" || performance.now() - requestedAt > 1000) return;
+            audio.state !== "running" || performance.now() - requestedAt > (loop ? 600 : 1000)) return;
         const source = audio.createBufferSource();
         source.buffer = buffer;
+        source.loop = loop;
         source.connect(audio.destination);
         active = source;
         source.onended = () => { if (active === source) active = null; source.disconnect(); };
@@ -391,6 +392,7 @@ async function init() {
   }
 
   function finish() {
+    channelSound.stop();
     clearTimeout(timer);
     inter.hidden = true;
     inter.replaceChildren();
@@ -406,15 +408,20 @@ async function init() {
       if (userInitiated && i !== from) channelSound.play();
       return;
     }
-    if (i === current && pending === null) return;
+    if (i === from) return;
+    channelSound.stop();
     if (breakDue()) {
-      if (userInitiated && i !== from) channelSound.play("commercial");
+      if (userInitiated) channelSound.play("commercial");
       startBreak(i);
       return;
     }
-    if (userInitiated && i !== from) channelSound.play();
     sinceBreak += 1;
-    if (reducedMotion.matches) { show(i); return; }
+    if (reducedMotion.matches) {
+      finish();
+      show(i);
+      if (userInitiated) channelSound.play();
+      return;
+    }
     hops += 1;
     clearTimeout(timer);
     pending = i;
@@ -422,6 +429,9 @@ async function init() {
     const psa = hops % 4 === 0 && sinceBreak > 2;
     inter.replaceChildren(psa ? psaCard(() => { finish(); screen.focus({ preventScroll: true }); }) : staticCard(pad2(i + 1)));
     inter.hidden = false;
+    // Snow plays only while the tuning card is visible. A PSA gets one
+    // short cue instead of 4.5 seconds of noise.
+    if (userInitiated) channelSound.play("channel", !psa);
     timer = setTimeout(finish, psa ? 4500 : 600);
   }
 

@@ -495,12 +495,28 @@ def test_crt_texture_is_scoped_to_the_picture(browser, base_url, mobile):
 AUDIO_SPY = """
 window.tuningStarts = 0;
 window.tuningDurations = [];
+window.tuningEvents = [];
+window.tuningActive = 0;
+window.tuningMaxActive = 0;
 const Audio = window.AudioContext || window.webkitAudioContext;
 const original = Audio.prototype.createBufferSource;
 Audio.prototype.createBufferSource = function () {
     const source = original.call(this);
-    const start = source.start.bind(source);
-    source.start = (...args) => { window.tuningStarts++; window.tuningDurations.push(source.buffer.duration); return start(...args); };
+    const start = source.start.bind(source), stop = source.stop.bind(source);
+    let active = false;
+    const ended = () => { if (active) { active = false; window.tuningActive--; } };
+    source.addEventListener("ended", ended);
+    source.start = (...args) => {
+        const result = start(...args);
+        active = true;
+        window.tuningActive++;
+        window.tuningMaxActive = Math.max(window.tuningMaxActive, window.tuningActive);
+        window.tuningStarts++;
+        window.tuningDurations.push(source.buffer.duration);
+        window.tuningEvents.push({loop: source.loop, static: !!document.querySelector("#interstitial:not([hidden]) .static")});
+        return result;
+    };
+    source.stop = (...args) => { const result = stop(...args); ended(); return result; };
     return source;
 };
 """
@@ -541,12 +557,12 @@ def test_recorded_cues_differ_for_channel_and_commercial(browser, base_url):
         if page.locator(".bumper").count():
             wait_until(page, "window.tuningDurations.at(-1) > 0.8", timeout=5000)
             break
-        wait_until(page, "window.tuningDurations.length > 0 && window.tuningDurations.at(-1) < 0.6", timeout=5000)
+        wait_until(page, "window.tuningDurations.length > 0 && window.tuningDurations.at(-1) < 0.7", timeout=5000)
         page.wait_for_timeout(550)
     else:
         raise AssertionError("commercial break did not occur")
     durations = page.evaluate("window.tuningDurations")
-    assert any(0.4 < d < 0.6 for d in durations)
+    assert any(0.57 < d < 0.59 for d in durations)
     assert 0.8 < durations[-1] < 1.1
     page.locator("#channel-sound").click()
     skip_break(page)
@@ -555,7 +571,7 @@ def test_recorded_cues_differ_for_channel_and_commercial(browser, base_url):
 
 def test_missing_recorded_sound_does_not_block_tuning(browser, base_url):
     page = open_page(browser, base_url, reduce=True, routes={
-        "**/sounds/*.mp3": lambda r: r.fulfill(status=404, body="missing")
+        "**/sounds/*": lambda r: r.fulfill(status=404, body="missing")
     })
     before = ch(page)
     page.click("#next")
@@ -590,3 +606,28 @@ def test_page_chrome_fits_small_phones(browser, base_url, width):
     page.wait_for_selector("#lineup li")
     assert page.evaluate("document.documentElement.scrollWidth") <= width
     ctx.close()
+
+
+def test_broadcast_snow_stops_when_static_card_clears(browser, base_url):
+    page = open_page(browser, base_url, init=AUDIO_SPY)
+    page.click("#next")
+    wait_until(page, "window.tuningStarts === 1")
+    assert page.evaluate("window.tuningEvents[0]") == {"loop": True, "static": True}
+    interstitial_closed(page, 3000)
+    assert page.evaluate("window.tuningActive") == 0
+    assert page.evaluate("window.tuningStarts") == 1
+    page.context.close()
+
+
+def test_rapid_tuning_never_overlaps_snow(browser, base_url):
+    page = open_page(browser, base_url, init=AUDIO_SPY)
+    page.click("#next")
+    wait_until(page, "window.tuningStarts === 1")
+    page.click("#next")
+    wait_until(page, "window.tuningStarts === 2")
+    assert page.evaluate("window.tuningMaxActive") == 1
+    page.click("#channel-sound")
+    assert page.evaluate("window.tuningActive") == 0
+    interstitial_closed(page, 3000)
+    assert page.evaluate("window.tuningStarts") == 2
+    page.context.close()
