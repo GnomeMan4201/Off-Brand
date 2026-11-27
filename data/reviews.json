@@ -1,7 +1,147 @@
 {
   "site_name": "Off-Brand",
-  "last_updated": "2026-11-27T06:17:21Z",
+  "last_updated": "2026-11-27T06:43:12Z",
   "items": [
+    {
+      "id": "urlscan-01a1f8dd-b83d-7541-b503-42125f30510e",
+      "aisle": "Streaming",
+      "impersonated_brand": "Spotify",
+      "knockoff_label": "Spotify Login (Cellar-Aged Domain)",
+      "verdict": "Served in the Wrong Glass",
+      "rating": "2/10",
+      "defanged_url": "hxxps://upgov[.]net/images/z1dpeth/-/louwhan1/pages/login.php",
+      "defanged_domain": "upgov[.]net",
+      "ip": "160.187.54.56",
+      "asn_name": "IPL-AS-AP - Imegh Private Limited, IN",
+      "page_title": "Spotify",
+      "scanned_at": "2026-11-20T12:10:56.126Z",
+      "reviewed_at": "2026-11-27T06:43:12Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/01a1f8dd-b83d-7541-b503-42125f30510e/",
+      "tells": [
+        "NOSE: upgov[.]net, a domain urlscan lists as ten years old, with the page buried at /images/z1dpeth/-/louwhan1/pages/login.php. A login deep inside an images folder on an unrelated site doesn't belong there. Spotify signs people in at accounts[.]spotify[.]com.",
+        "PALATE: 'Welcome back', an email or username box, then Continue with phone number, Google, Facebook and Apple. The record shows the buttons, not where they lead. On a page like this, each one is a chance to collect a different sign-in.",
+        "FINISH: the page is in English but the reCAPTCHA notice at the bottom is in French, a mismatch copied pages often leave behind. urlscan rated it Potentially Malicious and detected Spotify. Open the app, or type the address yourself."
+      ],
+      "critic_note": "An English 'Welcome back' over a French reCAPTCHA notice, poured from a domain that has spent ten years in the cellar with no connection to music. The login was found resting in an images folder, which is not where Spotify keeps its front door.",
+      "sketchy_segment": "upgov[.]net",
+      "voice": "sommelier",
+      "voice_name": "Tasting Notes",
+      "edge": 1,
+      "edge_name": "Dry"
+    },
+    {
+      "id": "urlscan-01a2129b-243d-7383-b7cb-4f43dd69e5de",
+      "aisle": "Telecom",
+      "impersonated_brand": "AT&T",
+      "knockoff_label": "AT&T Mail (Powered by Square)",
+      "verdict": "Sold Separately",
+      "rating": "1/10",
+      "defanged_url": "hxxps://att-103444-106506[.]square[.]site/",
+      "defanged_domain": "att-103444-106506[.]square[.]site",
+      "ip": "74.115.51.4",
+      "asn_name": "WEEBLY - Weebly, Inc., US",
+      "page_title": "Att-Home | AT&T",
+      "scanned_at": "2026-11-25T12:08:14.395Z",
+      "reviewed_at": "2026-11-27T06:43:12Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/01a2129b-243d-7383-b7cb-4f43dd69e5de/",
+      "tells": [
+        "Feature one: the address! att-103444-106506[.]square[.]site puts AT&T's name on a subdomain of Square's website builder, where anyone can claim a name. The registered part is square[.]site, not anything AT&T owns. Start at att[.]com instead.",
+        "But wait, there's more: 'Sign in to access AT&T Mail and Currently[.]com', a User ID box, a password box, and 'Powered by Square' at the bottom. Real email logins aren't built with a shop builder, and a borrowed reCAPTCHA notice doesn't change that.",
+        "Order now and get the record: urlscan rated it Potentially Malicious and detected AT&T. The footer still says © 2025 on a November 2026 scan. Never type an email password into a page you reached from a link; go to your provider yourself."
+      ],
+      "critic_note": "Tired of signing in to your email provider? Now you can type your AT&T password into an online-store builder instead! Every kit ships with two strings of random numbers, a 2025 copyright and a 'Powered by Square' footer, because your inbox deserves the same platform as a cupcake shop. Operators are standing by. The operators are the scammers.",
+      "sketchy_segment": "square[.]site",
+      "voice": "infomercial",
+      "voice_name": "Late-Night Infomercial",
+      "edge": 3,
+      "edge_name": "Roast"
+    },
+    {
+      "id": "urlscan-01a2121d-6fea-76ca-88bd-5e0ef22f925e",
+      "aisle": "Government",
+      "impersonated_brand": "UK Government (GOV.UK)",
+      "knockoff_label": "£100 Energy Payment (Register First)",
+      "verdict": "Mercury in Retrograde",
+      "rating": "2/10",
+      "defanged_url": "hxxps://energybillpayment[.]com/",
+      "defanged_domain": "www[.]energybillpayment[.]com",
+      "ip": "64.29.17.1",
+      "asn_name": "AMAZON-02 - Amazon.com, Inc., US",
+      "page_title": "£100 Energy Payment – GOV.UK",
+      "scanned_at": "2026-11-25T09:51:02.347Z",
+      "reviewed_at": "2026-11-27T06:43:12Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/01a2121d-6fea-76ca-88bd-5e0ef22f925e/",
+      "tells": [
+        "Your reading: a GOV.UK header over energybillpayment[.]com. UK government services live on gov[.]uk addresses. A payment scheme hosted on a plain .com is the first card in the spread, and it isn't a good one.",
+        "A prediction: a '£100 Energy Payment for eligible households', paid from January 2027, but only if you register. The eligibility list includes 'a valid bank account for payment'. Check any scheme on gov[.]uk yourself before giving anyone your details.",
+        "The outlook: urlscan rated it Potentially Malicious and detected UK Government; the submitter tagged it a threat. The capture stops at 'What you need to register', so the form itself isn't in the record. Don't give bank details to a sign-up page you reached by link."
+      ],
+      "critic_note": "The stars foresee £100 arriving in January 2027, a forecast delivered from a .com dressed in a GOV.UK header. Charts this generous always want something first. This one wants you to register, and it has already mentioned your bank account.",
+      "sketchy_segment": "energybillpayment[.]com",
+      "voice": "horoscope",
+      "voice_name": "Horoscope",
+      "edge": 2,
+      "edge_name": "Spicy"
+    },
+    {
+      "id": "urlscan-01a217c3-10b8-71e9-ba7a-64c078f954cc",
+      "aisle": "Streaming",
+      "impersonated_brand": "Netflix",
+      "knockoff_label": "Netflix Sign-In (Site-Builder Edition)",
+      "verdict": "Unattributed Forgery",
+      "rating": "2/10",
+      "defanged_url": "hxxp://maionedefsruviaro1795561832530[.]1690477[.]meusitehostgator[.]com[.]br/",
+      "defanged_domain": "maionedefsruviaro1795561832530[.]1690477[.]meusitehostgator[.]com[.]br",
+      "ip": "2a06:98c1:310d::6812:2a38",
+      "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
+      "page_title": "Netflix - Entrar",
+      "scanned_at": "2026-11-26T12:09:55.617Z",
+      "reviewed_at": "2026-11-27T06:43:12Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/01a217c3-10b8-71e9-ba7a-64c078f954cc/",
+      "tells": [
+        "Note the address: a run of letters, then twenty digits, then meusitehostgator[.]com[.]br, the domain of a website-builder service where customers get their own subdomains. Netflix signs people in at netflix[.]com, not on a builder's shelf.",
+        "Observe the form: 'Entrar', with boxes for 'Email ou número de celular' and 'Senha', copied right down to the reCAPTCHA notice. A good copy is the whole point, so how the page looks proves nothing. Only the address can.",
+        "Consider the record: urlscan rated it Potentially Malicious and detected Netflix. The page also prints a phone number under 'Dúvidas?'. A number on a copied page may be copied or swapped, so look it up on the real site before you call."
+      ],
+      "critic_note": "A faithful study of the Netflix sign-in, rendered in Portuguese on a website-builder subdomain that runs to twenty digits. The red is correct and the brushwork is confident. The frame, however, was assembled by a hosting company's site tool, and Netflix did not commission it.",
+      "sketchy_segment": "meusitehostgator[.]com[.]br",
+      "voice": "museum",
+      "voice_name": "Museum Placard",
+      "edge": 1,
+      "edge_name": "Dry"
+    },
+    {
+      "id": "urlscan-01a1a583-5919-702e-b4e1-d2330a5d977e",
+      "aisle": "Shipping & Delivery",
+      "impersonated_brand": "USPS",
+      "knockoff_label": "USPS Redelivery (Card Required)",
+      "verdict": "Recalled Parcel",
+      "rating": "2/10",
+      "defanged_url": "hxxp://uspsfund[.]online/",
+      "defanged_domain": "uspsfund[.]online",
+      "ip": "173.211.81.11",
+      "asn_name": "LATITUDE-SH - Latitude.sh, US",
+      "page_title": "Payment Verification — USPS",
+      "scanned_at": "2026-11-04T07:43:38.186Z",
+      "reviewed_at": "2026-11-27T06:43:12Z",
+      "source": "urlscan.io (Public Scan)",
+      "public_record_url": "https://urlscan.io/result/01a1a583-5919-702e-b4e1-d2330a5d977e/",
+      "tells": [
+        "AFFECTED PRODUCT: 'Payment Verification — USPS' at uspsfund[.]online, a domain urlscan saw on the day it was registered. USPS is at usps[.]com. A .online address with 'fund' bolted on is somebody else's mailbox.",
+        "HAZARD: a 'held parcel', a $1.95 redelivery fee, then a form for cardholder name, card number, expiry, CVV, billing address, phone and email, 'for fraud prevention purposes'. The tiny fee is the hook; the card details are the catch.",
+        "REMEDY: urlscan rated it Potentially Malicious and detected USPS. Don't pay delivery fees through a link in a text or email. Type the tracking number into usps[.]com yourself. The '256-bit SSL' badge only means the connection to the thief is private."
+      ],
+      "critic_note": "Effective immediately, this redelivery portal is withdrawn from service. A $1.95 fee was found to require a card number, expiry date, CVV, billing address, phone number and email address. The paperwork outweighs the postage by a margin we could not justify.",
+      "sketchy_segment": "uspsfund[.]online",
+      "voice": "recall",
+      "voice_name": "Product Recall Notice",
+      "edge": 1,
+      "edge_name": "Dry"
+    },
     {
       "id": "urlscan-01a1a8fa-5fc2-7178-b770-c8f6a8d461e3",
       "aisle": "Cloud & SaaS",
@@ -647,121 +787,6 @@
       "edge_name": "Spicy"
     },
     {
-      "id": "urlscan-01a21a4f-d3c3-76a3-9538-e87765a02458",
-      "aisle": "Crypto & Wallets",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "Crypto Magnata",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxps://professional-maroon-jtlihezc-dp3sifploudr[.]edgeone[.]dev/",
-      "defanged_domain": "professional-maroon-jtlihezc-dp3sifploudr[.]edgeone[.]dev",
-      "ip": "43.174.246.17",
-      "asn_name": "ACE-AS-AP - ACE, SG",
-      "page_title": "Crypto Magnata — V39.0 Domino Master Club",
-      "scanned_at": "2026-11-27T00:03:01Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a4f-d3c3-76a3-9538-e87765a02458/report/",
-      "tells": [
-        "The dashboard displays R$10,000. The scan caught it asking CoinGecko for Bitcoin, Ethereum, Solana and XRP prices in reais and dollars. That request can explain a convincing live ticker. It contains no account identifier and says nothing about who owns the displayed balance.",
-        "Two claims appear side by side. You can check the market price against another exchange. Checking a personal balance takes an account statement or a transaction you can independently verify. The countdown supplies neither.",
-        "urlscan gave this visit no classification. The record supports a dashboard using public price data. It leaves deposits, withdrawals and ownership of the funds unverified."
-      ],
-      "critic_note": "Give me ten minutes in The Sims and I can build their entire Executive Suite. Give me eleven and I’ll move the bed away from the fireplace."
-    },
-    {
-      "id": "urlscan-01a21a56-2d00-73ea-9ef0-fa90aeaa1543",
-      "aisle": "Social Media",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "Facebook login collage",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxps://cnsed-1ie-3hp4-y12vg-22-10-2026-aa[.]pages[.]dev/",
-      "defanged_domain": "www[.]facebook[.]com",
-      "ip": "157.240.0.35",
-      "asn_name": "FACEBOOK - Facebook, Inc., US",
-      "page_title": "Facebook",
-      "scanned_at": "2026-11-27T00:09:52Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a56-2d00-73ea-9ef0-fa90aeaa1543/report/",
-      "tells": [
-        "The scanner started on a pages[.]dev address and ended on www[.]facebook[.]com. The page history records both locations, and the final IP belongs to Facebook. The screenshot shows the password field at that destination.",
-        "To establish a counterfeit login here, we would need evidence of a form on the intermediary or a submission sent elsewhere. The screenshot supplies neither. The record also leaves open why the first page forwarded this visit.",
-        "urlscan gave this visit no classification. If the link came with a story about your account, open Facebook yourself and check whether the same request appears there."
-      ],
-      "critic_note": "All these people showed up to watch me forget my password."
-    },
-    {
-      "id": "urlscan-01a21a56-0ce6-76fc-a0b2-e3905cfb52fa",
-      "aisle": "Games",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "DANTE",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxps://straightforward-bronze-v6c1zn2w-dpqnt22shrz5[.]edgeone[.]dev/",
-      "defanged_domain": "straightforward-bronze-v6c1zn2w-dpqnt22shrz5[.]edgeone[.]dev",
-      "ip": "43.174.247.17",
-      "asn_name": "ACE-AS-AP - ACE, SG",
-      "page_title": "666",
-      "scanned_at": "2026-11-27T00:09:51Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a56-0ce6-76fc-a0b2-e3905cfb52fa/report/",
-      "tells": [
-        "The game credits give us something to check beyond the horns. The scan lists a link to SalvatorePreviti/js13k-2022 on GitHub and a separate music credit. The Play, Restart and movement controls fit the same explanation: this page presents a browser game.",
-        "Credits can travel with a copied game. They give us a lead about its origin while leaving open who put this copy on EdgeOne. The opening screen asks the player to move souls. It shows no sign-in or payment request.",
-        "urlscan gave this visit no classification. A phishing claim would need more evidence, such as a later screen asking for credentials under a false identity."
-      ],
-      "critic_note": "Lucifer lost a shipment of souls. Apparently the eighth circle is open, but Shipping and Receiving closes at five."
-    },
-    {
-      "id": "urlscan-01a21a4d-7085-738e-a391-cbb960feeaa9",
-      "aisle": "School & Events",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "School promo",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxps://superokulum1[.]blogspot[.]com/2026/07/web-sitemizin-tanitim-videosu-mutlaka.html",
-      "defanged_domain": "superokulum1[.]blogspot[.]com",
-      "ip": "173.194.45.132",
-      "asn_name": "GOOGLE - Google LLC, US",
-      "page_title": "WEB SİTEMİZİN TANITIM VİDEOSU MUTLAKA İZLEYİN!!!!",
-      "scanned_at": "2026-11-27T00:00:33Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a4d-7085-738e-a391-cbb960feeaa9/report/",
-      "tells": [
-        "The school name appears inside a promotional graphic. A Blogspot post hosts it, and the scan records a request to code[.]tidio[.]co alongside the visible chat greeting. The school pictured, the blog publisher and the chat operator could be different people.",
-        "Loading a chat service explains how a greeting can appear without a staff member typing it. It leaves the identity of the person answering this inbox open. The capture shows no conversation requesting enrollment fees or student records.",
-        "urlscan gave this visit no classification. If the chat asks for personal details, check with the school office through an independently located number before treating a reply as official."
-      ],
-      "critic_note": "“Hi there!” “Could you move two inches? The ad was mid-sentence.”"
-    },
-    {
-      "id": "urlscan-01a21a54-d9d3-73b1-a86b-71134f9af9ae",
-      "aisle": "Visual Oddities",
-      "impersonated_brand": "Not established",
-      "knockoff_label": "Favicon gallery",
-      "verdict": "Visual review",
-      "rating": "Unrated",
-      "defanged_url": "hxxp://hnr4c-izs-ncfr-xkohp-06-10-2026-aa[.]pages[.]dev/favicon.ico",
-      "defanged_domain": "hnr4c-izs-ncfr-xkohp-06-10-2026-aa[.]pages[.]dev",
-      "ip": "188.114.96.3",
-      "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
-      "page_title": "favicon.ico (32×32)",
-      "scanned_at": "2026-11-27T00:08:25Z",
-      "reviewed_at": "2026-11-27T02:08:28Z",
-      "source": "urlscan.io",
-      "public_record_url": "https://urlscan.io/result/01a21a54-d9d3-73b1-a86b-71134f9af9ae/report/",
-      "tells": [
-        "The scan requested /favicon.ico. The HTTP history shows the same file path before and after the switch to HTTPS, and the server returned image/x-icon. The scanner retrieved the image a browser can display on a tab.",
-        "The report lists zero outgoing links. This visit never tested what a visitor would see at the homepage. A familiar graphic could be reused on a deceptive login page, but the image alone reveals nothing about where such a page would send a visitor.",
-        "urlscan gave this visit no classification. This is a useful limit on the whole exercise: a scan of one file can answer questions about that file. A claim about a login page needs a capture of the page itself."
-      ],
-      "critic_note": "Gallery label: ‘Infinity, 32×32, with an unusually large black mat.’"
-    },
-    {
       "id": "urlscan-01a172c4-cf90-7236-8c9f-5e6c71047710",
       "aisle": "Marketplace & Retail",
       "impersonated_brand": "Allegro Lokalnie",
@@ -846,6 +871,31 @@
       "id": "urlscan-01a21a57-1369-760c-ac7f-874703c1270b",
       "defanged_domain": "gonedrivning[.]pages[.]dev",
       "reason": "Removed from the shelf. A contractor's quote page with no phishing classification or impersonation in the record, and its screenshot showed direct business contact details."
+    },
+    {
+      "id": "urlscan-01a21a4f-d3c3-76a3-9538-e87765a02458",
+      "defanged_domain": "professional-maroon-jtlihezc-dp3sifploudr[.]edgeone[.]dev",
+      "reason": "Retired from the shelf. A visual-only review: urlscan gave the scan no phishing classification and no impersonated brand was established. Replaced by a classified phishing specimen."
+    },
+    {
+      "id": "urlscan-01a21a56-2d00-73ea-9ef0-fa90aeaa1543",
+      "defanged_domain": "www[.]facebook[.]com",
+      "reason": "Retired from the shelf. A visual-only review: urlscan gave the scan no phishing classification and no impersonated brand was established. Replaced by a classified phishing specimen."
+    },
+    {
+      "id": "urlscan-01a21a56-0ce6-76fc-a0b2-e3905cfb52fa",
+      "defanged_domain": "straightforward-bronze-v6c1zn2w-dpqnt22shrz5[.]edgeone[.]dev",
+      "reason": "Retired from the shelf. A visual-only review: urlscan gave the scan no phishing classification and no impersonated brand was established. Replaced by a classified phishing specimen."
+    },
+    {
+      "id": "urlscan-01a21a4d-7085-738e-a391-cbb960feeaa9",
+      "defanged_domain": "superokulum1[.]blogspot[.]com",
+      "reason": "Retired from the shelf. A visual-only review: urlscan gave the scan no phishing classification and no impersonated brand was established. Replaced by a classified phishing specimen."
+    },
+    {
+      "id": "urlscan-01a21a54-d9d3-73b1-a86b-71134f9af9ae",
+      "defanged_domain": "hnr4c-izs-ncfr-xkohp-06-10-2026-aa[.]pages[.]dev",
+      "reason": "Retired from the shelf. A visual-only review: urlscan gave the scan no phishing classification and no impersonated brand was established. Replaced by a classified phishing specimen."
     }
   ]
 }
