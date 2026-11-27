@@ -1,0 +1,67 @@
+/* OFF-BRAND / station craftsmanship, intentionally separate from research data. */
+.crawl-window {
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+.stamp { right: 7%; max-width: 78%; transform: rotate(-4deg); animation: ob-stamp-in .28s ease-out both; }
+@keyframes ob-stamp-in { from { opacity: 0; transform: rotate(-4deg) scale(.97); } to { opacity: 1; transform: rotate(-4deg); } }
+.chyron { animation: ob-chyron-in .2s ease-out both; }
+@keyframes ob-chyron-in { from { opacity: .65; } to { opacity: 1; } }
+@media (max-width: 480px) {
+  .chyron-tag { padding: 8px; font-size: 11px; }
+  .chyron p { padding: 8px 10px; }
+}
+.shot-missing {
+  background: linear-gradient(#100b0bdc,#100b0bf5), linear-gradient(90deg,#ccc 0 14.28%,#d5bc43 14.28% 28.56%,#49adb3 28.56% 42.84%,#24975a 42.84% 57.12%,#ae4d99 57.12% 71.40%,#b94f47 71.40% 85.68%,#3951ac 85.68%);
+}
+.shot-missing::before {
+  content: "OB-TV / NO VIDEO FEED"; color: var(--yellow); font: 18px/1 var(--tty); letter-spacing: .06em;
+}
+/* Existing overlay is now optional; the original capture link stays unchanged. */
+.shot-area::after { display: none; }
+.ob-scanlines .shot-area::after { display: block; }
+.ob-control-strip { background: var(--night-3); border: 1px solid var(--bezel-edge); border-top: 2px solid var(--bezel-hi); padding: 12px; }
+.ob-control-top { display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: baseline; font: 18px/1.2 var(--tty); }
+.ob-clock { color: var(--chroma); font-variant-numeric: tabular-nums; }
+.ob-control-note { color: var(--dim); overflow-wrap: anywhere; }
+.ob-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.ob-switch {
+  background: var(--bezel-lo); color: var(--ink); border: 1px solid var(--bezel-edge); border-bottom-width: 3px;
+  border-radius: 3px; min-height: 44px; padding: 7px 10px; font: 18px/1.15 var(--tty);
+}
+.ob-switch:hover { border-color: var(--yellow); }
+.ob-switch:active { transform: translateY(1px); }
+.ob-switch[aria-pressed="true"], .ob-switch[aria-expanded="true"] { color: var(--chroma); border-color: var(--chroma); }
+.ob-signal { color: var(--muted); font: 17px/1.2 var(--tty); margin: 8px 0 0; }
+.ob-servicing .ob-clock { animation: ob-service .4s ease-out; }
+@keyframes ob-service { 0% { opacity: .6; } 100% { opacity: 1; } }
+.ob-calibration { margin-top: 8px; font-size: 15px; }
+.ob-calibration summary, .ob-loupe summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; color: var(--yellow); font-weight: 700; }
+.ob-test-card {
+  aspect-ratio: 16 / 8; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+  background: linear-gradient(90deg,#bbb 0 14.28%,#bca72f 14.28% 28.56%,#329ba1 28.56% 42.84%,#328b4b 42.84% 57.12%,#a1478c 57.12% 71.40%,#b7443e 71.40% 85.68%,#414eab 85.68%);
+  border: 5px solid #090303; padding: 12px; text-align: center;
+}
+.ob-test-card strong, .ob-test-card span { background: #140808; padding: 6px 10px; color: var(--ink); font-family: var(--tty); }
+.ob-test-card strong { font-size: clamp(24px,4vw,42px); }
+.ob-test-card span { font-size: 18px; }
+.ob-loupe { border-top: 1px dashed var(--bezel-edge); margin-top: 10px; padding-top: 4px; }
+.ob-loupe-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(160px,100%),1fr)); gap: 8px; margin: 0; }
+.ob-loupe-fields div { background: var(--night-3); border: 1px solid var(--bezel-edge); padding: 8px; overflow-wrap: anywhere; }
+.ob-loupe-fields dt { color: var(--dim); font: 17px/1.15 var(--tty); }
+.ob-loupe-fields dd { margin: 4px 0 0; color: var(--yellow); font: 20px/1.2 var(--tty); }
+.ob-loupe-note { color: var(--dim); font-size: 14px; margin: 8px 0 0; }
+.ob-remote { background: var(--night-2); color: var(--ink); border: 2px solid var(--bezel-edge); width: min(480px,calc(100% - 32px)); max-height: calc(100% - 32px); padding: 22px; overflow: auto; }
+.ob-remote::backdrop { background: #080303c9; }
+.ob-remote dt { color: var(--yellow); font-weight: 700; }
+.ob-remote dd { margin: 0 0 12px; color: var(--dim); }
+@media (prefers-reduced-motion: reduce) {
+  .ob-switch:active { transform: none; }
+  .ob-servicing .ob-clock, .stamp, .chyron { animation: none; }
+}
+
+/* Keep the no-feed label legible without squeezing the existing specimen title. */
+@media (max-width: 480px) {
+  .shot-missing { padding: 42px 12px 12px; gap: 6px; }
+  .shot-missing::before { font-size: 16px; }
+}
+.ob-calibration summary:focus-visible, .ob-loupe summary:focus-visible { outline-offset: 2px; }

@@ -971,3 +971,52 @@ def test_station_standards_navigation(browser, base_url, width):
     page.get_by_role("link", name="Return to the broadcast").click()
     page.wait_for_url("**/index.html")
     ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 768, 1024, 1440])
+def test_craftsmanship_controls_and_loupe(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
+    page = ctx.new_page()
+    page.route("https://urlscan.io/**", lambda route: route.abort())
+    problems = []
+    page.on("pageerror", lambda e: problems.append(str(e)))
+    page.add_init_script("try { localStorage.setItem('offbrand.breaks.enabled', 'off'); } catch (e) {}")
+    page.goto(base_url)
+    page.wait_for_selector("#address .ob-loupe")
+    assert page.locator(".ob-loupe").count() == 1
+    page.locator(".shot-missing").wait_for(state="visible")
+    original = page.locator(".address-text").inner_text()
+    locker = page.locator(".locker").inner_text()
+    page.locator(".ob-loupe summary").click()
+    assert page.locator(".ob-loupe a").count() == 0
+    assert "does not determine the registrable domain" in page.locator(".ob-loupe").inner_text()
+    assert page.locator(".address-text").inner_text() == original
+    assert page.locator(".locker").inner_text() == locker
+    scan = page.get_by_role("button", name="Scanlines: off")
+    scan.click()
+    assert scan.get_attribute("aria-pressed") == "true"
+    page.get_by_role("button", name="Degauss", exact=True).click()
+    assert page.locator(".ob-control-strip").evaluate("e => !e.classList.contains('ob-servicing')")
+    page.get_by_role("button", name="Station ID", exact=True).click()
+    assert page.locator(".ob-test-card").is_visible()
+    assert page.locator("#interstitial").is_hidden()
+    remote = page.get_by_role("button", name="Remote guide")
+    remote.click()
+    dialog = page.get_by_role("dialog", name="Remote guide")
+    assert dialog.is_visible()
+    assert dialog.evaluate("e => e.matches(':modal') && e.contains(document.activeElement)")
+    page.keyboard.press("Escape")
+    dialog.wait_for(state="hidden")
+    wait_until(page, "document.activeElement.textContent === 'Remote guide'")
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    page.click("#next")
+    wait_until(page, "document.querySelector('.address-text').textContent !== " + json.dumps(original))
+    page.wait_for_selector(".ob-loupe")
+    assert page.locator(".ob-loupe").count() == 1
+    assert not page.locator(".ob-loupe").evaluate("e => e.open")
+    assert page.locator(".ob-loupe").evaluate("e => e.dataset.source === document.querySelector('.address-text').textContent")
+    assert not problems
+    page.reload()
+    page.wait_for_selector(".ob-loupe")
+    assert page.get_by_role("button", name="Scanlines: on").get_attribute("aria-pressed") == "true"
+    ctx.close()
