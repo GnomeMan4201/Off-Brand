@@ -1072,3 +1072,52 @@ def test_teletext_public_navigation_and_return(browser, base_url, width):
     assert page.evaluate("location.hash") == channel
     assert not problems
     ctx.close()
+
+
+@pytest.mark.parametrize("width", [320, 390, 768, 1440])
+def test_studio_programs_are_on_demand_and_evidence_bound(browser, base_url, width):
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, reduced_motion="reduce")
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    channel = json.loads((ROOT / "data" / "reviews.json").read_text())["items"][0]["id"]
+    page.goto(base_url.replace("index.html","studio.html?channel="+channel+"#props"))
+    page.wait_for_selector("#source a")
+    assert page.locator("#return-broadcast").get_attribute("href") == "index.html#"+channel
+    assert page.locator("#program-guide").get_attribute("href") == "teletext.html?channel="+channel+"#412"
+    assert "not independently re-verified" in page.locator("#source").inner_text()
+    assert page.locator("#play").get_attribute("aria-pressed") == "false"
+    assert page.locator("#source a").get_attribute("href").startswith("index.html#urlscan-")
+    nxt = page.locator("#next")
+    for _ in range(3):
+        nxt.click()
+    assert "THE LEDGER" in page.locator("#program-card h2").inner_text()
+    assert nxt.get_attribute("aria-disabled") == "true"
+    assert nxt.evaluate("e => e === document.activeElement")
+    page.locator("#play").click()
+    assert "THE COAT" in page.locator("#program-card h2").inner_text()
+    assert page.locator("#play").get_attribute("aria-pressed") == "true"
+    page.locator('a[href="#continuity"]').click()
+    page.get_by_role("heading",name="Studio B Continuity Booth").wait_for()
+    assert page.locator("#play").get_attribute("aria-pressed") == "false"
+    page.locator("#next").click()
+    assert "Margaret" in page.locator("#program-card").inner_text()
+    assert "FICTIONAL" in page.locator("#type").inner_text()
+    page.locator('a[href="#readings"]').click()
+    page.get_by_role("heading",name="The Hostname Readings").wait_for()
+    assert "[.]invalid" in page.locator("#program-card").inner_text()
+    assert page.locator("#program-card a").count() == 0
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    assert not errors
+    ctx.close()
+
+
+def test_studio_does_not_substitute_changed_excerpt(browser, base_url):
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    page.route("**/data/reviews.json*", lambda route: route.fulfill(
+        status=200, content_type="application/json", body='{"items":[]}'))
+    page.goto(base_url.replace("index.html","studio.html#props"))
+    page.get_by_text("Excerpt unavailable:",exact=False).wait_for()
+    assert page.locator("#source a").count() == 0
+    ctx.close()

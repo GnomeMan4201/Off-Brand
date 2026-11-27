@@ -46,6 +46,9 @@ if (typeof module !== "undefined" && module.exports) {
   function link(label, href) { const a = el("a", label); a.href = href; return a; }
   function para(text, cls) { body.appendChild(el("p", text, cls)); }
   function note(text) { para(text, "txt-note"); }
+  function studioLink(href) {
+    return validId(selected) ? href.replace("#","?channel="+encodeURIComponent(selected)+"#") : href;
+  }
   function tuneLink(item) { return link(item.knockoff_label || item.impersonated_brand || "Untitled review", "index.html#" + item.id); }
   function list(items) {
     const ul = el("ul", null, "txt-rows");
@@ -118,7 +121,8 @@ if (typeof module !== "undefined" && module.exports) {
       case "101":
         para("FICTIONAL STATION CONTINUITY", "txt-kicker");
         body.appendChild(el("div", "You are watching Off-Brand. Please do not adjust your expectations.", "txt-bumper"));
-        para("Studio B has no announcements at this time. This is a fictional station message, not a report of a technical incident.");
+        para("A fictional station message, not a report of a technical incident.");
+        body.appendChild(link("Enter Studio B continuity booth", studioLink("studio.html#continuity")));
         break;
       case "204": showInvestigation(); break;
       case "310": {
@@ -137,6 +141,11 @@ if (typeof module !== "undefined" && module.exports) {
       }
       case "412":
         note("On-demand programming grouped by the archive's existing categories. These are not scheduled transmission times or independently verified shared techniques.");
+        const originals = el("ul", null, "txt-rows");
+        for (const [name,href] of [["Studio B continuity booth","studio.html#continuity"],["The Props Department · Episode 01","studio.html#props"],["The Hostname Readings · Special","studio.html#readings"]]) {
+          const li=el("li"); li.appendChild(link(name,studioLink(href))); originals.appendChild(li);
+        }
+        body.appendChild(originals);
         if (!reviews) { waiting("reviews"); break; }
         if (!groups(reviews.items).length) para("No usable published review IDs.");
         for (const [name,items] of groups(reviews.items)) {
