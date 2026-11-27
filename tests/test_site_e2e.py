@@ -292,7 +292,7 @@ def test_page_has_a_favicon_and_no_missing_files(browser, base_url):
     page.context.close()
 
 
-# ---------- regressions found in review of PR #19 ----------
+# ---------- commercial playback and scheduler regressions ----------
 
 def interstitial_closed(page, timeout):
     page.wait_for_function("() => document.getElementById('interstitial').hidden", timeout=timeout)
@@ -305,7 +305,7 @@ def skip_break(page):
 
 
 def test_rapid_switching_into_a_break_keeps_the_latest_destination(browser, any_url):
-    """Issue 1: a pending static switch must not overwrite the newer break target."""
+    """A pending static switch must not overwrite the newer break target."""
     page = open_page(browser, any_url)
     for _ in range(3):  # several breaks, each reached by clicking faster than the static clears
         start = ch(page)
@@ -358,7 +358,7 @@ HTMLMediaElement.prototype.play = function () { return Promise.reject(new DOMExc
 
 
 def test_video_that_loads_but_never_starts_returns_to_the_program(browser, base_url):
-    """Issue 2a: loadeddata alone must not satisfy the watchdog."""
+    """Loadeddata alone must not satisfy the watchdog."""
     page = open_page(browser, base_url, init=NEVER_STARTS)
     _, before = next_until_break(page)
     page.wait_for_selector(".commercial video")
@@ -370,7 +370,7 @@ def test_video_that_loads_but_never_starts_returns_to_the_program(browser, base_
 
 
 def test_video_that_stalls_mid_playback_returns_to_the_program(browser, base_url):
-    """Issue 2b: playback that freezes without a pause event must time out."""
+    """Playback that freezes without a pause event must time out."""
     page = open_page(browser, base_url)
     _, before = next_until_break(page)
     wait_playing(page)
@@ -383,7 +383,7 @@ def test_video_that_stalls_mid_playback_returns_to_the_program(browser, base_url
 
 
 def test_intentional_pause_is_not_treated_as_a_failure(browser, base_url):
-    """Issue 2c: a viewer's pause must never trip the stall watchdog."""
+    """A viewer's pause must never trip the stall watchdog."""
     page = open_page(browser, base_url)
     next_until_break(page)
     wait_playing(page)
@@ -398,7 +398,7 @@ def test_intentional_pause_is_not_treated_as_a_failure(browser, base_url):
 
 
 def test_autoplay_refusal_does_not_strand_the_viewer(browser, base_url):
-    """Issue 2d: a break that is waiting for a tap still ends on its own, and the ad is not blacklisted."""
+    """A break that is waiting for a tap still ends on its own, and the ad is not blacklisted."""
     page = open_page(browser, base_url, init=AUTOPLAY_BLOCKED)
     _, before = next_until_break(page)
     page.wait_for_selector(".ad-overlay")
@@ -420,7 +420,7 @@ def _browse_past_threshold(page):
 
 @pytest.mark.parametrize("failure", ["breaks.js 404", "manifest 404", "manifest garbage", "manifest wrong shape"])
 def test_specimens_still_browse_when_break_pieces_fail(browser, base_url, failure):
-    """Issue 3: nothing about commercials may stop ordinary browsing."""
+    """Nothing about commercials may stop ordinary browsing."""
     routes = {
         "breaks.js 404": {"**/breaks.js*": lambda r: r.fulfill(status=404, body="gone")},
         "manifest 404": {"**/commercials/manifest.json*": lambda r: r.fulfill(status=404, body="gone")},
@@ -437,7 +437,7 @@ def test_specimens_still_browse_when_break_pieces_fail(browser, base_url, failur
 
 
 def test_reduced_motion_break_ends_by_itself_if_nobody_chooses(browser, base_url):
-    """Issue 2e: a break waiting on the viewer must not wait forever."""
+    """A break waiting on the viewer must not wait forever."""
     page = open_page(browser, base_url, reduce=True)
     _, before = next_until_break(page)
     assert page.locator(".bumper-actions").count() == 1
