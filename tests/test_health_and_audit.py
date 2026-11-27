@@ -9,8 +9,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError
 
+import re
+
 import pytest
-import yaml
 
 import audit_reviews
 import evidence
@@ -95,28 +96,29 @@ def test_health_cli_writes_only_its_report_and_refuses_data(tmp_path, capsys):
     assert not (ROOT / "data" / "health.json").exists()
 
 
-def read_workflow(name):
+def workflow_code(name):
+    """The workflow without comment lines (comments may describe what it does not do)."""
     text = (ROOT / ".github" / "workflows" / name).read_text()
-    return text, yaml.safe_load(text)
+    return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
 
 
 @pytest.mark.parametrize("name", ["source-health.yml", "audit-reviews.yml"])
 def test_read_only_workflows_cannot_write_or_publish(name):
-    text, wf = read_workflow(name)
-    triggers = wf.get("on") or wf.get(True)
-    assert list(triggers) == ["workflow_dispatch"]
-    perms = wf["permissions"]
-    assert all(v == "read" for v in perms.values()), perms
-    for job in wf["jobs"].values():
-        assert "permissions" not in job
-    steps = [st for job in wf["jobs"].values() for st in job["steps"]]
-    commands = "\n".join(st.get("run", "") for st in steps)
+    code = workflow_code(name)
+    triggers = code.split("\non:\n", 1)[1].split("\n\n", 1)[0]
+    assert "workflow_dispatch" in triggers
+    for other in ("schedule:", "push:", "pull_request", "issues:", "issue_comment", "workflow_run"):
+        assert other not in triggers, other
+    perms = code.split("\npermissions:\n", 1)[1].split("\n\n", 1)[0]
+    lines = [ln.strip() for ln in perms.splitlines() if ln.strip()]
+    assert lines and all(ln.endswith(": read") for ln in lines), lines
+    assert code.count("permissions:") == 1  # no job-level override
+    assert "write" not in code
     for forbidden in ("gh issue", "git push", "git commit", "publish", "workflow run", "> data/", "ingest.py",
-                      "archive.py", "write_specimen"):
-        assert forbidden not in commands, forbidden
-    uses = {st["uses"].split("@")[0] for st in steps if "uses" in st}
-    assert uses <= {"actions/checkout", "actions/setup-python", "actions/upload-artifact"}
-    assert "SHELF_TOKEN" not in text and "secrets.GITHUB_TOKEN" not in text
+                      "archive.py", "write_specimen", "SHELF_TOKEN", "secrets.GITHUB_TOKEN"):
+        assert forbidden not in code, forbidden
+    uses = {u.split("@")[0] for u in re.findall(r"uses:\s*(\S+)", code)}
+    assert uses <= {"actions/checkout", "actions/setup-python", "actions/upload-artifact"}, uses
 
 
 # ---------------------------------------------------------------- historical audit
