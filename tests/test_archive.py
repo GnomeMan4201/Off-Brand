@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import archive  # noqa: E402
 import build_archive  # noqa: E402
-import publish_shelf  # noqa: E402
+import approval  # noqa: E402
 import write_specimen  # noqa: E402
 from shelf import Shelf  # noqa: E402
 
@@ -384,25 +384,16 @@ def test_shelf_must_be_private_and_separate(tmp_path):
         pass
 
 
-def test_publish_requires_approved_label_and_review_comment(monkeypatch, tmp_path):
-    index = _built_index(tmp_path)
-    spec = index["specimens"][0]
-    body = write_specimen.build_body(spec, [], "o/shelf")
-    comment = "brand: Acme\naisle: Banking\nverdict: Fake\nrating: 3\ncritic_note: mine"
-    for issue in ({"body": body, "labels": [], "comments": [{"body": comment}]},
-                  {"body": body, "labels": [{"name": "approved"}], "comments": []}):
-        try:
-            publish_shelf.publish(issue)
-            assert False
-        except SystemExit:
-            pass
-    seen = {}
-    monkeypatch.setattr(publish_shelf.publish_from_issue, "main",
-                        lambda: seen.update(b=__import__("os").environ["ISSUE_BODY"],
-                                            c=__import__("os").environ["REVIEW_COMMENT"]) or 0)
-    assert publish_shelf.publish({"body": body, "labels": [{"name": "approved"}],
-                                  "comments": [{"body": "older"}, {"body": comment}]}) == 0
-    assert seen["c"] == comment and seen["b"] == body
+def test_missing_cursor_stops_without_skipping(tmp_path):
+    results = [result(i, i) for i in range(1, 4)]
+    del results[1]["sort"]
+    index, state = fresh()
+    stats = run("backfill", FakeClient(results), index, state, tmp_path)
+    assert stats["stopped"] == "invalid_cursor" and not stats["complete"]
+    assert stats["added"] == 1
+    assert state["jobs"]["backfill"]["cursor"] == ",".join(map(str, results[0]["sort"]))
+    resumed = run("backfill", FakeClient([result(i, i) for i in range(1, 4)]), index, state, tmp_path)
+    assert resumed["complete"] and resumed["added"] == 2
 
 
 def test_no_scheduled_triage_and_workflows_keep_shelf_private():

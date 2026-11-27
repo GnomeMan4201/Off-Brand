@@ -1,42 +1,46 @@
 name: Publish Approved Review
 
 on:
-  issues:
-    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Public triage issue number"
+        required: true
+      comment_id:
+        description: "Numeric ID from the approved review comment link"
+        required: true
 
 permissions:
   contents: write
   issues: write
+  actions: write
+
+concurrency:
+  group: editorial-publication
+  cancel-in-progress: false
 
 jobs:
   publish:
-    if: github.event.label.name == 'approved'
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
+    env:
+      ISSUE: ${{ inputs.issue_number }}
+      COMMENT_ID: ${{ inputs.comment_id }}
+      EDITOR_LOGIN: ${{ github.repository_owner }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Extract latest comment & publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
-        run: |
-          REVIEW_COMMENT=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments[-1].body')
-          export REVIEW_COMMENT
-          python3 scripts/publish_from_issue.py
-
-      - name: Commit & close issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+      - name: Publish explicitly selected review
+        run: python3 scripts/publish_approved.py --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --comment "$COMMENT_ID"
+      - name: Commit review, close issue, deploy through checks
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/reviews.json
-          git diff --cached --quiet || git commit -m "feat: publish review from issue #$ISSUE_NUMBER"
+          git diff --cached --quiet || git commit -m "feat: publish approved review"
           git push
-          gh issue close "$ISSUE_NUMBER" --reason completed --comment "Published to Off-Brand."
+          gh issue close "$ISSUE" --reason completed --comment "Published to Off-Brand."
+          gh workflow run deploy.yml --ref main

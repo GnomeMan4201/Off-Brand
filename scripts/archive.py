@@ -352,7 +352,11 @@ def run_sweep(name: str, days: int, client, index: dict, state: dict, shelf: She
                 stats["stopped"] = reason
                 break
             sort = item.get("sort")
-            item_cursor = ",".join(str(x) for x in sort) if sort else None
+            item_cursor = ",".join(str(x) for x in sort) if isinstance(sort, list) and sort else None
+            if not item_cursor or not CURSOR_RE.fullmatch(item_cursor) or item_cursor == cursor:
+                stats["stopped"] = "invalid_cursor"
+                stats["errors"] += 1
+                break
             spec = parse_result(item)
             if spec is None:
                 stats["skipped_invalid"] += 1

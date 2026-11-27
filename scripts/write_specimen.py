@@ -56,7 +56,7 @@ def build_body(spec: dict, bullets: list[dict], shelf_repo: str) -> str:
         *[f"- {b['text']} _({b['source']})_" for b in bullets],
         "",
         "### How to publish from your phone",
-        "Reply with a comment using these `key: value` lines (your own words), then add the `approved` label:",
+        "Reply with a comment using these `key: value` lines (your own words), then add the `approved` label. Copy the comment link and use its numeric comment ID with the publication workflow:",
         "```",
         "brand: ",
         "aisle: <Banking | Crypto & Wallets | Marketplace & Retail | Cloud & SaaS>",

@@ -1,13 +1,15 @@
 name: Publish Approved Specimen
 
 # The explicit approval step for shelf drafts. Write your review as a comment on the
-# draft issue (in the private shelf repo), add the `approved` label there, then run this
-# with the issue number. Only the validated review fields reach the public zine.
+# draft issue (in the private shelf repo), add the approved label, then select its comment ID.
 on:
   workflow_dispatch:
     inputs:
       issue_number:
         description: "Draft issue number in the shelf repo"
+        required: true
+      comment_id:
+        description: "Numeric ID from the approved review comment link"
         required: true
 
 permissions:
@@ -15,11 +17,12 @@ permissions:
   actions: write
 
 concurrency:
-  group: publish-shelf
+  group: editorial-publication
   cancel-in-progress: false
 
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: ubuntu-latest
     env:
       SHELF_REPO: ${{ vars.SHELF_REPO }}
@@ -40,7 +43,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SHELF_TOKEN }}
           ISSUE: ${{ inputs.issue_number }}
-        run: python3 scripts/publish_shelf.py --issue "$ISSUE"
+          COMMENT_ID: ${{ inputs.comment_id }}
+          EDITOR_LOGIN: ${{ github.repository_owner }}
+        run: python3 scripts/publish_approved.py --repo "$SHELF_REPO" --private --issue "$ISSUE" --comment "$COMMENT_ID"
 
       - name: Commit review, close the draft, redeploy
         env:
