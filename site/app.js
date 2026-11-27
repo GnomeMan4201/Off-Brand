@@ -83,7 +83,13 @@ function renderCard(item) {
   if (tells.length) {
     const lesson = el("section", "lesson");
     lesson.appendChild(el("h3", null, "What to notice"));
-    for (const tell of tells) lesson.appendChild(el("p", null, tell));
+    lesson.appendChild(el("p", null, tells[0]));
+    if (tells.length > 1) {
+      const more = el("details", "lesson-more");
+      more.appendChild(el("summary", null, "Take a closer look"));
+      for (const tell of tells.slice(1)) more.appendChild(el("p", null, tell));
+      lesson.appendChild(more);
+    }
     card.appendChild(lesson);
   }
   const details = el("details", "scan-details");

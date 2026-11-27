@@ -1,6 +1,6 @@
 {
   "site_name": "Off-Brand",
-  "last_updated": "2026-11-27T02:21:20Z",
+  "last_updated": "2026-11-27T02:23:55Z",
   "items": [
     {
       "id": "urlscan-01a21a4f-d3c3-76a3-9538-e87765a02458",
@@ -19,7 +19,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a4f-d3c3-76a3-9538-e87765a02458/report/",
       "tells": [
-        "A balance on a dashboard is a number the page displays. The scan shows R$10,000 and a timer. It tells us nothing about who holds the money or whether anyone can withdraw it."
+        "R$10,000 looks precise. So does the countdown. Both numbers come from the same dashboard, so neither independently backs up the other.",
+        "Check what the timer actually measures. A screenshot records one instant. It can’t show what happens at zero or whether anyone can withdraw the displayed balance.",
+        "If someone says that balance is yours, open the account through your usual app and look for a matching transaction before sending money."
       ],
       "critic_note": "Give me ten minutes in The Sims and I can build their entire Executive Suite. Give me eleven and I’ll move the bed away from the fireplace."
     },
@@ -40,7 +42,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a57-5a41-756b-9f15-96d8586e39e9/report/",
       "tells": [
-        "The invitation calls itself “CodePen Demo” in the browser title. Templates can keep an old title. If an RSVP asks for personal details, check with the host using the number you already have."
+        "The invitation names Maria Clara, but the browser title reads “CodePen Demo.” A template can keep its old title even after someone personalizes every visible detail.",
+        "Look at what the guest is being asked to do. Choosing a meal or confirming attendance fits an invitation. A request to sign in to your email would need a separate explanation. The capture shows the invitation itself.",
+        "If you weren’t expecting the invite, ask the host whether they sent it using a number already in your contacts."
       ],
       "critic_note": "Breaking: the giant metallic 15 eclipses Maria Clara on her own invitation."
     },
@@ -61,7 +65,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a56-2d00-73ea-9ef0-fa90aeaa1543/report/",
       "tells": [
-        "The submitted address ends in pages[.]dev. The scan lists www[.]facebook[.]com as the page domain. Those are two different parts of a visit. A screenshot alone can’t tell us who received a password."
+        "There are two addresses in this scan. The submitted link ends in pages[.]dev. The recorded page domain is www[.]facebook[.]com. The login screenshot shows what the scanner saw after it started that visit.",
+        "In the public record, compare the submitted URL with the final page URL. A difference tells you the visit changed location. The logo and password box alone can’t establish which page, if any, collected credentials.",
+        "If a link unexpectedly asks you to sign in, open Facebook from your usual app and check there for the message or notification that brought you to the page."
       ],
       "critic_note": "All these people showed up to watch me forget my password."
     },
@@ -82,7 +88,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a57-1369-760c-ac7f-874703c1270b/report/",
       "tells": [
-        "The quote button sits on a pages[.]dev address. Shared hosting can serve an ordinary business site. Before sending your home address, check the contractor’s contact details through a separate source."
+        "The excavator and the yellow button make the offer easy to understand. The address, gonedrivning[.]pages[.]dev, tells you where the page is hosted. It doesn’t identify the person who will receive a quote request.",
+        "Look at the cookie banner and the quote button separately. Agreeing to cookies says nothing about who runs the business. The photo shows equipment, but it can’t establish who owns it.",
+        "Before supplying a home address or paying a deposit, find the contractor’s number independently and ask whether this is their quote page."
       ],
       "critic_note": "I clicked ‘free quote.’ Can you ask him to put the kitchen back?"
     },
@@ -103,7 +111,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a56-0ce6-76fc-a0b2-e3905cfb52fa/report/",
       "tells": [
-        "The capture shows a game menu and movement controls. A source flag gives a reviewer a reason to look. These controls alone give us no evidence of a credential request."
+        "Read Lucifer’s instructions alongside the menu. He wants souls moved to the eighth circle. The visible choices are Play, Play first person, and Restart. The screen reads like a game.",
+        "The scan title is “666.” That fits the artwork, but neither the title nor the horns tell you whether the page asks for sensitive information. A source flag is a starting point for review.",
+        "When assessing a flagged screenshot, name the exact request you can see. Here you can point to movement controls. A claim about a stolen password would need evidence from another step."
       ],
       "critic_note": "Lucifer lost a shipment of souls. Apparently the eighth circle is open, but Shipping and Receiving closes at five."
     },
@@ -124,7 +134,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a4d-7085-738e-a391-cbb960feeaa9/report/",
       "tells": [
-        "The green school ad and the blue chat prompt share a screen. The capture records the greeting. What happens after someone replies is outside the frame. Confirm an enrollment request through the school office."
+        "The green panel advertises the school. The blue chat box says “Hi there!” Their overlap makes them feel like one conversation, even though the greeting never identifies who is speaking.",
+        "The submitted address is a Blogspot post. A school could use a blog for a promo. Seeing the school’s name on the graphic still leaves a practical question: who answers the chat?",
+        "If a chat turns into an enrollment request, use contact details you already have for the school office before sharing a student’s records."
       ],
       "critic_note": "“Hi there!” “Could you move two inches? The ad was mid-sentence.”"
     },
@@ -145,7 +157,9 @@
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a54-d9d3-73b1-a86b-71134f9af9ae/report/",
       "tells": [
-        "The scanned path ends in /favicon.ico. That’s the little icon a browser can show on a tab. This capture tells us how the icon looks. It doesn’t show the site’s homepage or a login form."
+        "Read the last part of the scanned address: /favicon.ico. The scanner captured the little image a browser can show on a tab. That explains why so much of the frame is empty.",
+        "A recognizable icon can be copied as a single file. This record covers that file; it gives you no view of the homepage, a sign-in form, or what happens after a click.",
+        "When a screenshot seems strangely empty, check the submitted path and the page title in the scan record before drawing a conclusion about the whole site."
       ],
       "critic_note": "Gallery label: ‘Infinity, 32×32, with an unusually large black mat.’"
     },
@@ -167,7 +181,9 @@
       "public_record_url": "https://urlscan.io/result/01a172c4-cf90-7236-8c9f-5e6c71047710/report/",
       "sketchy_segment": "aukcja758487593[.]top",
       "tells": [
-        "Read past “allegrolokalnie” in the submitted address. The domain is aukcja758487593[.]top. Open the marketplace from your usual bookmark before signing in or paying."
+        "Start at the first slash after the hostname and read back. In allegrolokalnie[.]aukcja758487593[.]top, the auction brand sits on the left. The domain is aukcja758487593[.]top.",
+        "The path /logowanie/48819 adds a login label and a listing-like number. Those details can make a message feel specific, but the person naming a page can choose both.",
+        "Open the marketplace from your own bookmark and look up the listing or conversation there before signing in or paying."
       ],
       "critic_note": "Lot 48819. One used Allegro sign. Buyer must collect from aukcja758487593[.]top.",
       "voice": "critic",
@@ -193,7 +209,9 @@
       "public_record_url": "https://urlscan.io/result/019dfb7f-69ed-741c-a748-f5528fa3af1c/report/",
       "sketchy_segment": "walletsupport-ledger-live-login-ch[.]vercel[.]app",
       "tells": [
-        "The Ledger name appears inside a project name on vercel[.]app. A project name is chosen by its publisher. Open your wallet app directly if a support link sends you here."
+        "Read the address out loud up to the first dot. “walletsupport-ledger-live-login-ch” is one long project name on vercel[.]app. Familiar words inside that name don’t establish who published it.",
+        "Count the independent clues. The Ledger name in the artwork and the Ledger name in the project address can both come from the same publisher. Repetition makes a claim familiar; it doesn’t verify it.",
+        "If a message says your wallet needs attention, open your installed wallet app directly. Keep your recovery phrase off websites and out of support chats."
       ],
       "critic_note": "Somebody bought the whole bag of refrigerator magnets and spelled WALLET SUPPORT LEDGER LIVE LOGIN CH. Still had to borrow Vercel’s fridge.",
       "voice": "critic",

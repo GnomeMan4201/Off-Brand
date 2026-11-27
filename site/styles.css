@@ -397,3 +397,6 @@ body {
   .search-wrap { width:100%; }
   .search-wrap input { min-width:0; }
 }
+
+.lesson-more summary { cursor: pointer; color: var(--teal); font-weight: 650; padding: .45rem 0; }
+.lesson-more[open] p { margin: .25rem 0 .8rem; }
