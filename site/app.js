@@ -624,7 +624,7 @@ async function init() {
     video.setAttribute("webkit-playsinline", "");
     video.preload = "auto";
     video.disablePictureInPicture = true;
-    video.setAttribute("aria-label", `Commercial: ${c.title}. Captions are part of the picture.`);
+    video.setAttribute("aria-label", `Commercial: ${c.title}. ${c.captions_vtt ? "English captions available." : c.captions === "burned-in" ? "Captions are part of the picture." : "Captions are not available."}`);
     if (c.poster) video.poster = c.poster;
     if (c.captions_vtt) {
       const track = document.createElement("track");
