@@ -9,24 +9,23 @@
     content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://urlscan.io; object-src 'none'; base-uri 'none'; form-action 'none';"
   />
   <title>OFF-BRAND // The Internet's Knockoff Aisle</title>
+  <meta name="description" content="A screenshot comedy zine about phishing and the odd pages that turn up in public scans. Each caption comes with a detail you can check." />
   <link rel="stylesheet" href="styles.css?v=__BUILD__" />
 </head>
 <body>
-  <div class="tape-banner">
-    CAUTION: ZERO LIVE LINKS &bull; ALL URLS DEFANGED &bull; HUMAN-REVIEWED PUBLIC RECORDS ONLY
-  </div>
-
+  <a class="skip" href="#reviews">Skip to reviews</a>
   <header class="masthead">
     <div class="masthead-top">
-      <span class="issue-tag">ZINE VOL. 01</span>
+      <span class="issue-tag">A SCREENSHOT ZINE BY GNOMEMAN4201</span>
       <span class="issue-tag" id="last-updated">UPDATED: --</span>
     </div>
     <h1>OFF-BRAND</h1>
-    <p class="tagline">The internet's knockoff aisle. Real phishing pages reviewed by me, GnomeMan4201.</p>
+    <p class="tagline">I dig through public phishing reports for pages worth a double take. Here’s what made me laugh and what I’d check before clicking.</p>
     <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
   </header>
 
-  <main class="container">
+  <main class="container" id="reviews">
+    <div class="section-heading"><h2>The reviews</h2><a href="#safety-title">Phishing field guide ↓</a></div>
     <section class="controls" aria-label="Filter aisle">
       <div class="filter-group" id="aisle-filters"></div>
       <label class="search-wrap">
@@ -38,73 +37,25 @@
     <section id="aisle-grid" class="aisle-grid" aria-live="polite"></section>
 
     <section class="rejected-shelf">
-      <h2>// PULLED FROM THE SHELF (HUMAN REVIEW LOG)</h2>
+      <h2>Held back at review</h2>
       <p class="shelf-note">
-        Automated scanners make mistakes. Here is what human review held back so we don't accuse innocent or training sites.
+        A report is a lead. Sometimes the most useful thing in the record is the reason to leave a page off the shelf.
       </p>
       <ul id="rejected-list" class="rejected-list"></ul>
     </section>
 
     <section class="safety" aria-labelledby="safety-title">
-      <h2 id="safety-title">How to spot a phish and stay safe</h2>
-      <p class="safety-intro">Phishing pages copy the look of real sites. The look can be copied perfectly, so judge the address and the request instead.</p>
-
-      <h3>Check the address</h3>
-      <ul>
-        <li>Read the domain from right to left. The real owner is the part just before the ending (.com, .pl, .app). In <code>allegro.pl.login-check.top</code>, the owner is <code>login-check.top</code>, not Allegro.</li>
-        <li>A brand name at the start of the address, or in a subdomain, proves nothing. Anyone can put any word there.</li>
-        <li>Be wary of brands on free hosting addresses such as <code>.vercel.app</code>, <code>.netlify.app</code>, <code>.pages.dev</code>, <code>.github.io</code> or <code>.web.app</code>. Large companies use their own domains for sign-in.</li>
-        <li>Look for swapped or extra characters: <code>rn</code> for <code>m</code>, <code>0</code> for <code>o</code>, <code>1</code> or <code>I</code> for <code>l</code>, extra hyphens, misspellings.</li>
-        <li>The padlock (HTTPS) only means the connection is encrypted. Phishing sites have padlocks too.</li>
-        <li>On a phone, tap the address bar to see the full address. Phones often cut off the part that matters.</li>
-      </ul>
-
-      <h3>Check the request</h3>
-      <ul>
-        <li>Pressure is a warning sign: account locked, payment failed, package held, small fee due, act within 24 hours.</li>
-        <li>No real company will ask for your password, a one-time code or a crypto wallet recovery phrase by message, by phone or on a page you reached from a link.</li>
-        <li>Anyone who asks for a wallet's recovery phrase (seed phrase) is trying to steal the wallet. Hardware wallet makers never need it.</li>
-        <li>Unexpected requests to pay with gift cards, crypto or wire transfers are almost always fraud.</li>
-      </ul>
-
-      <h3>Habits that stop most phishing</h3>
-      <ul>
-        <li>Don't sign in from a link in an email, text or ad. Type the address yourself, or use a bookmark or the official app.</li>
-        <li>Use a password manager. It only fills in passwords on the real site, so if it doesn't offer your login, stop and check the address.</li>
-        <li>Turn on passkeys or a hardware security key where offered. They can't be used on a fake site. App-based codes are the next best option; text-message codes can be phished.</li>
-        <li>Use a different password for every account, so one stolen password doesn't open the others.</li>
-        <li>Keep your browser and phone updated. Built-in phishing warnings depend on current lists.</li>
-      </ul>
-
-      <h3>If you already entered details</h3>
-      <ul>
-        <li>Go to the real site directly and change the password right away. Change it anywhere else you used the same password.</li>
-        <li>Sign out of other sessions and check recovery email, phone number, forwarding rules and connected apps for changes you didn't make.</li>
-        <li>If you entered card or bank details, call the number on the back of your card or on the bank's official website.</li>
-        <li>If you entered a crypto recovery phrase, assume the wallet is compromised. Move the funds to a new wallet with a new phrase immediately.</li>
-        <li>Turn on two-factor authentication for the account if it isn't on already.</li>
-      </ul>
-
-      <h3>Report it</h3>
-      <ul>
-        <li>Phishing emails: forward them to <a href="mailto:reportphishing@apwg.org">reportphishing@apwg.org</a> (Anti-Phishing Working Group).</li>
-        <li>Phishing websites: report them to <a href="https://safebrowsing.google.com/safebrowsing/report_phish/" rel="noopener noreferrer" target="_blank">Google Safe Browsing</a>, which feeds browser warnings.</li>
-        <li>Scam texts in the US: forward them to <strong>7726</strong> (SPAM).</li>
-        <li>Fraud in the US: <a href="https://reportfraud.ftc.gov/" rel="noopener noreferrer" target="_blank">reportfraud.ftc.gov</a>. Elsewhere, contact your national fraud or cybercrime reporting centre.</li>
-        <li>Report it to the company being impersonated. Most have a phishing or abuse address on their official site.</li>
-      </ul>
+      <h2 id="safety-title">Phishing field guide</h2>
+      <div class="guide-grid">
+        <section><h3>Read the whole address</h3><p>On a phone, tap the address bar to expand it. Compare the hostname with the one in your bookmark. In the Allegro capture, the familiar name is the first thing you see. The address ends in <code>aukcja758487593[.]top</code>.</p></section>
+        <section><h3>Check the request elsewhere</h3><p>A logo is easy to copy. If a message asks you to sign in, pay, or fix an account problem, open the app yourself or call a number you already trust. You can check the claim without using the sender’s link.</p></section>
+        <section><h3>If you entered details</h3><p>Open the service directly, change the exposed password and any reused copies, and review active sessions. For payment details, call the number printed on your card.</p></section>
+        <section><h3>Report a suspicious message</h3><p>In the US, forward scam texts to <strong>7726</strong>. You can also <a href="https://reportfraud.ftc.gov/">report fraud to the FTC</a> or read its <a href="https://consumer.ftc.gov/articles/how-recognize-avoid-phishing-scams">phishing guide</a>.</p></section>
+      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <p>
-      <strong>THE ONE RULE:</strong> Every item traces to a checkable public record. Missing fields are shown as
-      <em>Not recorded</em>, never guessed.
-    </p>
-    <p>
-      Never visit defanged domains. All scanned strings are treated as hostile input and rendered as plain text.
-    </p>
-  </footer>
+  <footer class="footer"><strong>OFF-BRAND</strong><p>Each card links to its public scan record. Screenshots capture one moment. Brackets in scanned addresses keep them readable as plain text.</p><a href="#reviews">Back to reviews ↑</a></footer>
 
   <script src="app.js?v=__BUILD__" defer></script>
 </body>

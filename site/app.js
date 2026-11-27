@@ -45,17 +45,17 @@ function renderShot(item) {
   link.href = src;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.setAttribute("aria-label", `Open full screenshot of the page impersonating ${item.impersonated_brand}`);
+  link.setAttribute("aria-label", `Open full screenshot of ${item.knockoff_label}`);
 
   const img = document.createElement("img");
   img.src = src;
-  img.alt = `Screenshot of the knockoff page impersonating ${item.impersonated_brand}`;
+  img.alt = `Screenshot of ${item.knockoff_label}`;
   img.loading = "lazy";
   img.decoding = "async";
   img.referrerPolicy = "no-referrer";
   img.addEventListener("error", () => {
     // Nothing fake: a missing screenshot is shown as missing, never replaced.
-    fig.replaceChildren(el("div", "shot-missing", "No screenshot recorded in public scan"));
+    fig.replaceChildren(el("div", "shot-missing", "Screenshot unavailable · see scan notes below"));
   });
 
   link.appendChild(img);
@@ -70,40 +70,29 @@ function renderCard(item) {
 
   const top = el("div", "card-top");
   top.appendChild(el("span", "aisle-badge", item.aisle || "Uncategorized"));
-  top.appendChild(el("span", "sticker", `${item.verdict} (${item.rating})`));
+  if (item.rating && item.rating !== "Unrated") {
+    top.appendChild(el("span", "sticker", item.verdict + " · " + item.rating));
+  }
   card.appendChild(top);
-
+  card.appendChild(el("h2", null, item.knockoff_label));
   const shot = renderShot(item);
   if (shot) card.appendChild(shot);
-
-  card.appendChild(el("h2", null, item.knockoff_label));
-  card.appendChild(el("div", "brand-target", `Impersonating: ${item.impersonated_brand}`));
-  card.appendChild(el("div", "defanged-box", item.defanged_url));
   card.appendChild(el("p", "critic-note", item.critic_note));
 
-  const btn = el("button", "drill-btn", "INSPECT THE TELLS");
-  btn.type = "button";
-  btn.setAttribute("aria-expanded", "false");
-
-  const tellsPanel = el("div", "tells-panel");
-  tellsPanel.hidden = true;
-  if (item.sketchy_segment) {
-    tellsPanel.appendChild(el("strong", null, `Dead giveaway: ${item.sketchy_segment}`));
+  const tells = item.tells || [];
+  if (tells.length) {
+    const lesson = el("section", "lesson");
+    lesson.appendChild(el("h3", null, "What to notice"));
+    for (const tell of tells) lesson.appendChild(el("p", null, tell));
+    card.appendChild(lesson);
   }
-  const ul = el("ul");
-  (item.tells || []).forEach((tell) => ul.appendChild(el("li", null, tell)));
-  tellsPanel.appendChild(ul);
-
-  btn.addEventListener("click", () => {
-    const opening = tellsPanel.hidden;
-    tellsPanel.hidden = !opening;
-    btn.setAttribute("aria-expanded", String(opening));
-    btn.textContent = opening ? "HIDE THE TELLS" : "INSPECT THE TELLS";
-  });
-
-  card.appendChild(btn);
-  card.appendChild(tellsPanel);
-
+  const details = el("details", "scan-details");
+  details.appendChild(el("summary", null, "Inspect the scan"));
+  if (item.impersonated_brand && item.impersonated_brand !== "Not established") {
+    details.appendChild(el("p", "brand-target", "Brand pictured · " + item.impersonated_brand));
+  }
+  details.appendChild(el("div", "defanged-box", item.defanged_url));
+  if (item.sketchy_segment) details.appendChild(el("p", "brand-target", "Address detail · " + item.sketchy_segment));
   const meta = el("div", "receipt-meta");
   meta.appendChild(el("div", null, `IP: ${displayOrMissing(item.ip)}`));
   meta.appendChild(el("div", null, `ASN: ${displayOrMissing(item.asn_name)}`));
@@ -119,7 +108,8 @@ function renderCard(item) {
     meta.appendChild(link);
   }
 
-  card.appendChild(meta);
+  details.appendChild(meta);
+  card.appendChild(details);
   return card;
 }
 
@@ -129,11 +119,11 @@ async function init() {
   const items = data.items || [];
   const rejected = data.rejected_log || [];
 
-  document.getElementById("last-updated").textContent = `UPDATED: ${data.last_updated || "UNKNOWN"}`;
+  document.getElementById("last-updated").textContent = `Updated ${String(data.last_updated || "").slice(0, 10)}`;
 
   const statsBar = document.getElementById("stats-bar");
-  statsBar.appendChild(el("span", "stat-chip", `${items.length} REVIEWED KNOCKOFFS`));
-  statsBar.appendChild(el("span", "stat-chip", `${rejected.length} HELD BACK IN TRIAGE`));
+  statsBar.appendChild(el("span", "stat-chip", `${items.length} REVIEWS`));
+  statsBar.appendChild(el("span", "stat-chip", `${rejected.length} HELD BACK`));
 
   const aisles = ["All", ...new Set(items.map((i) => i.aisle).filter(Boolean))];
   let activeAisle = "All";
@@ -160,7 +150,7 @@ async function init() {
     });
 
     if (filtered.length === 0) {
-      gridEl.appendChild(el("p", null, "No knockoffs match that filter."));
+      gridEl.appendChild(el("p", null, "No reviews match. Try another aisle or search."));
       return;
     }
     filtered.forEach((item) => gridEl.appendChild(renderCard(item)));
@@ -169,11 +159,16 @@ async function init() {
   aisles.forEach((aisle) => {
     const btn = el("button", "filter-btn", aisle);
     btn.type = "button";
+    btn.setAttribute("aria-pressed", String(aisle === activeAisle));
     if (aisle === activeAisle) btn.classList.add("active");
     btn.addEventListener("click", () => {
       activeAisle = aisle;
-      document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".filter-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
       btn.classList.add("active");
+      btn.setAttribute("aria-pressed", "true");
       render();
     });
     filtersEl.appendChild(btn);

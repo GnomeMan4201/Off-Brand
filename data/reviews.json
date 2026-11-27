@@ -1,6 +1,6 @@
 {
   "site_name": "Off-Brand",
-  "last_updated": "2026-11-27T02:08:28Z",
+  "last_updated": "2026-11-27T02:17:43Z",
   "items": [
     {
       "id": "urlscan-01a21a4f-d3c3-76a3-9538-e87765a02458",
@@ -13,13 +13,15 @@
       "defanged_domain": "professional-maroon-jtlihezc-dp3sifploudr[.]edgeone[.]dev",
       "ip": "43.174.246.17",
       "asn_name": "ACE-AS-AP - ACE, SG",
-      "page_title": "Crypto Magnata \u2014 V39.0 Domino Master Club",
+      "page_title": "Crypto Magnata — V39.0 Domino Master Club",
       "scanned_at": "2026-11-27T00:03:01Z",
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a4f-d3c3-76a3-9538-e87765a02458/report/",
-      "tells": [],
-      "critic_note": "Give me ten minutes in The Sims and I can build their entire Executive Suite. Give me eleven and I\u2019ll move the bed away from the fireplace."
+      "tells": [
+        "A balance on a dashboard is a number the page displays. The scan shows R$10,000 and a timer. It tells us nothing about who holds the money or whether anyone can withdraw it."
+      ],
+      "critic_note": "Give me ten minutes in The Sims and I can build their entire Executive Suite. Give me eleven and I’ll move the bed away from the fireplace."
     },
     {
       "id": "urlscan-01a21a57-5a41-756b-9f15-96d8586e39e9",
@@ -37,7 +39,9 @@
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a57-5a41-756b-9f15-96d8586e39e9/report/",
-      "tells": [],
+      "tells": [
+        "The invitation calls itself “CodePen Demo” in the browser title. Templates can keep an old title. If an RSVP asks for personal details, check with the host using the number you already have."
+      ],
       "critic_note": "Breaking: the giant metallic 15 eclipses Maria Clara on her own invitation."
     },
     {
@@ -56,8 +60,10 @@
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a56-2d00-73ea-9ef0-fa90aeaa1543/report/",
-      "tells": [],
-      "critic_note": "Nothing says human connection like a pile of strangers arranged around a password field."
+      "tells": [
+        "The submitted address ends in pages[.]dev. The scan lists www[.]facebook[.]com as the page domain. Those are two different parts of a visit. A screenshot alone can’t tell us who received a password."
+      ],
+      "critic_note": "All these people showed up to watch me forget my password."
     },
     {
       "id": "urlscan-01a21a57-1369-760c-ac7f-874703c1270b",
@@ -70,13 +76,15 @@
       "defanged_domain": "gonedrivning[.]pages[.]dev",
       "ip": "2606:4700:310c::ac42:2f02",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
-      "page_title": "Nedrivning K\u00f8benhavn & Sj\u00e6lland | Nedrivningsfirma med fast pris",
+      "page_title": "Nedrivning København & Sjælland | Nedrivningsfirma med fast pris",
       "scanned_at": "2026-11-27T00:10:55Z",
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a57-1369-760c-ac7f-874703c1270b/report/",
-      "tells": [],
-      "critic_note": "I clicked \u2018free quote.\u2019 Can you ask him to put the kitchen back?"
+      "tells": [
+        "The quote button sits on a pages[.]dev address. Shared hosting can serve an ordinary business site. Before sending your home address, check the contractor’s contact details through a separate source."
+      ],
+      "critic_note": "I clicked ‘free quote.’ Can you ask him to put the kitchen back?"
     },
     {
       "id": "urlscan-01a21a56-0ce6-76fc-a0b2-e3905cfb52fa",
@@ -94,8 +102,10 @@
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a56-0ce6-76fc-a0b2-e3905cfb52fa/report/",
-      "tells": [],
-      "critic_note": "Nothing says eternal damnation like a construction zone and a boss asking you to clean up someone else\u2019s mess."
+      "tells": [
+        "The capture shows a game menu and movement controls. A source flag gives a reviewer a reason to look. These controls alone give us no evidence of a credential request."
+      ],
+      "critic_note": "Lucifer lost a shipment of souls. Apparently the eighth circle is open, but Shipping and Receiving closes at five."
     },
     {
       "id": "urlscan-01a21a4d-7085-738e-a391-cbb960feeaa9",
@@ -108,13 +118,15 @@
       "defanged_domain": "superokulum1[.]blogspot[.]com",
       "ip": "173.194.45.132",
       "asn_name": "GOOGLE - Google LLC, US",
-      "page_title": "WEB S\u0130TEM\u0130Z\u0130N TANITIM V\u0130DEOSU MUTLAKA \u0130ZLEY\u0130N!!!!",
+      "page_title": "WEB SİTEMİZİN TANITIM VİDEOSU MUTLAKA İZLEYİN!!!!",
       "scanned_at": "2026-11-27T00:00:33Z",
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a4d-7085-738e-a391-cbb960feeaa9/report/",
-      "tells": [],
-      "critic_note": "\u201cHi there!\u201d \u201cCould you move two inches? The ad was mid-sentence.\u201d"
+      "tells": [
+        "The green school ad and the blue chat prompt share a screen. The capture records the greeting. What happens after someone replies is outside the frame. Confirm an enrollment request through the school office."
+      ],
+      "critic_note": "“Hi there!” “Could you move two inches? The ad was mid-sentence.”"
     },
     {
       "id": "urlscan-01a21a54-d9d3-73b1-a86b-71134f9af9ae",
@@ -127,13 +139,15 @@
       "defanged_domain": "hnr4c-izs-ncfr-xkohp-06-10-2026-aa[.]pages[.]dev",
       "ip": "188.114.96.3",
       "asn_name": "CLOUDFLARENET - Cloudflare, Inc., US",
-      "page_title": "favicon.ico (32\u00d732)",
+      "page_title": "favicon.ico (32×32)",
       "scanned_at": "2026-11-27T00:08:25Z",
       "reviewed_at": "2026-11-27T02:08:28Z",
       "source": "urlscan.io",
       "public_record_url": "https://urlscan.io/result/01a21a54-d9d3-73b1-a86b-71134f9af9ae/report/",
-      "tells": [],
-      "critic_note": "Gallery label: \u2018Infinity, 32\u00d732, with an unusually large black mat.\u2019"
+      "tells": [
+        "The scanned path ends in /favicon.ico. That’s the little icon a browser can show on a tab. This capture tells us how the icon looks. It doesn’t show the site’s homepage or a login form."
+      ],
+      "critic_note": "Gallery label: ‘Infinity, 32×32, with an unusually large black mat.’"
     },
     {
       "id": "urlscan-01a172c4-cf90-7236-8c9f-5e6c71047710",
@@ -153,9 +167,7 @@
       "public_record_url": "https://urlscan.io/result/01a172c4-cf90-7236-8c9f-5e6c71047710/report/",
       "sketchy_segment": "aukcja758487593[.]top",
       "tells": [
-        "Brand-name cosplay: 'allegrolokalnie' is wearing the real company's name like a borrowed suit, parked up front where a phone screen will show it and then politely give up.",
-        "Read the address right to left, like a skeptic. The part that actually owns the page is 'aukcja758487593.top', which is a lottery ticket number on a domain ending that costs about as much as a gas station hot dog.",
-        "'/logowanie/48819' means 'login' in Polish plus a listing number, the URL equivalent of a fake mustache: technically a disguise, mostly a confession."
+        "Read past “allegrolokalnie” in the submitted address. The domain is aukcja758487593[.]top. Open the marketplace from your usual bookmark before signing in or paying."
       ],
       "critic_note": "Putting 'allegrolokalnie' in front of 'aukcja758487593.top' is the web equivalent of taping a Gucci logo to a cardboard box. The whole con depends on your phone cutting the address off after the first word, which, to be fair, it will. Ours did.",
       "voice": "critic",
@@ -181,11 +193,9 @@
       "public_record_url": "https://urlscan.io/result/019dfb7f-69ed-741c-a748-f5528fa3af1c/report/",
       "sketchy_segment": "walletsupport-ledger-live-login-ch[.]vercel[.]app",
       "tells": [
-        "Five buzzwords walked into a subdomain ('walletsupport-ledger-live-login-ch') and none of them were hired by Ledger. Real companies don't need to shout every keyword at once to prove who they are.",
-        "The real owner of this address is 'vercel.app', a free hosting service anyone can sign up for in two minutes. That's like Rolex running its flagship store out of a borrowed folding table.",
-        "Ledger Live is an app on your own device. It has never needed you to 'log in' on a website, and no real support person will ever ask for your 24-word recovery phrase. Anyone who does isn't support; they're the robbery."
+        "The Ledger name appears inside a project name on vercel[.]app. A project name is chosen by its publisher. Open your wallet app directly if a support link sends you here."
       ],
-      "critic_note": "Nothing says 'official hardware security' like a 34-character hyphen salad on a free hobbyist hosting plan. If a domain has more dashes than a Morse code message, keep walking. Then run.",
+      "critic_note": "Somebody bought the whole bag of refrigerator magnets and spelled WALLET SUPPORT LEDGER LIVE LOGIN CH. Still had to borrow Vercel’s fridge.",
       "voice": "critic",
       "voice_name": "The Critic",
       "edge": 2,
@@ -196,7 +206,7 @@
     {
       "id": "urlscan-01a1f3b1-f851-7443-874b-0a167d2ad2a5",
       "defanged_domain": "webaccess-alert[.]net",
-      "reason": "Human review caught '_phishme.com_session_id' cookie in scan metadata \u2014 likely a corporate phishing simulation/training domain, not a criminal knockoff. Excluded from the main aisle.",
+      "reason": "Human review caught '_phishme.com_session_id' cookie in scan metadata — likely a corporate phishing simulation/training domain, not a criminal knockoff. Excluded from the main aisle.",
       "public_record_url": "https://urlscan.io/result/01a1f3b1-f851-7443-874b-0a167d2ad2a5/"
     }
   ]
