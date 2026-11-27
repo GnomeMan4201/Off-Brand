@@ -3,3 +3,9 @@
 /archive/
 /data/archive*.json
 __pycache__/
+
+# Local development outputs
+/.venv/
+/_site/
+/results.xml
+/.pytest_cache/

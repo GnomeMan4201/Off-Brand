@@ -70,17 +70,38 @@ The manifest at `site/commercials/manifest.json` determines CH 00 listings and t
 
 Store H.264/AAC MP4s and JPEG, PNG or WebP posters in `site/commercials/`, with lowercase alphanumeric/hyphen filenames. Keep videos below 25 MB. Use fast-start and remove unnecessary container metadata. Add a manifest entry with `id`, `title`, `runtime_seconds`, `src`, `poster` and `description`. Use `captions: "burned-in"` only for verified embedded captions, or provide a `captions_vtt` path for WebVTT. Set `enabled: false` to disable a commercial without deleting its assets.
 
-## Local checks
+## Local development and checks
+
+CI uses Python 3.12, Node.js 22, Chrome with H.264/AAC support, and ffprobe (from ffmpeg). The direct Python test dependencies are pinned in [requirements-dev.txt](../requirements-dev.txt); transitive dependencies and runner/browser patch versions are not fully locked. No Python packages are required to build the static site itself.
+
+From the repository root on Linux, with those system tools installed:
 
 ```sh
-mkdir -p _site/data
-cp -r site/* _site/
-cp data/reviews.json _site/data/
-python3 -m http.server -d _site 8000
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pip check
+python --version
+node --version
+ffprobe -version
+export OFFBRAND_CHROME="$(command -v google-chrome)"
+"$OFFBRAND_CHROME" --version
+python -m pytest -q tests --junitxml=results.xml
 ```
+
+For another Chrome-compatible binary, set `OFFBRAND_CHROME` to its actual executable path and verify that it supports the commercial media. A skipped browser or media test is not a full pass. PR and deployment CI require a nonempty suite with zero skips, and retain the JUnit results for 30 days (when a report was produced). The workflow logs record installed dependency and tool versions. Do not relax the CI gate to accommodate a machine missing dependencies.
+
+### Preview the same public build used by Pages
 
 ```sh
-python3 -m pytest -q tests
+python3 scripts/stage_site.py _site --revision "$(git rev-parse --short=7 HEAD)"
+python3 -m http.server 8000 --bind 127.0.0.1 --directory _site
 ```
 
-Local checks may skip unavailable dependencies. Pull requests and deployments run the full suite with Node.js, ffprobe, Pillow, Playwright and Chrome; any skipped check blocks deployment. Review commercial frames and captions before adding media. Withdrawn material must not appear in commercials, posters or other public assets.
+Open http://127.0.0.1:8000/. The staging script requires a new or empty output directory. Use a new output directory for a second build, or remove only your known generated output before rebuilding. It copies only the public site tree and published reviews JSON, generates the script-free reading edition, and substitutes the revision token on all five HTML pages. Browser test fixtures use the same staging function; synthetic evidence and expanded review collections exist only in temporary test outputs.
+
+### Operational verification after a merge
+
+Check the regression and Pages deployment workflows, then verify that the public index, Teletext, Studio B, reading edition and methodology return HTTP 200 and their versioned assets carry the expected short commit. A merged commit is not itself a successful deployment. Test the live viewer separately: source screenshot delivery, media playback and physical-device accessibility are not proven by successful HTTP responses or fixture tests.
+
+Do not visit reported targets during checks. Review commercial frames and captions before adding media. Withdrawn material must not appear in commercials, posters or other public assets. The source audit and publishing workflows remain subject to the reuse authorization and editorial gates above.

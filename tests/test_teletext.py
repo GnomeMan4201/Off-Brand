@@ -15,7 +15,9 @@ def test_teletext_shell_and_deploy():
     assert (SITE / "teletext.css").is_file()
     assert (SITE / "teletext.js").is_file()
     assert 'href="teletext.html#100"' in (SITE / "index.html").read_text()
-    assert "_site/teletext.html" in (ROOT / ".github/workflows/deploy.yml").read_text()
+    from stage_site import PAGES
+    assert "teletext.html" in PAGES
+    assert "scripts/stage_site.py _site" in (ROOT / ".github/workflows/deploy.yml").read_text()
 
 def test_teletext_only_loads_public_data_and_uses_text_nodes():
     src = (SITE / "teletext.js").read_text()
